@@ -1,93 +1,9 @@
-#### Libraries and classes ####
-# Libraries #
-library(raster)
-library(sp)
-library(rgdal)
-library(spThin)
-library(rpart)
-library(rgdal)
-library(mgcv)
-library(SDMTools)
-library(e1071)
-library(plotrix)
-library(rgeos)
-library(snowfall)
-
-# Classe ENM #
+#### ENM class ####
 setClass('ENM', 
-         representation(proj = 'RasterStack', eval = 'data.frame', data = 'data.frame', incert = 'RasterLayer', algo.eval = 'data.frame', algo.corr = 'data.frame', axes.contrib = 'data.frame'), 
-         prototype(proj = stack(raster()), eval= data.frame(), data = data.frame(), incert = raster(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame()))
-ENM <- function(proj = stack(raster()), incert = raster(), eval = data.frame(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame(), data = data.frame()) {
-  return(new('ENM', proj = proj, incert = incert, eval = eval, data = data,  algo.eval = algo.eval, algo.corr = algo.corr, axes.contrib = axes.contrib))
-}
-
-#### Functions ####
-
-# 0 - Result functions #
-proba.map = function(list = enm.list, Occ = Occurences, nb = 1, niche = F, zoom = F) {
-  i = 1
-  title = 'Probability map'
-  if (niche) {
-    i = 2
-    title = 'Niche map'
-    }
-  plot(list[[nb]]@proj[[i]], main = title)
-  points(Occ$Longitude, Occ$Latitude, cex = 0.5, pch =16, col = 'red')
-  if(zoom) {
-    extent = drawExtent()
-    plot(crop(list[[nb]]@proj[[i]], extent), main = title)
-    points(Occ$Longitude, Occ$Latitude, cex = 0.5, pch =16, col = 'red')
-  }
-}
-uncert = function(list = enm.list, Occ = Occurences, nb = 1, zoom = F) {
-  plot(list[[nb]]@incert, main = 'Uncertaintiy map')
-  points(Occ$Longitude, Occ$Latitude, cex = 0.5, pch =16, col = 'red')
-  if(zoom) {
-    extent = drawExtent()
-    plot(crop(list[[nb]]@incert, extent), main = 'Uncertaintiy map')
-    points(Occ$Longitude, Occ$Latitude, cex = 0.5, pch =16, col = 'red')
-  }
-}
-varimp = function(list = enm.list, nb = 1) {
-  barplot(list[[nb]]@axes.contrib$Mean, names.arg = row.names(list[[nb]]@axes.contrib), las = 2)
-}
-algo.perf = function(list = enm.list, nb = 1,
-                     metric = 'AUC' # AUC, omission.rate, sensitivity, specificity, prop.correct, Kappa
-                     ) {
-  i = which(names(list[[nb]]@algo.eval) == metric)
-  barplot(as.matrix(list[[nb]]@algo.eval[i]), 
-          names.arg = names(list[[nb]]@algo.corr), 
-          las = 2, main = metric)
-}
-load.enm = function(SpecieID) {
-  directory = getwd()
-  setwd(paste0(directory, "/",SpecieID,'_Results'))
-  enm = ENM(
-    proj = stack(raster('Rasters/Probability.tif'), raster('Rasters/Niche.tif')),
-    incert = raster('Rasters/Uncertainity.tif'),
-    eval = read.csv('Tables/ENMeval'),
-    algo.eval = read.csv('Tables/AlgoEval'),
-    algo.corr = read.csv('Tables/AlgoCorr'),
-    axes.contrib = read.csv('Tables/VarImp')
-  )
-  setwd(directory)
-  return(enm)
-}
-diversity = function(enms, choice = 'Niche') {
-  if (choice == 'Probability') {
-    proj = enms[[1]]@proj[[1]]
-    for (i in 2:length(enms)) {proj = proj + enms[[i]]@proj[[1]]}
-  }
-  if (choice == 'Niche') {
-    proj = enms[[1]]@proj[[2]]
-    for (i in 2:length(enms)) {proj = proj + enms[[i]]@proj[[2]]}
-  }
-  if (choice == 'Uncertainity') {
-    proj = enms[[1]]@incert
-    for (i in 2:length(enms)) {proj = proj + enms[[i]]@incert}
-  }
-  plot(proj, main = choice)
-  return(proj)
+         representation(name = 'character', proj = 'RasterStack', eval = 'data.frame', data = 'data.frame', incert = 'RasterLayer', algo.eval = 'data.frame', algo.corr = 'data.frame', axes.contrib = 'data.frame'), 
+         prototype(name = character(), proj = stack(raster()), eval= data.frame(), data = data.frame(), incert = raster(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame()))
+ENM <- function(name = character(), proj = stack(raster()), incert = raster(), eval = data.frame(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame(), data = data.frame()) {
+  return(new('ENM', name = name, proj = proj, incert = incert, eval = eval, data = data,  algo.eval = algo.eval, algo.corr = algo.corr, axes.contrib = axes.contrib))
 }
 
 # 1 - Occurences treatment #
@@ -181,10 +97,11 @@ points.in.categories = function(Env, nb = 1000) {
   return(points)
 }
 
-data.format = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
+data.prep = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
   cat('Data preparation \n')
   
   # Mask defining
+  cat('   mask defining')
   border = readOGR(dsn = 'bord', layer = 'bord', verbose = F)
   border = crop(border, extent(Env))
   if (PA.strat == 'random') {
@@ -208,17 +125,16 @@ data.format = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.d
   }
   
   # Pseudo-Absences selection
-  cat('Pseudo-absences selection \n')
-  PA = as.data.frame(cbind(Occurences$Latitude, Occurences$Longitude))
-  names(PA) = c('x','y')
-  points = points.in.categories(Env)
-  PA = rbind(PA, points)
-  l = length(PA$x)
-  cat('   pseudo-absences selected : \n')
+  cat('   pseudo-absences selection : \n')
+  data = as.data.frame(cbind(Occurences$Latitude, Occurences$Longitude))
+  names(data) = c('x','y')
+  PAcat = points.in.categories(Env) # Selection of one PA by each category
+  data = rbind(data, PAcat)
+  l = length(data$x)
   for (i in 1:PA.rep) {
-    PAi = data.frame(matrix(nrow = 0, ncol = 2))
-    names(PAi) = c('x','y')
-    while (length(PAi[,1]) < PA.nb) {
+    PA = data.frame(matrix(nrow = 0, ncol = 2))
+    names(PA) = c('x','y')
+    while (length(PA[,1]) < PA.nb) {
       x = runif(PA.nb*10, min = bbox(border)[1,1], max = bbox(border)[1,2])
       y = runif(PA.nb*10, min = bbox(border)[2,1],max = bbox(border)[2,2])
       points = data.frame(X = x, Y = y)
@@ -232,23 +148,39 @@ data.format = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.d
         x = x[-which(is.na(check))]
         y = y[-which(is.na(check))]
       }
-      PAi = rbind(PAi, data.frame(x,y))
-      cat((length(PAi[,1])+PA.nb*i),' ')
+      PA = rbind(PA, data.frame(x,y))
+      cat((length(PA[,1])+PA.nb*i),' ')
     }
-    PAi = PAi[1:PA.nb,]
-    PA = rbind(PA, PAi)
+    PA = PA[1:PA.nb,]
+    data = rbind(data, PA)
   }
-  PA$Presence = 0
-  PA$Presence[1:length(Occurences$Longitude)] = 1
+  
+  # Table creation
+  cat('   table creation \n')
+  data$Presence = 0
+  data$Presence[1:length(Occurences$Longitude)] = 1
   for (i in 1:PA.rep) {
-    PA$Run = F
-    PA$Run[1:l] = T
+    data$Run = F
+    data$Run[1:l] = T
     init = length(Occurences$Longitude) + (i-1)*PA.nb
-    PA$Run[init:(init+PA.nb)] = T
-    names(PA)[length(PA)] = paste0('Run',i)
+    data$Run[init:(init+PA.nb)] = T
+    names(data)[length(data)] = paste0('Run',i)
   }
+  
+  # Values extraction
+  cat('   values extraction \n')
+  data = cbind(data, extract(Env, cbind(data$x, data$y)))
+  
+  # Categorical variables as factor
+  for (i in 1:length(Env@layers)) {
+    if(Env[[i]]@data@isfactor) {
+      col = which(names(data) == Env[[i]]@data@names)
+      data[,col] = as.factor(data[,col])
+    }
+  }
+  
   cat('done \n\n')
-  return(PA)
+  return(data)
 }
 
 
@@ -268,18 +200,6 @@ Modelling = function (Occurences, Env,
   
   # Parameterization
   if(models == 'all') {models = c('GLM','GAM','MAXENT','ANN','CTA','GBM','RF','FDA','MARS')} # 'FDA' et 'MARS' en débugage, 'SVM' en rajout
-  
-  Options = BIOMOD_ModelingOptions(
-    GLM = list(myFormula = NULL, test = test, control = glm.control(epsilon = epsilon, maxit = maxit, trace = FALSE)),
-    GAM = list(algo = 'GAM_mgcv', myFormula = NULL, control = gam.control(epsilon = epsilon, maxit = maxit, trace = FALSE)),
-    MAXENT = list(maximumiterations = maxit, linear = TRUE, quadratic = TRUE, product = TRUE, threshold = TRUE, hinge = TRUE, lq2lqptthreshold = 80, l2lqthreshold = 10, hingethreshold = 15, defaultprevalence = 0.5),
-    ANN = list(NbCV = cv, size = NULL, decay = NULL, rang = 0.1, maxit = maxit),
-    MARS = list(degree = 2, nk = NULL, penalty = 2, thresh = thresh.shrink, prune = TRUE),
-    FDA = list(methods = 'mars'),
-    CTA = list(method = 'class', parms = 'default', cost = NULL, control = rpart.control(minbucket = final.leave, xval = cv)),
-    GBM = list(distribution = 'bernoulli', n.trees = trees, interaction.depth = 7, n.minobsinnode = final.leave, shrinkage = thresh.shrink, bag.fraction = 0.5, train.fraction = 1, cv.folds = cv, perf.method = 'cv'),
-    RF = list(do.classif = TRUE, ntree = trees, mtry = 'default', nodesize = final.leave, maxnodes = NULL)
-  )
   
   # Initalization
   models.out = list() #Results list
@@ -353,16 +273,17 @@ Modelling = function (Occurences, Env,
       PA.strat = '2nd'
       PA.dist = 2
     }
-    PA = PA(PA.rep, PA.nb, Occurences = Occurences, Env = Env, PA.strat = PA.strat, PA.dist = PA.dist)
     
-    # Check PAs and sectors
-    plot(Env[[2]], main = 'Occurences and Pseudo-absences')
-    points(PA$x, PA$y, pch = 16, col = as.factor(PA$Presence), cex = 0.5)
-    
+    # Data preparation
     cat('       formating data \n')
-    data = BIOMOD_FormatingData(resp.var = PA$Presence, resp.xy = cbind(PA$x, PA$y), expl.var = Env, resp.name = paste("ID",sp), PA.strategy = 'user.defined', PA.table = PA[4:length(PA)])
+    data = data.prep(PA.rep, PA.nb, Occurences = Occurences, Env = Env, PA.strat = PA.strat, PA.dist = PA.dist)
+    # Check PAs and sectors
+    plot(Env[[1]], main = 'Occurences and Pseudo-absences')
+    points(data$x, data$y, pch = 16, col = as.factor(PA$Presence), cex = 0.5)
+    
+    # Modeling
     cat('       modeling \n')
-    model = try(BIOMOD_Modeling(data, models = models[i], models.options = Options, DataSplit = split, VarImport = 1, models.eval.meth = "ROC", rescal.all.models = TRUE, do.full.models = FALSE))
+    model = modeling()
     if(!inherits(model,"try-error")) {
       models.out[[i]] = list(sp, models[i], data, model)
     } else {
@@ -717,78 +638,4 @@ sp.loop = function(Occurences, Env,
   if(log) {sink()}
   return(enm.list)
 }
-
-#### Data loading ####
-OpenEnv <- function(EnvNames) {
-  # Open environement variables
-  Env = stack()
-  for (i in 1:length(EnvNames)){
-    Raster = raster(paste0(EnvNames[i],".tif"))
-    Raster = reclassify(Raster, c(-Inf,-900,NA))
-    names(Raster) = EnvNames[i]
-    
-    Env = stack(Raster,Env)
-  }
-  return(Env)
-}
-LoadOcc <- function(Reduc = F) {
-  setwd("/home/amap/Documents/Données/")
-  Occurences = read.csv2(file = "ZYGOGYNUM_DATASET/OCCURENCES/occurences.csv", dec = ".")  # Occ = occurences
-  Occurences$SpeciesID = as.factor(Occurences$SpeciesID)
-  if(Reduc) {
-    # Reducing to one specie for testing purposes
-    Occurences = subset(Occurences,Occurences$Taxon == 'Zygogynum pancheri (Baill.) Vink')
-    Occurences = droplevels(Occurences)
-  }
-  return(Occurences)
-}
-LoadEnv <- function(Reduc = F, Extent = extent(165.8179 , 167.3069 , -22.33978, -21.57512), Cat = T) {
-  setwd("/home/amap/Documents/Données/ZYGOGYNUM_DATASET/VARIABLES_ENVIRONNEMENTALES")
-  EnvNames = c("alizes","altitude","cti","ensoleillement","pente","routes","secteurs","substrat")
-  if (Cat == F) {EnvNames = c("alizes","altitude","cti","ensoleillement","pente","routes")}
-  Env = OpenEnv(EnvNames)
-  if(Reduc) {
-    # Decreasing resolution for testing purposes
-    Env = crop(Env, extent(165.8179 , 167.3069 , -22.33978, -21.57512))
-    Env = stack(Env)
-  }
-  if (Cat) {
-    Env[[1]] = reclassify(Env[[1]], c(3,Inf,NA))
-    names(Env[[1]]) = 'substrat'
-    Env[[2]] = reclassify(Env[[2]], c(-Inf,0.5,NA))
-    names(Env[[2]]) = 'secteur'
-    Env[[1]] = as.factor(Env[[1]])
-    Env[[2]] = as.factor(Env[[2]])
-  }
-  return(Env)
-}
-
-#### Main ####
-# Available algorithms :
-# Working algorithms'GLM','GAM','MAXENT','ANN','CTA','GBM','RF', 'FDA', 'MARS
-Env = LoadEnv()
-Env = TreatVar(Env)
-Occurences = LoadOcc(Reduc = T)
-setwd("/home/amap/Documents/R/Essai4_Zygogynum")
-
-enm.list = sp.loop(Occurences, Env, models = 'MARS', PA = 'Min1', save = F, Norm = F, log = F)
-proba.map(zoom = T)
-proba.map(niche = T)
-varimp()
-
-# Mars.test.fact::earth ----
-library(earth)
-Occ = TreatOcc(Occurences)
-Occ = Resample(Occ, Env)
-point = PA(1,100,Occ,Env)
-val = extract(Env, point[1:2], df = T)
-nas = which(is.na(val$substrat))
-val = val[-nas,]
-val = val[-1]
-val$substrat = as.factor(val$substrat)
-val$secteur = as.factor(val$secteur)
-point = point[-nas,]
-val$presence = point$Presence
-m = earth(presence ~ ., data = val)
-predict(m, val)
 
