@@ -4,7 +4,6 @@ library(raster)
 library(sp)
 library(rgdal)
 library(spThin)
-library(biomod2)
 library(rpart)
 library(rgdal)
 library(mgcv)
@@ -152,7 +151,8 @@ Resample = function(Occurences, Env, GeoRes = T, reso = max(res(Env@layers[[1]])
 }
 
 # 4 - Modelling #
-# Pseudo-absences #
+
+# Pseudo-absences and data preparation #
 points.in.categories = function(Env, nb = 1000) {
   points = data.frame(matrix(nrow = 0, ncol = 2))
   names(points) = c('X', 'Y')
@@ -180,8 +180,11 @@ points.in.categories = function(Env, nb = 1000) {
   }
   return(points)
 }
-PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
-  cat('Pseudo-absences selection \n')
+
+data.format = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
+  cat('Data preparation \n')
+  
+  # Mask defining
   border = readOGR(dsn = 'bord', layer = 'bord', verbose = F)
   border = crop(border, extent(Env))
   if (PA.strat == 'random') {
@@ -203,6 +206,9 @@ PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NUL
     sl= SpatialPolygons(list(Polygons(circles, 'Circles')))
     border = gIntersection(sl, border)
   }
+  
+  # Pseudo-Absences selection
+  cat('Pseudo-absences selection \n')
   PA = as.data.frame(cbind(Occurences$Latitude, Occurences$Longitude))
   names(PA) = c('x','y')
   points = points.in.categories(Env)
@@ -244,6 +250,9 @@ PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NUL
   cat('done \n\n')
   return(PA)
 }
+
+
+# Modeling #
 Modelling = function (Occurences, Env, 
                       models = c('all'),
                       PA = 'Adapt', # Adapt, Min1, Min2, 10M, 10, Disk1
