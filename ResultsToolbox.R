@@ -1,4 +1,4 @@
-#### Results Toolbox ####
+### Results plotting toolbox ####
 
 proba.map = function(list = enm.list, Occ = Occurences, nb = 1, niche = F, zoom = F) {
   i = 1
@@ -31,7 +31,7 @@ varimp = function(list = enm.list, nb = 1) {
 }
 
 algo.perf = function(list = enm.list, nb = 1, metric = 'AUC') {
-  # Available metrics : AUC, omission.rate, sensitivity, specificity, prop.correct, Kappa
+  # Avalaible metrics : AUC, omission.rate, sensitivity, specificity, prop.correct, Kappa
   i = which(names(list[[nb]]@algo.eval) == metric)
   barplot(as.matrix(list[[nb]]@algo.eval[i]), 
           names.arg = names(list[[nb]]@algo.corr), 

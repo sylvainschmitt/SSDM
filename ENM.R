@@ -1,12 +1,12 @@
-#### ENM Class ####
+#### ENM class #### ----
 setClass('ENM', 
-         representation(proj = 'RasterStack', eval = 'data.frame', data = 'data.frame', incert = 'RasterLayer', algo.eval = 'data.frame', algo.corr = 'data.frame', axes.contrib = 'data.frame'), 
-         prototype(proj = stack(raster()), eval= data.frame(), data = data.frame(), incert = raster(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame()))
-ENM <- function(proj = stack(raster()), incert = raster(), eval = data.frame(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame(), data = data.frame()) {
-  return(new('ENM', proj = proj, incert = incert, eval = eval, data = data,  algo.eval = algo.eval, algo.corr = algo.corr, axes.contrib = axes.contrib))
+         representation(name = 'character', proj = 'RasterStack', eval = 'data.frame', data = 'data.frame', incert = 'RasterLayer', algo.eval = 'data.frame', algo.corr = 'data.frame', axes.contrib = 'data.frame'), 
+         prototype(name = character(), proj = stack(raster()), eval= data.frame(), data = data.frame(), incert = raster(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame()))
+ENM <- function(name = character(), proj = stack(raster()), incert = raster(), eval = data.frame(), algo.eval = data.frame(), algo.corr = data.frame(), axes.contrib = data.frame(), data = data.frame()) {
+  return(new('ENM', name = name, proj = proj, incert = incert, eval = eval, data = data,  algo.eval = algo.eval, algo.corr = algo.corr, axes.contrib = axes.contrib))
 }
 
-#### Main Loop ####
+#### Main loop ####
 
 # 1 - Occurences treatment # ----
 TreatOcc <- function(Occurences, 
@@ -62,6 +62,7 @@ TreatVar <- function (Env, Reso.adapt = T, Norm = T) {
 Resample = function(Occurences, Env, GeoRes = T, reso = max(res(Env@layers[[1]]))) {
   if (GeoRes) {
     cat('Geographical resampling \n\n')
+    require(spThin)
     Occ_resamp = thin(Occurences, lat.col = "X", long.col = "Y", spec.col = "Sp", thin.par = reso, reps = 1, locs.thinned.list.return = T, write.files = F, write.log.file = F, verbose = F)[[1]]
     Occ_resamp$Sp = Occurences$Sp[1]
   }
@@ -69,7 +70,8 @@ Resample = function(Occurences, Env, GeoRes = T, reso = max(res(Env@layers[[1]])
 }
 
 # 4 - Modelling # ----
-# Pseudo-absences #
+
+# Pseudo-absences and data preparation #
 points.in.categories = function(Env, nb = 1000) {
   points = data.frame(matrix(nrow = 0, ncol = 2))
   names(points) = c('X', 'Y')
@@ -97,8 +99,13 @@ points.in.categories = function(Env, nb = 1000) {
   }
   return(points)
 }
-PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
-  cat('Pseudo-absences selection \n')
+
+data.prep = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NULL) {
+  cat('Data preparation \n')
+  
+  # Mask defining
+  cat('   mask defining')
+  require(rgdal)
   border = readOGR(dsn = 'bord', layer = 'bord', verbose = F)
   border = crop(border, extent(Env))
   if (PA.strat == 'random') {
@@ -120,16 +127,18 @@ PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NUL
     sl= SpatialPolygons(list(Polygons(circles, 'Circles')))
     border = gIntersection(sl, border)
   }
-  PA = as.data.frame(cbind(Occurences$Latitude, Occurences$Longitude))
-  names(PA) = c('x','y')
-  points = points.in.categories(Env)
-  PA = rbind(PA, points)
-  l = length(PA$x)
-  cat('   pseudo-absences selected : \n')
+  
+  # Pseudo-Absences selection
+  cat('   pseudo-absences selection : \n')
+  data = as.data.frame(cbind(Occurences$Latitude, Occurences$Longitude))
+  names(data) = c('x','y')
+  PAcat = points.in.categories(Env) # Selection of one PA by each category
+  data = rbind(data, PAcat)
+  l = length(data$x)
   for (i in 1:PA.rep) {
-    PAi = data.frame(matrix(nrow = 0, ncol = 2))
-    names(PAi) = c('x','y')
-    while (length(PAi[,1]) < PA.nb) {
+    PA = data.frame(matrix(nrow = 0, ncol = 2))
+    names(PA) = c('x','y')
+    while (length(PA[,1]) < PA.nb) {
       x = runif(PA.nb*10, min = bbox(border)[1,1], max = bbox(border)[1,2])
       y = runif(PA.nb*10, min = bbox(border)[2,1],max = bbox(border)[2,2])
       points = data.frame(X = x, Y = y)
@@ -143,24 +152,46 @@ PA = function(PA.rep, PA.nb, Occurences, Env, PA.strat = 'random', PA.dist = NUL
         x = x[-which(is.na(check))]
         y = y[-which(is.na(check))]
       }
-      PAi = rbind(PAi, data.frame(x,y))
-      cat((length(PAi[,1])+PA.nb*i),' ')
+      PA = rbind(PA, data.frame(x,y))
+      cat((length(PA[,1])+PA.nb*i),' ')
     }
-    PAi = PAi[1:PA.nb,]
-    PA = rbind(PA, PAi)
+    PA = PA[1:PA.nb,]
+    data = rbind(data, PA)
   }
-  PA$Presence = 0
-  PA$Presence[1:length(Occurences$Longitude)] = 1
+  
+  # Table creation
+  cat('   table creation \n')
+  data$Presence = 0
+  data$Presence[1:length(Occurences$Longitude)] = 1
   for (i in 1:PA.rep) {
-    PA$Run = F
-    PA$Run[1:l] = T
+    data$Run = F
+    data$Run[1:l] = T
     init = length(Occurences$Longitude) + (i-1)*PA.nb
-    PA$Run[init:(init+PA.nb)] = T
-    names(PA)[length(PA)] = paste0('Run',i)
+    data$Run[init:(init+PA.nb)] = T
+    names(data)[length(data)] = paste0('Run',i)
   }
+  
+  # Values extraction
+  cat('   values extraction \n')
+  data = cbind(data, extract(Env, cbind(data$x, data$y)))
+  
+  # Categorical variables as factor
+  for (i in 1:length(Env@layers)) {
+    if(Env[[i]]@data@isfactor) {
+      col = which(names(data) == Env[[i]]@data@names)
+      data[,col] = as.factor(data[,col])
+    }
+  }
+  
+  # NA removing
+  cat('   NA removing \n')
+  data = data[-which(is.na(data[length(data)])),]
+  
   cat('done \n\n')
-  return(PA)
+  return(data)
 }
+
+# Modeling #
 Modelling = function (Occurences, Env, 
                       models = c('all'),
                       PA = 'Adapt', # Adapt, Min1, Min2, 10M, 10, Disk1
@@ -176,18 +207,6 @@ Modelling = function (Occurences, Env,
   
   # Parameterization
   if(models == 'all') {models = c('GLM','GAM','MAXENT','ANN','CTA','GBM','RF','FDA','MARS')} # 'FDA' et 'MARS' en débugage, 'SVM' en rajout
-  
-  Options = BIOMOD_ModelingOptions(
-    GLM = list(myFormula = NULL, test = test, control = glm.control(epsilon = epsilon, maxit = maxit, trace = FALSE)),
-    GAM = list(algo = 'GAM_mgcv', myFormula = NULL, control = gam.control(epsilon = epsilon, maxit = maxit, trace = FALSE)),
-    MAXENT = list(maximumiterations = maxit, linear = TRUE, quadratic = TRUE, product = TRUE, threshold = TRUE, hinge = TRUE, lq2lqptthreshold = 80, l2lqthreshold = 10, hingethreshold = 15, defaultprevalence = 0.5),
-    ANN = list(NbCV = cv, size = NULL, decay = NULL, rang = 0.1, maxit = maxit),
-    MARS = list(degree = 2, nk = NULL, penalty = 2, thresh = thresh.shrink, prune = TRUE),
-    FDA = list(methods = 'mars'),
-    CTA = list(method = 'class', parms = 'default', cost = NULL, control = rpart.control(minbucket = final.leave, xval = cv)),
-    GBM = list(distribution = 'bernoulli', n.trees = trees, interaction.depth = 7, n.minobsinnode = final.leave, shrinkage = thresh.shrink, bag.fraction = 0.5, train.fraction = 1, cv.folds = cv, perf.method = 'cv'),
-    RF = list(do.classif = TRUE, ntree = trees, mtry = 'default', nodesize = final.leave, maxnodes = NULL)
-  )
   
   # Initalization
   models.out = list() #Results list
@@ -261,16 +280,17 @@ Modelling = function (Occurences, Env,
       PA.strat = '2nd'
       PA.dist = 2
     }
-    PA = PA(PA.rep, PA.nb, Occurences = Occurences, Env = Env, PA.strat = PA.strat, PA.dist = PA.dist)
     
-    # Check PAs and sectors
-    plot(Env[[2]], main = 'Occurences and Pseudo-absences')
-    points(PA$x, PA$y, pch = 16, col = as.factor(PA$Presence), cex = 0.5)
-    
+    # Data preparation
     cat('       formating data \n')
-    data = BIOMOD_FormatingData(resp.var = PA$Presence, resp.xy = cbind(PA$x, PA$y), expl.var = Env, resp.name = paste("ID",sp), PA.strategy = 'user.defined', PA.table = PA[4:length(PA)])
+    data = data.prep(PA.rep, PA.nb, Occurences = Occurences, Env = Env, PA.strat = PA.strat, PA.dist = PA.dist)
+    # Check PAs and sectors
+    plot(Env[[1]], main = 'Occurences and Pseudo-absences')
+    points(data$x, data$y, pch = 16, col = as.factor(data$Presence), cex = 0.5)
+    
+    # Modeling
     cat('       modeling \n')
-    model = try(BIOMOD_Modeling(data, models = models[i], models.options = Options, DataSplit = split, VarImport = 1, models.eval.meth = "ROC", rescal.all.models = TRUE, do.full.models = FALSE))
+    model = modeling()
     if(!inherits(model,"try-error")) {
       models.out[[i]] = list(sp, models[i], data, model)
     } else {
@@ -504,7 +524,7 @@ ENMproj <- function(Models, thresh = 1001) {
   return(enm)
 }
 
-# 8 - Saving # -----
+# 8 - Saving # ----
 save.enm = function(enm, directory = as.character(getwd()),
                     # Objects to save
                     Probabilities = T,
@@ -625,3 +645,4 @@ sp.loop = function(Occurences, Env,
   if(log) {sink()}
   return(enm.list)
 }
+

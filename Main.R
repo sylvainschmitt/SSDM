@@ -1,19 +1,4 @@
-#### Libraries ####
-library(raster)
-library(sp)
-library(rgdal)
-library(spThin)
-library(biomod2)
-library(rpart)
-library(rgdal)
-library(mgcv)
-library(SDMTools)
-library(e1071)
-library(plotrix)
-library(rgeos)
-library(snowfall)
-
-#### Data loading ####
+#### Data loading #### ----
 OpenEnv <- function(EnvNames) {
   # Open environement variables
   Env = stack()
@@ -32,8 +17,7 @@ LoadOcc <- function(Reduc = F) {
   Occurences$SpeciesID = as.factor(Occurences$SpeciesID)
   if(Reduc) {
     # Reducing to one specie for testing purposes
-    Occurences = subset(Occurences,Occurences$SpeciesID == '6318')
-    # Occurences = subset(Occurences,Occurences$Taxon == 'Zygogynum pancheri (Baill.) Vink')
+    Occurences = subset(Occurences,Occurences$Taxon == 'Zygogynum pancheri (Baill.) Vink')
     Occurences = droplevels(Occurences)
   }
   return(Occurences)
@@ -54,21 +38,25 @@ LoadEnv <- function(Reduc = F, Extent = extent(165.8179 , 167.3069 , -22.33978, 
     Env[[2]] = reclassify(Env[[2]], c(-Inf,0.5,NA))
     names(Env[[2]]) = 'secteur'
     Env[[1]] = as.factor(Env[[1]])
-    Env[[1]]@data@attributes[[1]]$ID = labels(Env[[1]]@data@attributes[[1]])[[1]]
     Env[[2]] = as.factor(Env[[2]])
   }
   return(Env)
 }
 
-#### Main ####
+#### Main #### ----
 # Available algorithms :
 # Working algorithms'GLM','GAM','MAXENT','ANN','CTA','GBM','RF', 'FDA', 'MARS
 Env = LoadEnv()
 Env = TreatVar(Env)
 Occurences = LoadOcc(Reduc = T)
-setwd("/home/amap/Documents/R/Essai5")
+setwd("/home/amap/Documents/R/Sans Biomod/")
 
-enm.list = sp.loop(Occurences, Env, models = 'GAM', PA = 'Min1', save = F, Norm = F, log = F)
-proba.map(zoom = T)
-proba.map(niche = T)
-varimp()
+data = data.prep(1, 100, Occurences, Env)
+
+i = 1
+Run = data[grep(paste0('Run',i), names(data))] # selecting the run
+data.algo = data[which(Run == T),] # taking data for the algorithms
+data.algo = data.algo[-grep('Run', names(data.algo))]
+
+algo = algorithm.modeling(data.algo, Env, 'GBM')
+plot(algo@proj)
