@@ -1,4 +1,4 @@
-#### Data loading ####
+#### Data loading #### ----
 OpenEnv <- function(EnvNames) {
   # Open environement variables
   Env = stack()
@@ -42,16 +42,56 @@ LoadEnv <- function(Reduc = F, Extent = extent(165.8179 , 167.3069 , -22.33978, 
   }
   return(Env)
 }
+TreatVar <- function (Env, Reso.adapt = T, Norm = T) {
+  cat('Variables treatment \n')
+  
+  # Resolution
+  if(Reso.adapt) {
+    cat('   resolution adaptation \n')
+    reso = max(res(Env@layers[[1]]))
+    # Coarser resolution measurement
+    for (i in 1:length(Env@layers)){
+      reso = max((res(Env@layers[[i]])),reso)
+    }
+    # Refine all stack resolution
+    res(Env) = reso
+  }
+  
+  # Normalizing variables
+  if (Norm) {
+    cat('   normalizing continuous variables \n\n')
+    for (i in 1:length(Env@layers)) {
+      #For not categorical variables
+      if (!Env[[i]]@data@isfactor) { 
+        Env[[i]] = Env[[i]]/Env[[i]]@data@max
+      }
+    }
+  }
+  
+  return(Env)
+}
 
-#### Main ####
+#### Main #### ----
 # Available algorithms :
 # Working algorithms'GLM','GAM','MAXENT','ANN','CTA','GBM','RF', 'FDA', 'MARS
 Env = LoadEnv()
-Env = TreatVar(Env)
 Occurences = LoadOcc(Reduc = T)
-setwd("/home/amap/Documents/R/Sans Biomod/")
+Env = TreatVar(Env)
+setwd("/home/amap/Documents/R/Sans Biomod 2/")
 
-enm.list = sp.loop(Occurences, Env, models = 'MARS', PA = 'Min1', save = F, Norm = F, log = F)
-proba.map(zoom = T)
-proba.map(niche = T)
-varimp()
+model1 = Modelling('GLM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model2 = Modelling('GAM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model3 = Modelling('MARS', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model4 = Modelling('CTA', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model5 = Modelling('GBM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model6 = Modelling('RF', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model7 = Modelling('MAXENT', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model8 = Modelling('ANN', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model9 = Modelling('SVM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+
+obj = Algorithm.Niche.Model('CTA', data = data.frame(X = Occurences$Longitude, Y = Occurences$Latitude))
+obj@data$Presence = 1
+obj = PA.select(obj, Env)
+obj = data.values(obj, Env)
+obj = project(obj, Env)
+obj = evaluate(obj)

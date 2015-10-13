@@ -1,0 +1,552 @@
+##### Libraries ##### ----
+library(raster)
+library(methods)
+library(SDMTools)
+library(mgcv)
+library(earth)
+library(rpart)
+library(gbm)
+library(randomForest)
+library(dismo)
+library(nnet)
+library(e1071)
+
+##### New generics ##### ----
+setGeneric('evaluate', function(obj, thresh = 1001) {return(standardGeneric('evaluate'))})
+setGeneric('get_PA', function(obj) {return(standardGeneric('get_PA'))})
+setGeneric('PA.select', function(obj, Env, ...) {return(standardGeneric('PA.select'))})
+setGeneric('data.values', function(obj, Env) {return(standardGeneric('data.values'))})
+setGeneric('get_model', function(obj, ...) {return(standardGeneric('get_model'))})
+setGeneric('project', function(obj, Env, ...) {return(standardGeneric('project'))})
+setGeneric('evaluate.axes', function(obj, thresh = 1001, ...) {return(standardGeneric('evaluate.axes'))})
+setGeneric('assemble', function(x,  ..., thresh = 1001) {return(standardGeneric('assemble'))})
+
+##### Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('Niche.Model',
+         representation(name = 'character', 
+                        projection = 'RasterStack', 
+                        evaluation = 'data.frame', 
+                        variables.importance = 'data.frame',
+                        data = 'data.frame',
+                        parameters = 'list'),
+         prototype(name = character(), 
+                   projection = stack(), 
+                   evaluation = data.frame(), 
+                   variables.importance = data.frame(),
+                   data = data.frame(),
+                   parameters = list()))
+
+# 2 - Methods definition #
+setMethod("evaluate", "Niche.Model", function(obj, thresh = 1001) {
+            predicted.values = extract(obj@projection[[1]], obj@data[c('X','Y')])
+            threshold = optim.thresh(obj@data$Presence, predicted.values, thresh)
+            threshold = mean(threshold$`max.sensitivity+specificity`)
+            obj@evaluation = accuracy(obj@data$Presence, predicted.values, threshold)
+            row.names(obj@evaluation) = "Evaluation"
+            return(obj)})
+
+setMethod('print', 'Niche.Model', function(x, ...) {
+  cat('Object of class :', class(x)[1],'\n')
+  cat('Name :', x@name, '\n')
+  cat('Projections : ',names(x@projection),'\n')
+  print(x@evaluation[2:7])
+  print(x@variables.importance)
+})
+
+setMethod('plot', 'Niche.Model', function(x, y = 'AUC', ...) {
+  plot(x@projection[[1]], main = paste0('Probability map for ',x@name), sub = paste0('AUC : ',x@evaluation[y][1,1]))
+})
+
+setMethod('barplot', 'Niche.Model', function(height, ...) {
+  barplot(as.data.frame(t(height@variables.importance))$Axes.evaluation, main = 'Variables importance', names.arg = names(height@variables.importance), las = 2)
+})
+
+##### Algorithm Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('Algorithm.Niche.Model',
+         contains = 'Niche.Model')
+
+# 2 - Class creation function #
+Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
+                                  name = character(), 
+                                  projection = stack(), 
+                                  evaluation = data.frame(), 
+                                  variables.importance = data.frame(),
+                                  data = data.frame(),
+                                  parameters = list()) {
+  object.class = paste0(algorithm,'.Niche.Model')
+  return(new(object.class, name = name, projection = projection, evaluation = evaluation, variables.importance = variables.importance, data = data, parameters = list()))
+}
+
+# 3 - Methods definition #
+setMethod('get_PA', "Algorithm.Niche.Model", function(obj) {return(obj)})
+
+setMethod('PA.select', "Algorithm.Niche.Model", function(obj, Env, PA = NULL) {
+  if (is.null(PA)) {PA = get_PA(obj)}
+  
+  # Mask defining
+  if (PA$strat == '2nd') {
+    cat('   second far selection \n')
+    circles = list()
+    for (i in 1:length(obj@data$X)) {
+      x = obj@data$X[i]
+      y = obj@data$Y[i]
+      pts = seq(0, 2 * pi, length.out = 100)
+      xy = cbind(x + 2/60 * sin(pts), y + 2/60 * cos(pts))
+      circle = Polygon(xy)
+      circles[i] = circle
+    }
+    sc= SpatialPolygons(list(Polygons(circles, 'Circles')))
+    Mask = mask(Env[[1]], sc)
+  } else {
+    cat('   random selection \n')
+    Mask = Env[[1]]}
+  
+  # Pseudo-Absences selection
+  data.PA = data.frame(matrix(nrow = 0, ncol = 2))
+  names(data.PA) = c('X','Y')
+  if(PA$nb < 100) {nb = PA$nb*PA$nb} else {nb = 1000}
+  while (length(data.PA[,1]) < PA$nb) {
+    X = runif(nb, min = bbox(Mask)[1,1], max = bbox(Mask)[1,2])
+    Y = runif(nb, min = bbox(Mask)[2,1],max = bbox(Mask)[2,2])
+    points = data.frame(X = X, Y = Y)
+    check = extract(Mask, points)
+    points = points[-which(is.na(check)),]
+    data.PA = rbind(data.PA, points)
+  }
+  data.PA = data.PA[1:PA$nb,]
+  data.PA$Presence = 0
+  obj@data = rbind(obj@data, data.PA)
+  
+  return(obj)})
+
+setMethod('data.values', "Algorithm.Niche.Model", function(obj, Env) {
+  values = data.frame(extract(Env, cbind(obj@data$X, obj@data$Y)))
+  
+  # Categorical variables as factor
+  for (i in 1:length(Env@layers)) {
+    if(Env[[i]]@data@isfactor) {
+      col = which(names(values) == Env[[i]]@data@names)
+      values[,col] = as.factor(values[,col])
+      levels(values[,col]) = Env[[i]]@data@attributes[[1]]$ID
+    }
+  }
+  
+  # Tables binding
+  obj@data = cbind(obj@data, values)
+
+  return(obj)})
+
+setMethod('get_model', "Algorithm.Niche.Model", function(obj, ....) {return(obj)})
+
+setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
+  model = get_model(obj, ...)
+  proj = predict(Env, model)
+  # Rescaling projection
+  proj = reclassify(proj, c(-Inf,0,0))
+  proj = proj / proj@data@max
+  names(proj) = "Projection"
+  obj@projection = stack(proj)
+  return(obj)})
+
+setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, ...) {
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  for (i in 4:length(obj@data)) {
+    obj.axes = obj
+    obj.axes@data = obj.axes@data[-i]
+    model = get_model(obj.axes,...)
+    predicted.values = predict(model, obj.axes@data)
+    threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
+    threshold = mean(threshold$`max.sensitivity+specificity`)
+    evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
+    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+  }
+  obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  row.names(obj@variables.importance) = "Axes.evaluation"
+  return(obj)})
+
+setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, na.rm = F, format = T) {
+  models = list(x, ...)
+  if(format) {for(i in 1:length(models)) {if(!inherits(models[[i]], class(x)[[1]])) {stop('You can only sum models from the same algorithm')}}}
+  smodel =  new(class(x)[[1]], 
+                projection = stack(reclassify(x@projection[[1]], c(-Inf,Inf,0))),
+                data = x@data[1,],
+                variables.importance = x@variables.importance)
+  smodel@data = smodel@data[-1,]
+  smodel@variables.importance[1,] = 0
+  
+  # Name
+  if (!is.null(name)) {name = paste0(name,'.')}
+  smodel@name = paste0(name,class(x)[[1]],'.sum')
+  
+  # Datas, Projections, and Variables importance fusion
+  sAUC = 0
+  for (i in 1:length(models)) {
+    if (models[[i]]@evaluation$AUC > AUCthresh) {
+      smodel@projection[[1]] = smodel@projection[[1]] + models[[i]]@projection[[1]]*models[[i]]@evaluation$AUC
+      smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance*models[[i]]@evaluation$AUC
+      smodel@data = rbind(smodel@data, models[[i]]@data)
+      sAUC = sAUC + models[[i]]@evaluation$AUC
+    }
+  }
+  smodel@projection[[1]] = smodel@projection[[1]] / sAUC
+  smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100
+
+  # Parameters
+  smodel@parameters = x@parameters
+  
+  # Evaluation
+  smodel = evaluate(smodel, thresh = 1001)
+})
+
+setMethod('assemble', Algorithm.Niche.Model, function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001) {
+  amodel = sum(x, ..., AUCthresh = 0, thresh, format = F)
+  models = list(x, ...)
+  
+  # Name
+  if (!is.null(name)) {name = paste0(name,'.')}
+  amodel@name = paste0(name,'Algorithm.Assembly')
+  
+  # Evaluation
+  amodel = evaluate(amodel, Env)
+  
+  # Projections stack
+  projections = stack()
+  for (i in length(models)) {projections = stack(projections, models[[i]]@projection[[1]])}
+  
+  # Algorithms Correlation
+  amodel@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
+  
+  # Uncertainity map
+  amodel@uncertainity = calc(Proj, var)
+  names(amodel@incert) = 'Uncertainity map'
+  
+  # Algorithms Evaluation
+  amodel@algoritm.evaluation = x@evaluation
+  for (i in 2:length(models)) {amodel@algorithm.evaluation = rbind(amodel@algorithm.evaluation, models[[i]]@evaluation)}
+  
+  return(amodel)
+})
+
+##### GLM Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('GLM.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "GLM.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = 1000
+            PA['strat'] = 'random'
+            return(PA)})
+
+setMethod('get_model', "GLM.Niche.Model", 
+          function(obj, test = 'AIC', epsilon = 1e-08, maxit = 500) {
+            model = glm(Presence ~ ., 
+                        data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))], 
+                        test = test, control = glm.control(epsilon = epsilon, maxit = maxit))
+            return(model)})
+
+##### GAM Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('GAM.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "GAM.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = 1000
+            PA['strat'] = 'random'
+            return(PA)})
+
+setMethod('get_model', "GAM.Niche.Model", 
+          function(obj, test = 'AIC', epsilon = 1e-08, maxit = 500) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            formula = "Presence ~"
+            for (i in 2:length(data)) {
+              var = names(data[i])
+              if (i != 2) {formula = paste(formula,'+',var)} else {formula = paste(formula,var)}
+              if (!is.factor(data[,i])) {formula = paste0(formula,' + s(',var,')')}
+            }
+            model = gam(formula(formula), data = data, test = test, control = gam.control(epsilon = epsilon, maxit = maxit))
+            return(model)})
+
+##### MARS Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('MARS.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "MARS.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = 100
+            PA['strat'] = 'random'
+            return(PA)})
+
+setMethod('get_model', "MARS.Niche.Model", 
+          function(obj, degree = 2) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = earth(Presence ~ ., data = data, degree = 2)
+            return(model)})
+
+setMethod('project', "MARS.Niche.Model", 
+          function(obj, Env, ...) {
+  model = get_model(obj, ...)
+  proj = predict(Env, model, 
+                 fun = function(model, x){
+                   x= as.data.frame(x)
+                   for (i in 1:length(Env@layers)) {
+                     if(Env[[i]]@data@isfactor) {
+                       x[,i] = as.factor(Env[[i]]@data@attributes[[1]]$ID[x[,i]])
+                       levels(x[,i]) = Env[[i]]@data@attributes[[1]]$ID
+                     }
+                   }
+                   return(predict(model, x))
+                 })
+  # Rescaling projection
+  proj = reclassify(proj, c(-Inf,0,0))
+  proj = proj / proj@data@max
+  names(proj) = "Projection"
+  obj@projection = stack(proj)
+  return(obj)})
+
+##### CTA Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('CTA.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "CTA.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = length(obj@data$Presence)
+            PA['strat'] = '2nd'
+            return(PA)})
+
+setMethod('get_model', "CTA.Niche.Model", 
+          function(obj, final.leave = 1, cv = 3) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = rpart(Presence ~ ., data = data, method = 'class', 
+                          control = rpart.control(minbucket = final.leave, xval = cv))
+            return(model)})
+
+setMethod('evaluate.axes', "CTA.Niche.Model", function(obj, thresh = 1001, ...) {
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  for (i in 4:length(obj@data)) {
+    obj.axes = obj
+    obj.axes@data = obj.axes@data[-i]
+    model = get_model(obj.axes,...)
+    predicted.values = predict(model, obj.axes@data)[,2]
+    threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
+    threshold = mean(threshold$`max.sensitivity+specificity`)
+    evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
+    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+  }
+  obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  row.names(obj@variables.importance) = "Axes.evaluation"
+  return(obj)})
+
+##### GBM Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('GBM.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "GBM.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = length(obj@data$Presence)
+            PA['strat'] = '2nd'
+            return(PA)})
+
+setMethod('get_model', "GBM.Niche.Model", 
+          function(obj, trees = 2500, final.leave = 1, cv = 3, thresh.shrink = 1e-03) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = gbm(Presence ~ ., data = data,
+                        distribution = 'bernoulli', n.minobsinnode = final.leave,
+                        shrinkage = thresh.shrink, bag.fraction = 0.5, 
+                        train.fraction = 1, cv.folds = cv, n.trees = trees)
+            return(model)})
+
+##### RF Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('RF.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "RF.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = length(obj@data$Presence)
+            PA['strat'] = '2nd'
+            return(PA)})
+
+setMethod('get_model', "RF.Niche.Model", 
+          function(obj, trees = 2500, final.leave = 1) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = randomForest(Presence ~ ., data = data, do.classif = TRUE, ntree = trees, 
+                                 nodesize = final.leave, maxnodes = NULL)
+            return(model)})
+
+##### MAXENT Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('MAXENT.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "MAXENT.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = 10000
+            PA['strat'] = 'random'
+            return(PA)})
+
+setMethod('get_model', "MAXENT.Niche.Model", 
+          function(obj, Env) {
+            factors = c()
+            for(i in 4:length(names(obj@data))) {if(is.factor(obj@data[,i])) {factors = c(factors, names(obj@data)[i])}}
+            model = maxent(x = Env, p = obj@data[which(obj@data$Presence == 1),1:2], 
+                           a = obj@data[which(obj@data$Presence == 0),1:2], factors = factors)
+            return(model)})
+
+setMethod('project', "MAXENT.Niche.Model", function(obj, Env, ...) {
+  model = get_model(obj, Env)
+  proj = predict(Env, model)
+  # Rescaling projection
+  proj = reclassify(proj, c(-Inf,0,0))
+  proj = proj / proj@data@max
+  names(proj) = "Projection"
+  obj@projection = stack(proj)
+  return(obj)})
+
+setMethod('evaluate.axes', "MAXENT.Niche.Model", function(obj, thresh = 1001, Env) {
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  for (i in 4:length(obj@data)) {
+    obj.axes = obj
+    obj.axes@data = obj.axes@data[-i]
+    model = get_model(obj.axes, Env)
+    predicted.values = predict(model, obj.axes@data)
+    threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
+    threshold = mean(threshold$`max.sensitivity+specificity`)
+    evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
+    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+  }
+  obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  row.names(obj@variables.importance) = "Axes.evaluation"
+  return(obj)})
+
+##### ANN Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('ANN.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "ANN.Niche.Model", 
+          function(obj) {
+            cat('ANN algorithm, no pseudo-absences needed')
+            PA = list()
+            PA['nb'] = 1000
+            PA['strat'] = 'random'
+            return(PA)})
+
+setMethod('get_model', "ANN.Niche.Model", 
+          function(obj, maxit = 500) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = nnet(Presence ~ ., data = data, size = 2, maxit = maxit)
+            return(model)})
+
+##### SVM Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('SVM.Niche.Model',
+         contains = 'Algorithm.Niche.Model')
+
+# 2 - Methods definition #
+setMethod('get_PA', "SVM.Niche.Model", 
+          function(obj) {
+            PA = list()
+            PA['nb'] = length(obj@data$Presence)
+            PA['strat'] = '2nd'
+            return(PA)})
+
+setMethod('get_model', "SVM.Niche.Model", 
+          function(obj, epsilon = 1e-08, cv = 3) {
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
+            model = svm(Presence ~ ., data = data, type = 'eps-regression', 
+                        gamma = 1/(length(data)-1), kernel = 'radial', epsilon = epsilon, cross = cv)
+            return(model)})
+
+setMethod('project', "SVM.Niche.Model", 
+          function(obj, Env, ...) {
+            model = get_model(obj, ...)
+            proj = predict(Env, model, 
+                           fun = function(model, x){
+                             x= as.data.frame(x)
+                             for (i in 1:length(Env@layers)) {
+                               if(Env[[i]]@data@isfactor) {
+                                 x[,i] = as.factor(Env[[i]]@data@attributes[[1]]$ID[x[,i]])
+                                 levels(x[,i]) = Env[[i]]@data@attributes[[1]]$ID
+                               }
+                             }
+                             return(predict(model, x))
+                           })
+            # Rescaling projection
+            proj = reclassify(proj, c(-Inf,0,0))
+            proj = proj / proj@data@max
+            names(proj) = "Projection"
+            obj@projection = stack(proj)
+            return(obj)})
+
+##### Ensemble Niche Model Class ##### -----
+
+# 1 - Class definition #
+setClass('Ensemble.Niche.Model',
+         representation(uncertainity = 'Raster',
+                        algorithm.correlation = 'data.frame',
+                        algorithm.evaluation = 'data.frame'),
+         prototype(uncertainity = raster(),
+                   algorithm.correlation = data.frame(),
+                   algorithm.evaluation = data.frame()),
+         contains = 'Niche.Model')
+
+# 2 - Class creation function #
+Ensemble.Niche.Model <- function(name = character(), 
+                                  projection = stack(), 
+                                  evaluation = data.frame(), 
+                                  variables.importance = data.frame(),
+                                  data = data.frame(),
+                                  parameters = list(),
+                                  uncertainity = raster(),
+                                  algorithm.correlation = data.frame(),
+                                  algorithm.evaluation = data.frame()) {
+  return(new(object.class, 
+             name = name, 
+             projection = projection, 
+             evaluation = evaluation, 
+             variables.importance = variables.importance, 
+             data = data, 
+             parameters = parameters,
+             uncertainity = uncertainity,
+             algorithm.correlation = algorithm.correlation,
+             algorithm.evaluation = algorithm.evaluation))}
+
+# 3 - Methods definition #
+setMethod('save', 'Ensemble.Niche.Model', function(obj, ...) {
+  })
