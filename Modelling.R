@@ -8,7 +8,7 @@ Modelling = function(algorithm,
                      # Model creation
                      name = NULL,
                      # Pseudo-absences definition
-                     PA = NULL,
+                     PA = NULL, train.frac = 0.7,
                      # Evaluation parameters
                      thresh = 1001,
                      # Modelling parameters
@@ -34,6 +34,8 @@ Modelling = function(algorithm,
   data = data.frame(X = Occurences[which(names(Occurences) == Xcol)], Y = Occurences[which(names(Occurences) == Ycol)])
   names(data) = c('X','Y')
   if (PO) {data$Presence = 1} else {data$Presence = Occurences[which(names(Occurences == Pcol))]}
+  data$Train = F
+  data$Train[sample.int(length(data$Presence), round(length(data$Presence)*train.frac))] = T
   
   # Environment data input test | RasterStack needed
   if (is.raster(Env)) {Env = stack(Env)}
@@ -44,7 +46,7 @@ Modelling = function(algorithm,
   cat('Pseudo absence selection... \n')
   model@data = data
   if (PO) {
-    model = PA.select(model, Env, PA)
+    model = PA.select(model, Env, PA, train.frac)
     model@parameters['PA'] = T}
   model = data.values(model, Env)
   cat('   done. \n\n')
@@ -61,7 +63,7 @@ Modelling = function(algorithm,
   
   # Evaluation
   cat('Model axes contribution evaluation...\n')
-  model = evaluate.axes(model, thresh)
+  model = evaluate.axes(model, thresh, Env, ...)
   cat('   done. \n\n')
   
   return(model)

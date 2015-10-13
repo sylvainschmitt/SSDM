@@ -17,7 +17,8 @@ LoadOcc <- function(Reduc = F) {
   Occurences$SpeciesID = as.factor(Occurences$SpeciesID)
   if(Reduc) {
     # Reducing to one specie for testing purposes
-    Occurences = subset(Occurences,Occurences$Taxon == 'Zygogynum pancheri (Baill.) Vink')
+    Occurences = subset(Occurences,Occurences$SpeciesID == '6318')
+    #Occurences = subset(Occurences,Occurences$Taxon == 'Zygogynum pancheri (Baill.) Vink')
     Occurences = droplevels(Occurences)
   }
   return(Occurences)
@@ -84,14 +85,15 @@ model2 = Modelling('GAM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude'
 model3 = Modelling('MARS', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 model4 = Modelling('CTA', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 model5 = Modelling('GBM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model6 = Modelling('RF', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+model62 = Modelling('RF', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 model7 = Modelling('MAXENT', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 model8 = Modelling('ANN', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 model9 = Modelling('SVM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
 
-obj = Algorithm.Niche.Model('CTA', data = data.frame(X = Occurences$Longitude, Y = Occurences$Latitude))
-obj@data$Presence = 1
+obj = Algorithm.Niche.Model('GLM', data = data.frame(X = Occurences$Longitude, Y = Occurences$Latitude))
 obj = PA.select(obj, Env)
-obj = data.values(obj, Env)
+obj = data.values(obj, Env, na.rm = T)
+summary(obj@data)
 obj = project(obj, Env)
 obj = evaluate(obj)
+obj = evaluate.axes(obj, thresh, Env)
