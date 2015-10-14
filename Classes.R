@@ -1,5 +1,6 @@
 ##### Libraries ##### ----
 library(raster)
+library(rgdal)
 library(methods)
 library(SDMTools)
 library(mgcv)
@@ -19,7 +20,9 @@ setGeneric('data.values', function(obj, Env, na.rm = T) {return(standardGeneric(
 setGeneric('get_model', function(obj, ...) {return(standardGeneric('get_model'))})
 setGeneric('project', function(obj, Env, ...) {return(standardGeneric('project'))})
 setGeneric('evaluate.axes', function(obj, thresh = 1001, Env, ...) {return(standardGeneric('evaluate.axes'))})
-setGeneric('assemble', function(x,  ..., thresh = 1001) {return(standardGeneric('assemble'))})
+setGeneric('ensemble', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, uncertainity = T) {return(standardGeneric('ensemble'))})
+setGeneric('save.enm', function (enm, directory = getwd()) {return(standardGeneric('save.enm'))})
+setGeneric('load.enm', function (directory = getwd()) {return(standardGeneric('load.enm'))})
 
 ##### Niche Model Class ##### -----
 
@@ -42,6 +45,7 @@ setClass('Niche.Model',
 setMethod("evaluate", "Niche.Model", function(obj, thresh = 1001) {
   data = obj@data[which(!obj@data$Train),]
   predicted.values = extract(obj@projection[[1]], data[c('X','Y')])
+  predicted.values[which(is.na(predicted.values))] = 0
   threshold = optim.thresh(data$Presence, predicted.values, thresh)
   threshold = mean(threshold$`max.sensitivity+specificity`)
   obj@evaluation = accuracy(data$Presence, predicted.values, threshold)
@@ -52,12 +56,18 @@ setMethod('print', 'Niche.Model', function(x, ...) {
   cat('Object of class :', class(x)[1],'\n')
   cat('Name :', x@name, '\n')
   cat('Projections : ',names(x@projection),'\n')
-  print(x@evaluation[2:7])
+  print(x@evaluation)
   print(x@variables.importance)
+  if(inherits(x, 'Ensemble.Niche.Model')) {
+    cat('Uncertinity map :', names(x@uncertainity),'\n')
+    print(x@algorithm.evaluation)
+    print(x@algorithm.correlation)
+  }
 })
 
 setMethod('plot', 'Niche.Model', function(x, y = 'AUC', ...) {
-  plot(x@projection[[1]], main = paste0('Probability map for ',x@name), sub = paste0('AUC : ',x@evaluation[y][1,1]))
+  plot(x@projection[[1]], main = paste0('Probability map for ',x@name), sub = paste0('AUC : ',x@evaluation$AUC))
+  points(x@data$X[which(x@data$Presence == 1)], x@data$Y[which(x@data$Presence == 1)], pch = 16, cex = 0.5, col = as.factor(x@data$Train[which(x@data$Presence == 1)]))
 })
 
 ##### Algorithm Niche Model Class ##### -----
@@ -159,8 +169,8 @@ setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
   return(obj)})
 
 setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, Env, ...) {
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
-  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
+  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
   for (i in 5:length(obj@data)) {
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
@@ -170,13 +180,13 @@ setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001,
     threshold = optim.thresh(data$Presence, predicted.values, thresh)
     threshold = mean(threshold$`max.sensitivity+specificity`)
     evaluation = accuracy(data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
   }
   obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
   row.names(obj@variables.importance) = "Axes.evaluation"
   return(obj)})
 
-setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, na.rm = F, format = T) {
+setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, format = T, verbose = T, na.rm = F) {
   models = list(x, ...)
   if(format) {for(i in 1:length(models)) {if(!inherits(models[[i]], class(x)[[1]])) {stop('You can only sum models from the same algorithm')}}}
   smodel =  new(class(x)[[1]], 
@@ -188,56 +198,144 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
   
   # Name
   if (!is.null(name)) {name = paste0(name,'.')}
-  smodel@name = paste0(name,class(x)[[1]],'.sum')
+  smodel@name = paste0(name,class(x)[[1]],'.ensemble')
   
   # Datas, Projections, and Variables importance fusion
   sAUC = 0
+  kept.model = 0
   for (i in 1:length(models)) {
     if (models[[i]]@evaluation$AUC > AUCthresh) {
       smodel@projection[[1]] = smodel@projection[[1]] + models[[i]]@projection[[1]]*models[[i]]@evaluation$AUC
       smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance*models[[i]]@evaluation$AUC
       smodel@data = rbind(smodel@data, models[[i]]@data)
       sAUC = sAUC + models[[i]]@evaluation$AUC
+      kept.model = kept.model + 1
     }
   }
-  smodel@projection[[1]] = smodel@projection[[1]] / sAUC
-  smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100
-
-  # Parameters
-  smodel@parameters = x@parameters
   
-  # Evaluation
-  smodel = evaluate(smodel, thresh = 1001)
-})
+  # Return NULL if any model is kept
+  if( kept.model == 0) {
+    if (verbose) {cat('No model were kept with this threshold, Null is return. \n')}
+    return(NULL)} else {
+      
+      smodel@projection[[1]] = smodel@projection[[1]] / sAUC
+      names(smodel@projection[[1]]) = 'Probability'
+      smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100
+      
+      # Parameters
+      smodel@parameters = x@parameters
+      smodel@parameters['kept.model'] = kept.model
+      
+      # Evaluation
+      smodel = evaluate(smodel, thresh = 1001)}})
 
-setMethod('assemble', Algorithm.Niche.Model, function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001) {
-  amodel = sum(x, ..., AUCthresh = 0, thresh, format = F)
+setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, uncertainity = T) {
   models = list(x, ...)
+  enm = Ensemble.Niche.Model()
   
-  # Name
-  if (!is.null(name)) {name = paste0(name,'.')}
-  amodel@name = paste0(name,'Algorithm.Assembly')
+  # Algorithm ensemble model creation
+  cat('Creation of one ensemble niche model by algorithm...')
+  algo.ensemble = list()
+  while(length(models) > 1) {
+    type.model = list()
+    type = class(models[[1]])[[1]]
+    rm = {}
+    for (i in 1:length(models)) {
+      if (inherits(models[[i]], type)) {
+        type.model[(length(type.model)+1)] = models[[i]]
+        rm = c(rm, i)
+      }
+    }
+    if (length(rm) > 0) {
+      for (i in 1:length(rm)) {
+        models[[rm[i]]] = NULL
+        rm = rm - 1
+      }
+    }
+    type.model['verbose'] = F
+   algo.ensemble[type] = do.call(sum, type.model)
+  }
+  cat('   done. \n')
   
-  # Evaluation
-  amodel = evaluate(amodel, Env)
-  
-  # Projections stack
-  projections = stack()
-  for (i in length(models)) {projections = stack(projections, models[[i]]@projection[[1]])}
-  
-  # Algorithms Correlation
-  amodel@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
-  
-  # Uncertainity map
-  amodel@uncertainity = calc(Proj, var)
-  names(amodel@incert) = 'Uncertainity map'
-  
-  # Algorithms Evaluation
-  amodel@algoritm.evaluation = x@evaluation
-  for (i in 2:length(models)) {amodel@algorithm.evaluation = rbind(amodel@algorithm.evaluation, models[[i]]@evaluation)}
-  
-  return(amodel)
-})
+  if (length(algo.ensemble) < 1) {
+    cat('No model were kept with this threshold, Null is returned. \n')
+    return(NULL)
+  } else {
+    
+    # Sum of algorithm ensemble
+    cat('Projcetion, and variables importance computing...')
+    algo.list = list()
+    for (i in 1:length(algo.ensemble)) {algo.list[[i]] = algo.ensemble[[i]]}
+    algo.list['format'] = F
+    sum.algo.ensemble = do.call(sum, algo.list)
+    
+    # Name
+    if (!is.null(name)) {name = paste0(name,'.')}
+    enm@name = paste0(name,'Ensemble.Niche.Model')
+    
+    # Projection
+    enm@projection = sum.algo.ensemble@projection
+    cat('done \n')
+    
+    # Data
+    enm@data = algo.ensemble[[1]]@data
+    if (length(algo.ensemble) > 1) {
+      for (i in 2:length(algo.ensemble)) {
+        enm@data = rbind(enm@data, algo.ensemble[[i]]@data)
+      }
+    }
+    
+    # Evaluation
+    cat('Model evaluation...')
+    enm = evaluate(enm)
+    cat('done \n')
+    
+    # Axes evaluation
+    cat('Axes evaluation...')
+    enm@variables.importance = sum.algo.ensemble@variables.importance
+    cat('done \n')
+    
+    # Binary map
+    cat('Binary tranformation')
+    enm@projection[[2]] = reclassify(enm@projection[[1]], c(-Inf,enm@evaluation$threshold,0, enm@evaluation$threshold,Inf,1))
+    names(enm@projection[[2]]) = 'Niche'
+    cat('done \n')
+    
+    # Projections stack
+    projections = stack()
+    for (i in 1:length(algo.ensemble)) {
+      projections = stack(projections, algo.ensemble[[i]]@projection[[1]])
+      names(projections[[i]]) = algo.ensemble[[i]]@name
+    }
+    
+    # Algorithms Correlation
+    cat('Algorithms correlation')
+    enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
+    cat('done \n')
+    
+    # Uncertainity map
+    if (uncertainity && length(projections@layers) > 1) {
+      cat('Uncertainity mapping')
+      enm@uncertainity = calc(projections, var)
+      names(enm@uncertainity) = 'Uncertainity map'
+      cat('done \n')
+    }
+    
+    # Algorithms Evaluation
+    cat('Algorithms evaluation')
+    enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
+    enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
+    row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
+    if (length(algo.ensemble) > 1) {
+      for (i in 2:length(algo.ensemble)) {
+        enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
+        enm@algorithm.evaluation$kept.model = algo.ensmelbe[[i]]@parameters$kept.model
+        row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
+      }
+    }
+    cat('done \n')
+    
+    return(enm)}})
 
 ##### GLM Niche Model Class ##### -----
 
@@ -339,7 +437,7 @@ setMethod('get_PA', "CTA.Niche.Model",
           function(obj) {
             PA = list()
             PA['nb'] = length(obj@data$Presence)
-            PA['strat'] = '2nd'
+            PA['strat'] = 'random'
             return(PA)})
 
 setMethod('get_model', "CTA.Niche.Model", 
@@ -351,17 +449,18 @@ setMethod('get_model', "CTA.Niche.Model",
             return(model)})
 
 setMethod('evaluate.axes', "CTA.Niche.Model", function(obj, thresh = 1001, ...) {
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
-  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
-  for (i in 4:length(obj@data)) {
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
+  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
+  for (i in 5:length(obj@data)) {
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
+    data = obj.axes@data[which(!obj.axes@data$Train),]
     model = get_model(obj.axes,...)
-    predicted.values = predict(model, obj.axes@data)[,2]
-    threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
+    predicted.values = predict(model,data)[,2]
+    threshold = optim.thresh(data$Presence, predicted.values, thresh)
     threshold = mean(threshold$`max.sensitivity+specificity`)
-    evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+    evaluation = accuracy(data$Presence, predicted.values, threshold)
+    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
   }
   obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
   row.names(obj@variables.importance) = "Axes.evaluation"
@@ -378,7 +477,7 @@ setMethod('get_PA', "GBM.Niche.Model",
           function(obj) {
             PA = list()
             PA['nb'] = length(obj@data$Presence)
-            PA['strat'] = '2nd'
+            PA['strat'] = 'random'
             return(PA)})
 
 setMethod('get_model', "GBM.Niche.Model", 
@@ -448,18 +547,18 @@ setMethod('project', "MAXENT.Niche.Model", function(obj, Env, ...) {
   return(obj)})
 
 setMethod('evaluate.axes', "MAXENT.Niche.Model", function(obj, thresh = 1001, Env, ...) {
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
-  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
+  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
   for (i in 5:length(obj@data)) {
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
+    model = get_model(obj.axes, Env[[-(i-4)]])
     obj.axes@data = obj.axes@data[which(!obj.axes@data$Train),]
-    model = get_model(obj.axes, Env[[-(i-3)]])
     predicted.values = predict(model, obj.axes@data)
     threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
     threshold = mean(threshold$`max.sensitivity+specificity`)
     evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-3)] = obj@evaluation$AUC - evaluation$AUC
+    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
   }
   obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
   row.names(obj@variables.importance) = "Axes.evaluation"
@@ -530,13 +629,13 @@ setMethod('project', "SVM.Niche.Model", function(obj, Env, ...) {
 
 # 1 - Class definition #
 setClass('Ensemble.Niche.Model',
+         contains = 'Niche.Model',
          representation(uncertainity = 'Raster',
                         algorithm.correlation = 'data.frame',
                         algorithm.evaluation = 'data.frame'),
          prototype(uncertainity = raster(),
                    algorithm.correlation = data.frame(),
-                   algorithm.evaluation = data.frame()),
-         contains = 'Niche.Model')
+                   algorithm.evaluation = data.frame()))
 
 # 2 - Class creation function #
 Ensemble.Niche.Model <- function(name = character(), 
@@ -548,7 +647,7 @@ Ensemble.Niche.Model <- function(name = character(),
                                  uncertainity = raster(),
                                  algorithm.correlation = data.frame(),
                                  algorithm.evaluation = data.frame()) {
-  return(new(object.class, 
+  return(new('Ensemble.Niche.Model', 
              name = name, 
              projection = projection, 
              evaluation = evaluation, 
@@ -559,5 +658,38 @@ Ensemble.Niche.Model <- function(name = character(),
              algorithm.correlation = algorithm.correlation,
              algorithm.evaluation = algorithm.evaluation))}
 
+load.enm = function (name = character(), directory = getwd()) {
+  enm = Ensemble.Niche.Model(name,
+                             projection = stack(raster(paste0(directory,'/Rasters/Probability.tif')), raster(paste0(directory,'/Rasters/Niche.tif'))),
+                             uncertainity = raster(paste0(directory,'/Rasters/Uncertainity.tif')),
+                             evaluation = read.csv(paste0(directory,'/Tables/ENMeval')),
+                             algorithm.evaluation  = read.csv(paste0(directory,'/Tables/AlgoEval')),
+                             algorithm.correlation = read.csv(paste0(directory,'/Tables/AlgoCorr')),
+                             data = read.csv(paste0(directory,'/Tables/Data')))
+  return(enm)
+}
+
 # 3 - Methods definition #
-#setMethod('save', 'Ensemble.Niche.Model', function(obj, ...) {})
+setMethod('save.enm', 'Ensemble.Niche.Model', function (enm, directory = getwd()) {
+            
+            cat('Saving ensemble model results \n')
+            # Directories creation
+            dir.create(path = paste0(directory, "/Rasters"))
+            dir.create(path = paste0(directory, "/Tables"))
+            
+            # Raster saving
+            cat('   rasters ...')
+            writeRaster(enm@projection[[1]], paste0(directory,'/Rasters/Probability'), 'GTiff', overwrite = T)
+            writeRaster(enm@projection[[2]], paste0(directory,'/Rasters/Niche'), 'GTiff', overwrite = T)
+            writeRaster(enm@uncertainity, paste0(directory,'/Rasters/Uncertainity'), 'GTiff', overwrite = T)
+            cat('saved \n')
+            
+            # Tables saving
+            cat('   tables ...')
+            write.csv(enm@evaluation, paste0(directory,'/Tables/ENMeval'))
+            write.csv(enm@algorithm.evaluation, paste0(directory,'/Tables/AlgoEval'))
+            write.csv(enm@algorithm.correlation, paste0(directory,'/Tables/AlgoCorr'))
+            write.csv(enm@variables.importance, paste0(directory,'/Tables/VarImp'))
+            write.csv(enm@data, paste0(directory,'/Tables/Data'))
+            cat('saved \n \n')
+          })

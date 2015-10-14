@@ -1,3 +1,8 @@
+#### Sources #### ----
+source('Data.prep.R')
+source('Classes.R')
+source('Modelling.R')
+
 #### Data loading #### ----
 OpenEnv <- function(EnvNames) {
   # Open environement variables
@@ -43,57 +48,31 @@ LoadEnv <- function(Reduc = F, Extent = extent(165.8179 , 167.3069 , -22.33978, 
   }
   return(Env)
 }
-TreatVar <- function (Env, Reso.adapt = T, Norm = T) {
-  cat('Variables treatment \n')
-  
-  # Resolution
-  if(Reso.adapt) {
-    cat('   resolution adaptation \n')
-    reso = max(res(Env@layers[[1]]))
-    # Coarser resolution measurement
-    for (i in 1:length(Env@layers)){
-      reso = max((res(Env@layers[[i]])),reso)
-    }
-    # Refine all stack resolution
-    res(Env) = reso
-  }
-  
-  # Normalizing variables
-  if (Norm) {
-    cat('   normalizing continuous variables \n\n')
-    for (i in 1:length(Env@layers)) {
-      #For not categorical variables
-      if (!Env[[i]]@data@isfactor) { 
-        Env[[i]] = Env[[i]]/Env[[i]]@data@max
-      }
-    }
-  }
-  
-  return(Env)
-}
-
-#### Main #### ----
-# Available algorithms :
-# Working algorithms'GLM','GAM','MAXENT','ANN','CTA','GBM','RF', 'FDA', 'MARS
 Env = LoadEnv()
 Occurences = LoadOcc(Reduc = T)
-Env = TreatVar(Env)
+Env = treat.var(Env)
+Occurences = treat.occ(Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude', Spcol = 'SpeciesID')
 setwd("/home/amap/Documents/R/Sans Biomod 2/")
 
-model1 = Modelling('GLM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model2 = Modelling('GAM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model3 = Modelling('MARS', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model4 = Modelling('CTA', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model5 = Modelling('GBM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model62 = Modelling('RF', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model7 = Modelling('MAXENT', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model8 = Modelling('ANN', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
-model9 = Modelling('SVM', Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude')
+#### Main #### ----
+# Available algorithms : 'GLM', 'GAM', 'MARS', 'CTA', 'GBM', 'RF', 'MAXENT', 'ANN', 'SVM'
+# sink('Log', split = T)
+# sink()
+# print(enm)
+# plot(enm)
+# save.enm(enm)
+# load.enm(enm)
 
-obj = Algorithm.Niche.Model('GLM', data = data.frame(X = Occurences$Longitude, Y = Occurences$Latitude))
+enm = Ensemble.Modelling(c('GLM', 'GAM', 'MARS', 'CTA', 'GBM', 'RF', 'MAXENT', 'ANN', 'SVM'),
+                         Occurences, Env, Xcol = 'Longitude', Ycol = 'Latitude', rep = 1)
+
+# Object handmaking ----
+obj = Algorithm.Niche.Model('GBM', data = data.frame(X = Occurences$Longitude, Y = Occurences$Latitude))
+obj@data$Presence = 1
+obj@data$Train = F
+obj@data$Train[sample.int(length(obj@data$Presence), round(length(obj@data$Presence)*0.7))] = T
 obj = PA.select(obj, Env)
-obj = data.values(obj, Env, na.rm = T)
+obj = data.values(obj, Env)
 summary(obj@data)
 obj = project(obj, Env)
-obj = evaluate(obj)
-obj = evaluate.axes(obj, thresh, Env)
+
