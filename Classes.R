@@ -11,6 +11,9 @@ library(randomForest)
 library(dismo)
 library(nnet)
 library(e1071)
+library(shiny)
+library(shinydashboard)
+library(gplots)
 
 ##### New generics ##### ----
 setGeneric('evaluate', function(obj, thresh = 1001) {return(standardGeneric('evaluate'))})
@@ -65,9 +68,98 @@ setMethod('print', 'Niche.Model', function(x, ...) {
   }
 })
 
-setMethod('plot', 'Niche.Model', function(x, y = 'AUC', ...) {
-  plot(x@projection[[1]], main = paste0('Probability map for ',x@name), sub = paste0('AUC : ',x@evaluation$AUC))
-  points(x@data$X[which(x@data$Presence == 1)], x@data$Y[which(x@data$Presence == 1)], pch = 16, cex = 0.5, col = as.factor(x@data$Train[which(x@data$Presence == 1)]))
+setMethod('plot', 'Niche.Model', function(x, y, ...) {
+  if (inherits(x, 'Algorithm.Niche.Model')) {full = F} else {full = T}
+  ui <- dashboardPage(
+    dashboardHeader(title = x@name, titleWidth = 450),
+    dashboardSidebar(disable = T),
+    dashboardBody(
+      fluidRow(
+        tabBox(title = 'Maps',
+               tabPanel(plotOutput('probability'), title = 'Probability'),
+               if(full) {tabPanel(plotOutput('niche'), title = 'Niche')},
+               if(full) {tabPanel(plotOutput('uncertainity'), title = 'Uncertainity')}
+        ),
+        tabBox(title = 'Variables importance',
+               tabPanel(plotOutput('varimp.barplot'), title = 'Barplot'), 
+               tabPanel(tableOutput('varimp.table'), title = 'Table')
+        )
+      ),
+      if(full) {
+        fluidRow(
+          tabBox(title = 'Model evaluation',
+                 tabPanel(plotOutput('evaluation.barplot'), title = 'Barplot'), 
+                 tabPanel(tableOutput('evaluation.table'), title = 'Table')
+          ),
+          tabBox(title = 'Algorithms correlation',
+                 tabPanel(plotOutput('algo.corr.heatmap'), title = 'Heatmap'), 
+                 tabPanel(tableOutput('algo.corr.table'), title = 'Table')
+          )
+        )}
+    )
+  )
+  
+  
+  server <- function(input, output) {
+    set.seed(122)
+    if(full) {
+      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.Niche')[[1]][1]}
+      for (i in 1:length(row.names(x@algorithm.correlation))) {row.names(x@algorithm.correlation)[i] = strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.Niche')[[1]][1]}
+      x@algorithm.correlation[upper.tri(x@algorithm.correlation)] = NA
+      names(x@algorithm.correlation) = row.names(x@algorithm.correlation)
+      x@algorithm.correlation = x@algorithm.correlation[-length(x@algorithm.correlation)]
+      #x@algorithm.correlation = x@algorithm.correlation[-1]
+      x@algorithm.correlation = x@algorithm.correlation[-length(x@algorithm.correlation)]
+    }
+    # Maps
+    output$probability <- renderPlot({
+      plot(x@projection[[1]], 
+           main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
+           xlab = 'Longitude (°)',
+           ylab = 'Latitude (°)')
+      points(x@data$X[which(x@data$Presence == 1)], 
+             x@data$Y[which(x@data$Presence == 1)], 
+             pch = 16, cex = 0.7)
+    })
+    output$niche <- renderPlot({plot(x@projection[[2]], main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
+    if(full) {
+      output$uncertainity <- renderPlot({plot(x@uncertainity, main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
+      # Evaluation
+      output$evaluation.barplot <- renderPlot({
+        x@evaluation[1] = 'Ensmble.Niche.Model'
+        evaluation = rbind(x@evaluation, x@algorithm.evaluation)
+        row.names(evaluation) = evaluation[,1]
+        evaluation = evaluation[-1,]
+        table <- t(cbind(evaluation$AUC, evaluation$Kappa))
+        barplot(table, col=c("darkblue","red"), names.arg = row.names(evaluation), beside=TRUE)
+        legend('bottomright', c('AUC', 'Kappa'), fill = c("darkblue","red"))
+      })
+      output$evaluation.table <- renderTable({
+        x@evaluation[1] = 'Ensmble.Niche.Model'
+        evaluation = rbind(x@evaluation, x@algorithm.evaluation)
+        row.names(evaluation) = evaluation[,1]
+        evaluation = evaluation[-1,]
+        evaluation[c(3,5:8)]
+      })
+      # Algorithms correlation
+      output$algo.corr.table <- renderTable({x@algorithm.correlation})
+      output$algo.corr.heatmap <- renderPlot({
+        m <- as.matrix(x@algorithm.correlation)
+        heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
+                  cellnote = round(m,3), notecol = "black", notecex = 2,
+                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = T)
+      })
+    }
+    # Variable importance
+    output$varimp.barplot <- renderPlot({
+      varimp = as.data.frame(t(x@variables.importance[-1]))
+      names(varimp) = 'Axes.evaluation'
+      barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2)
+    })
+    output$varimp.table <- renderTable({x@variables.importance[-1]})
+  }
+  
+  shinyApp(ui, server)
 })
 
 ##### Algorithm Niche Model Class ##### -----
@@ -236,7 +328,7 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
   # Algorithm ensemble model creation
   cat('Creation of one ensemble niche model by algorithm...')
   algo.ensemble = list()
-  while(length(models) > 1) {
+  while(length(models) > 0) {
     type.model = list()
     type = class(models[[1]])[[1]]
     rm = {}
@@ -253,6 +345,9 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
       }
     }
     type.model['verbose'] = F
+    type.model['name'] = name
+    type.model['AUCthresh'] = AUCthresh
+    type.model['thresh'] = thresh
    algo.ensemble[type] = do.call(sum, type.model)
   }
   cat('   done. \n')
@@ -267,6 +362,8 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     algo.list = list()
     for (i in 1:length(algo.ensemble)) {algo.list[[i]] = algo.ensemble[[i]]}
     algo.list['format'] = F
+    algo.list['AUCthresh'] = 0
+    algo.list['thresh'] = thresh
     sum.algo.ensemble = do.call(sum, algo.list)
     
     # Name
@@ -275,7 +372,7 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     
     # Projection
     enm@projection = sum.algo.ensemble@projection
-    cat('done \n')
+    cat('   done \n')
     
     # Data
     enm@data = algo.ensemble[[1]]@data
@@ -288,18 +385,18 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     # Evaluation
     cat('Model evaluation...')
     enm = evaluate(enm)
-    cat('done \n')
+    cat('   done \n')
     
     # Axes evaluation
     cat('Axes evaluation...')
     enm@variables.importance = sum.algo.ensemble@variables.importance
-    cat('done \n')
+    cat('   done \n')
     
     # Binary map
-    cat('Binary tranformation')
+    cat('Binary tranformation...')
     enm@projection[[2]] = reclassify(enm@projection[[1]], c(-Inf,enm@evaluation$threshold,0, enm@evaluation$threshold,Inf,1))
     names(enm@projection[[2]]) = 'Niche'
-    cat('done \n')
+    cat('   done \n')
     
     # Projections stack
     projections = stack()
@@ -309,31 +406,36 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     }
     
     # Algorithms Correlation
-    cat('Algorithms correlation')
+    cat('Algorithms correlation...')
     enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
-    cat('done \n')
+    cat('   done \n')
     
     # Uncertainity map
     if (uncertainity && length(projections@layers) > 1) {
-      cat('Uncertainity mapping')
+      cat('Uncertainity mapping...')
       enm@uncertainity = calc(projections, var)
       names(enm@uncertainity) = 'Uncertainity map'
-      cat('done \n')
+      cat('   done \n')
     }
     
     # Algorithms Evaluation
-    cat('Algorithms evaluation')
+    cat('Algorithms evaluation...')
     enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
-    enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
     row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
     if (length(algo.ensemble) > 1) {
       for (i in 2:length(algo.ensemble)) {
         enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
-        enm@algorithm.evaluation$kept.model = algo.ensmelbe[[i]]@parameters$kept.model
+        enm@algorithm.evaluation$kept.model = algo.ensemble[[i]]@parameters$kept.model
         row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
       }
     }
-    cat('done \n')
+    enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
+    if (length(algo.ensemble) > 1) {
+      for (i in 2:length(algo.ensemble)) {
+        enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
+      }
+    }
+    cat('   done \n')
     
     return(enm)}})
 
@@ -355,7 +457,13 @@ setMethod('get_model', "GLM.Niche.Model",
           function(obj, test = 'AIC', epsilon = 1e-08, maxit = 500) {
             data = obj@data[which(obj@data$Train),]
             data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
-            model = glm(Presence ~ ., data = data, test = test, control = glm.control(epsilon = epsilon, maxit = maxit))
+            formula = "Presence ~"
+            for (i in 2:length(data)) {
+              var = names(data[i])
+              if (is.factor(data[,i])) {var = paste0('factor(',var,')')}
+              if (i != 2) {formula = paste(formula,'+',var)} else {formula = paste(formula,var)}
+            }
+            model = glm(formula(formula), data = data, test = test, control = glm.control(epsilon = epsilon, maxit = maxit))
             return(model)})
 
 ##### GAM Niche Model Class ##### -----
@@ -595,7 +703,7 @@ setClass('SVM.Niche.Model',
 setMethod('get_PA', "SVM.Niche.Model", function(obj) {
   PA = list()
   PA['nb'] = length(obj@data$Presence)
-  PA['strat'] = '2nd'
+  PA['strat'] = 'random'
   return(PA)})
 
 setMethod('get_model', "SVM.Niche.Model", function(obj, epsilon = 1e-08, cv = 3) {
@@ -658,14 +766,15 @@ Ensemble.Niche.Model <- function(name = character(),
              algorithm.correlation = algorithm.correlation,
              algorithm.evaluation = algorithm.evaluation))}
 
-load.enm = function (name = character(), directory = getwd()) {
-  enm = Ensemble.Niche.Model(name,
+load.enm = function (directory = getwd()) {
+  enm = Ensemble.Niche.Model(name = as.character(read.csv(paste0(directory,'/Tables/Name'))[1,2]),
                              projection = stack(raster(paste0(directory,'/Rasters/Probability.tif')), raster(paste0(directory,'/Rasters/Niche.tif'))),
                              uncertainity = raster(paste0(directory,'/Rasters/Uncertainity.tif')),
                              evaluation = read.csv(paste0(directory,'/Tables/ENMeval')),
                              algorithm.evaluation  = read.csv(paste0(directory,'/Tables/AlgoEval')),
                              algorithm.correlation = read.csv(paste0(directory,'/Tables/AlgoCorr')),
-                             data = read.csv(paste0(directory,'/Tables/Data')))
+                             data = read.csv(paste0(directory,'/Tables/Data')),
+                             variables.importance = read.csv(paste0(directory,'/Tables/VarImp')))
   return(enm)
 }
 
@@ -691,5 +800,6 @@ setMethod('save.enm', 'Ensemble.Niche.Model', function (enm, directory = getwd()
             write.csv(enm@algorithm.correlation, paste0(directory,'/Tables/AlgoCorr'))
             write.csv(enm@variables.importance, paste0(directory,'/Tables/VarImp'))
             write.csv(enm@data, paste0(directory,'/Tables/Data'))
+            write.csv(enm@name, paste0(directory,'/Tables/Name'))
             cat('saved \n \n')
           })

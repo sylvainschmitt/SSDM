@@ -13,8 +13,8 @@ Modelling = function(algorithm,
                      # Modelling parameters
                      ...) {
   # Test if algorithm is available
-  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','RF')
-  if(!(algorithm %in% available.algo)) {stop(algorithm,' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, RF')}
+  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
+  if(!(algorithm %in% available.algo)) {stop(algorithm,' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}
   
   # Empty Algorithm niche model object creation
   model = Algorithm.Niche.Model(algorithm)
@@ -86,9 +86,9 @@ Ensemble.Modelling = function(algorithms,
                               # Modelling parameters
                               ...) {
   # Test if algorithm is available
-  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','RF')
+  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
   for (i in 1:length(algorithms)) {
-    if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, RF')}}
+    if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   
   # Algorithms models creation
   cat('#### Algorithms models creation ##### \n\n')

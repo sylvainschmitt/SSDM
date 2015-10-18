@@ -2,11 +2,15 @@
 library(spThin)
 
 ##### Occurences treatment ##### ----
-treat.occ = function(Occurences, Env, Xcol, Ycol, Spcol, GeoRes = T, reso = max(res(Env@layers[[1]]))) {
+treat.occ = function(Occurences, Env, Xcol, Ycol, Spcol = NULL, GeoRes = T, reso = max(res(Env@layers[[1]]))) {
+  if (is.null(Spcol)) {
+    Occurences$Sp = 1
+    Spcol = 'NULL'
+  }
   # Geographical resampling
   if (GeoRes) {
     cat('Geographical resampling \n\n')
-    thin.result = thin(Occurences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol, 
+    thin.result = thin(Occurences, long.col = Xcol, lat.col = Ycol, spec.col = 'Sp', 
                       thin.par = reso, reps = 1, locs.thinned.list.return = T, 
                       write.files = F, write.log.file = F, verbose = F)
     deleted = {}
@@ -15,6 +19,7 @@ treat.occ = function(Occurences, Env, Xcol, Ycol, Spcol, GeoRes = T, reso = max(
     for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
     Occurences = Occurences[-deleted,]
   }
+  if (Spcol == 'NULL') {Occurences = Occurences[-which(names(Occurences)=='Sp')]}
   return(Occurences)
 }
 
@@ -27,13 +32,16 @@ treat.var <- function (Env, Reso.adapt = T, Norm = T) {
   # Resolution
   if(Reso.adapt) {
     cat('   resolution adaptation \n')
-    reso = max(res(Env@layers[[1]]))
+    reso = res(Env@layers[[1]])
     # Coarser resolution measurement
     for (i in 1:length(Env@layers)){
-      reso = max((res(Env@layers[[i]])),reso)
+      reso[1] = max((res(Env@layers[[i]]))[1],reso[1])
+      reso[2] = max((res(Env@layers[[i]]))[1],reso[2])
     }
     # Refine all stack resolution
-    res(Env) = reso
+    for (i in 1:length(Env@layers)) {
+      Env[[i]] = aggregate(Env[[i]], fact = c(res(Env[[i]])/reso[1],res(Env[[i]])/reso[2]), fun = max)
+    }
   }
   
   # Normalizing variables
