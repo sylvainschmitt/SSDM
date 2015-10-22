@@ -3,7 +3,7 @@ Modelling = function(algorithm,
                      # Modelling data input
                      Occurences, Env,
                      # Occurences reading
-                     Xcol, Ycol, Pcol = NULL,
+                     Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
                      # Model creation
                      name = NULL,
                      # Pseudo-absences definition
@@ -76,19 +76,20 @@ Ensemble.Modelling = function(algorithms,
                               # Modelling data input
                               Occurences, Env,
                               # Occurences reading
-                              Xcol, Ycol, Pcol = NULL,
+                              Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
                               # Model creation
                               rep = 1, name = NULL, save = F, directory = getwd(),
                               # Pseudo-absences definition
                               PA = NULL, train.frac = 0.7,
                               # Evaluation parameters
-                              thresh = 1001, AUCthresh = 0.75, uncertainity = T,
+                              thresh = 1001, AUCthresh = 0.75, uncertainity = T, tmp = F,
                               # Modelling parameters
                               ...) {
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
+  if (tmp) {if (!("./.rasters" %in% list.dirs())) (dir.create('./.rasters'))}
   
   # Algorithms models creation
   cat('#### Algorithms models creation ##### \n\n')
@@ -99,7 +100,10 @@ Ensemble.Modelling = function(algorithms,
       cat('Modelling :', model.name, '\n\n')
       model = try(Modelling(algorithms[i], Occurences, Env, Xcol, Ycol, Pcol, name = NULL,
                             PA = NULL, train.frac = 0.7, thresh = 1001, ...))
-      if (inherits(model, "try-error")) {cat(model)} else {models[model.name] = model}
+      if (inherits(model, "try-error")) {cat(model)} else {
+        if (tmp) {model@projection[[1]] = writeRaster(model@projection[[1]], paste0('./.rasters/',j,model.name), overwrite = T)}
+        models[model.name] = model
+      }
       cat('\n\n')
     }
   }
@@ -121,6 +125,9 @@ Ensemble.Modelling = function(algorithms,
       save.enm(enm, directory)
     }
   }
+  
+  # Removing tmp
+  if (tmp) {unlink('./.rasters/', recursive = T, force = T)}
   
   return(enm)
 }

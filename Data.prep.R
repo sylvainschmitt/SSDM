@@ -2,12 +2,20 @@
 library(spThin)
 
 ##### Occurences treatment ##### ----
-treat.occ = function(Occurences, Env, Xcol, Ycol, Spcol = NULL, GeoRes = T, reso = max(res(Env@layers[[1]]))) {
+load.occ = function(directory = getwd(), Env, file = NULL, ...,
+                     Xcol = 'Longitude', Ycol = 'Latitude', Spcol = NULL, 
+                     GeoRes = T, reso = max(res(Env@layers[[1]]))) {
+  pdir = getwd()
+  cat('Occurences loading \n')
+  setwd(directory)
+  if (is.null(file)) {file = as.character(list.files(pattern = '.csv')[[1]])}
+  Occurences = read.csv2(file = file, ...)  # Occ = occurences
+  
+  # Geographical resampling
   if (is.null(Spcol)) {
     Occurences$Sp = 1
     Spcol = 'NULL'
   }
-  # Geographical resampling
   if (GeoRes) {
     cat('Geographical resampling \n\n')
     thin.result = thin(Occurences, long.col = Xcol, lat.col = Ycol, spec.col = 'Sp', 
@@ -20,29 +28,76 @@ treat.occ = function(Occurences, Env, Xcol, Ycol, Spcol = NULL, GeoRes = T, reso
     Occurences = Occurences[-deleted,]
   }
   if (Spcol == 'NULL') {Occurences = Occurences[-which(names(Occurences)=='Sp')]}
+  
+  setwd(pdir)
   return(Occurences)
 }
 
 ##### Environment variables treatment ##### ----
 # 2 -  Variables treatment #
 # Without multiscaling for the moment
-treat.var <- function (Env, Reso.adapt = T, Norm = T) {
-  cat('Variables treatment \n')
+load.var <- function (directory = getwd(), files = NULL, 
+                      format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
+                      factors = NULL, Norm = T, tmp = T) {
+  pdir = getwd()
+  cat('Variables loading \n')
+  setwd(directory)
+  Env = stack()
   
-  # Resolution
-  if(Reso.adapt) {
-    cat('   resolution adaptation \n')
-    reso = res(Env@layers[[1]])
-    # Coarser resolution measurement
-    for (i in 1:length(Env@layers)){
-      reso[1] = max((res(Env@layers[[i]]))[1],reso[1])
-      reso[2] = max((res(Env@layers[[i]]))[1],reso[2])
+  # Rasters loading
+  files.null = files
+  if (is.null(files)) {files.null = T} else {files.null = F}
+  for (j in 1:length(format)) {
+    if(files.null) {
+      files = list.files(pattern = paste0('.',format,'$'))
     }
-    # Refine all stack resolution
-    for (i in 1:length(Env@layers)) {
-      Env[[i]] = aggregate(Env[[i]], fact = c(res(Env[[i]])/reso[1],res(Env[[i]])/reso[2]), fun = max)
+    if (length(files) > 0) {
+      for (i in 1:length(files)){
+        Raster = raster(files[[i]])
+        # Extent and resolution check
+        reso = res(Raster)
+        extent = extent(Raster)
+        if (j == 1  && i == 1) {
+          resostack = reso
+          extentstack = extent
+        } else {
+          resostack[1] = max(reso[1], resostack[1])
+          resostack[2] = max(reso[2], resostack[2])
+          # Extent and resolution adpatation
+          extentstack@xmin = max(extentstack@xmin, extent@xmin)
+          extentstack@xmax = min(extentstack@xmax, extent@xmax)
+          extentstack@ymin = max(extentstack@ymin, extent@ymin)
+          extentstack@ymax = min(extentstack@ymax, extent@ymax)
+        }
+      }
     }
   }
+  
+  cat('Variables treatment \n')
+  
+  cat('   resolution and extent adaptation...')
+  for (j in 1:length(format)) {
+    if(files.null) {
+      files = list.files(pattern = paste0('.',format,'$'))
+    }
+    if (length(files) > 0) {
+      for (i in 1:length(files)){
+        Raster = raster(files[[i]])
+        Raster = reclassify(Raster, c(-Inf,-900,NA))
+        Raster = crop(Raster, extentstack)
+        names(Raster) = as.character(strsplit(files[i],paste0('.',format[j]))[1])
+        if (names(Raster) %in% factors) {
+          Raster = as.factor(Raster)
+          row.names(Raster@data@attributes[[1]]) = Raster@data@attributes[[1]]$ID
+          fun = max
+        } else {fun = mean}
+        if (res(Raster)[1] != resostack[1] || res(Raster)[2] != resostack[2]) {Raster = aggregate(Raster, fact = c(res(Raster)[1]/resostack[1],res(Raster)[2]/resostack[2]), fun = fun)}
+        Env = stack(Env, Raster)
+      }
+    }
+  }
+  cat('   done... \n')
+  
   
   # Normalizing variables
   if (Norm) {
@@ -53,6 +108,16 @@ treat.var <- function (Env, Reso.adapt = T, Norm = T) {
         Env[[i]] = Env[[i]]/Env[[i]]@data@max
       }
     }
+  }
+  
+  setwd(pdir)
+  
+  # Temporary files
+  if (tmp) {
+    if (!("./.rasters" %in% list.dirs())) (dir.create('./.rasters'))
+    setwd(".rasters")
+    for (i in 1:length(Env@layers)) {Env[[i]] = writeRaster(Env[[i]], names(Env[[i]]), overwrite = T)}
+    setwd(pdir)
   }
   
   return(Env)
