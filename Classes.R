@@ -33,13 +33,13 @@ setGeneric('stacking', function(enm, ...) {return(standardGeneric('stacking'))})
 # 1 - Class definition #
 setClass('Niche.Model',
          representation(name = 'character', 
-                        projection = 'RasterStack', 
+                        projection = 'Raster', 
                         evaluation = 'data.frame', 
                         variables.importance = 'data.frame',
                         data = 'data.frame',
                         parameters = 'list'),
          prototype(name = character(), 
-                   projection = stack(), 
+                   projection = raster(), 
                    evaluation = data.frame(), 
                    variables.importance = data.frame(),
                    data = data.frame(),
@@ -48,7 +48,7 @@ setClass('Niche.Model',
 # 2 - Methods definition #
 setMethod("evaluate", "Niche.Model", function(obj, thresh = 1001) {
   data = obj@data[which(!obj@data$Train),]
-  predicted.values = extract(obj@projection[[1]], data[c('X','Y')])
+  predicted.values = extract(obj@projection, data[c('X','Y')])
   predicted.values[which(is.na(predicted.values))] = 0
   threshold = optim.thresh(data$Presence, predicted.values, thresh)
   threshold = mean(threshold$`max.sensitivity+specificity`)
@@ -137,7 +137,7 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
       })
       
       output$probability <- renderPlot({
-        if (!is.null(ranges$x)) {proba.map = crop(x@projection[[1]], c(ranges$x, ranges$y))} else {proba.map = x@projection[[1]]}
+        if (!is.null(ranges$x)) {proba.map = crop(x@projection, c(ranges$x, ranges$y))} else {proba.map = x@projection}
         plot(proba.map, 
              main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
              xlab = 'Longitude (°)',
@@ -147,7 +147,9 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
                pch = 16, cex = 0.7)
       })
       output$niche <- renderPlot({
-        if (!is.null(ranges$x)) {niche.map = crop(x@projection[[2]], c(ranges$x, ranges$y))} else {niche.map = x@projection[[2]]}
+        if (!is.null(ranges$x)) {
+          niche.map = crop(reclassify(enm@projection, c(-Inf,enm@evaluation$threshold,0, enm@evaluation$threshold,Inf,1)), c(ranges$x, ranges$y))
+        } else {niche.map = reclassify(enm@projection, c(-Inf,enm@evaluation$threshold,0, enm@evaluation$threshold,Inf,1))}
         plot(niche.map, main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
       if(full) {
         output$uncertainity <- renderPlot({
@@ -194,7 +196,7 @@ setClass('Algorithm.Niche.Model',
 # 2 - Class creation function #
 Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
                                   name = character(), 
-                                  projection = stack(), 
+                                  projection = raster(), 
                                   evaluation = data.frame(), 
                                   variables.importance = data.frame(),
                                   data = data.frame(),
@@ -291,7 +293,7 @@ setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
   proj = reclassify(proj, c(-Inf,0,0))
   proj = proj / proj@data@max
   names(proj) = "Projection"
-  obj@projection = stack(proj)
+  obj@projection = proj
   return(obj)})
 
 setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, Env, ...) {
@@ -320,7 +322,7 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
   models = list(x, ...)
   if(format) {for(i in 1:length(models)) {if(!inherits(models[[i]], class(x)[[1]])) {stop('You can only sum models from the same algorithm')}}}
   smodel =  new(class(x)[[1]], 
-                projection = stack(reclassify(x@projection[[1]], c(-Inf,Inf,0))),
+                projection = reclassify(x@projection[[1]], c(-Inf,Inf,0)),
                 data = x@data[1,],
                 variables.importance = x@variables.importance)
   smodel@data = smodel@data[-1,]
@@ -335,7 +337,7 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
   kept.model = 0
   for (i in 1:length(models)) {
     if (models[[i]]@evaluation$AUC > AUCthresh) {
-      smodel@projection[[1]] = smodel@projection[[1]] + models[[i]]@projection[[1]]*models[[i]]@evaluation$AUC
+      smodel@projection = smodel@projection + models[[i]]@projection * models[[i]]@evaluation$AUC
       smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance*models[[i]]@evaluation$AUC
       smodel@data = rbind(smodel@data, models[[i]]@data)
       sAUC = sAUC + models[[i]]@evaluation$AUC
@@ -348,8 +350,8 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
     if (verbose) {cat('No model were kept with this threshold, Null is return. \n')}
     return(NULL)} else {
       
-      smodel@projection[[1]] = smodel@projection[[1]] / sAUC
-      names(smodel@projection[[1]]) = 'Probability'
+      smodel@projection = smodel@projection / sAUC
+      names(smodel@projection) = 'Probability'
       
       # Variables importance
       if (sum(smodel@variables.importance) != 0) {smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100}
@@ -435,16 +437,10 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     enm@variables.importance = sum.algo.ensemble@variables.importance
     cat('   done \n')
     
-    # Binary map
-    cat('Binary tranformation...')
-    enm@projection[[2]] = reclassify(enm@projection[[1]], c(-Inf,enm@evaluation$threshold,0, enm@evaluation$threshold,Inf,1))
-    names(enm@projection[[2]]) = 'Niche'
-    cat('   done \n')
-    
     # Projections stack
     projections = stack()
     for (i in 1:length(algo.ensemble)) {
-      projections = stack(projections, algo.ensemble[[i]]@projection[[1]])
+      projections = stack(projections, algo.ensemble[[i]]@projection)
       names(projections[[i]]) = algo.ensemble[[i]]@name
     }
     
@@ -675,7 +671,7 @@ setMethod('project', "MAXENT.Niche.Model", function(obj, Env, ...) {
   proj = reclassify(proj, c(-Inf,0,0))
   proj = proj / proj@data@max
   names(proj) = "Projection"
-  obj@projection = stack(proj)
+  obj@projection = proj
   return(obj)})
 
 setMethod('evaluate.axes', "MAXENT.Niche.Model", function(obj, thresh = 1001, Env, ...) {
@@ -750,7 +746,7 @@ setClass('Ensemble.Niche.Model',
 
 # 2 - Class creation function #
 Ensemble.Niche.Model <- function(name = character(), 
-                                 projection = stack(), 
+                                 projection = raster(), 
                                  evaluation = data.frame(), 
                                  variables.importance = data.frame(),
                                  data = data.frame(),
@@ -777,7 +773,7 @@ load.enm = function (name, directory = getwd()) {
     a = data.frame()
     }
   enm = Ensemble.Niche.Model(name = as.character(read.csv(paste0(directory,'/Tables/Name'))[1,2]),
-                             projection = stack(raster(paste0(directory,'/Rasters/Probability.tif')), raster(paste0(directory,'/Rasters/Niche.tif'))),
+                             projection = raster(paste0(directory,'/Rasters/Probability.tif')),
                              uncertainity = try(raster(paste0(directory,'/Rasters/Uncertainity.tif'))),
                              evaluation = read.csv(paste0(directory,'/Tables/ENMeval'), row.names = 1),
                              algorithm.evaluation  = read.csv(paste0(directory,'/Tables/AlgoEval'), row.names = 1),
@@ -801,7 +797,6 @@ setMethod('save.enm', 'Ensemble.Niche.Model', function (enm,
   # Raster saving
   cat('   rasters ...')
   writeRaster(enm@projection[[1]], paste0(directory, "/", name, '/Rasters/Probability'), 'GTiff', overwrite = T)
-  writeRaster(enm@projection[[2]], paste0(directory, "/", name, '/Rasters/Niche'), 'GTiff', overwrite = T)
   writeRaster(enm@uncertainity, paste0(directory, "/", name, '/Rasters/Uncertainity'), 'GTiff', overwrite = T)
   cat('saved \n')
   
@@ -1160,7 +1155,7 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
     })
     
     output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(x@enms[[which(choices == input$enmchoice)]]@projection[[1]], c(ranges$x, ranges$y))} else {proba = x@enms[[which(choices == input$enmchoice)]]@projection[[1]]}
+      if (!is.null(ranges$x)) {proba = crop(x@enms[[which(choices == input$enmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@enms[[which(choices == input$enmchoice)]]@projection}
       plot(proba, 
            main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
            xlab = 'Longitude (°)',
@@ -1170,7 +1165,8 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
              pch = 16, cex = 0.7)
     })
     output$niche <- renderPlot({
-      if (!is.null(ranges$x)) {niche.map = crop(x@enms[[which(choices == input$enmchoice)]]@projection[[2]], c(ranges$x, ranges$y))} else {niche.map = x@enms[[which(choices == input$enmchoice)]]@projection[[2]]}
+      niche.map = reclassify(x@enms[[which(choices == input$enmchoice)]]@projection, c(-Inf,x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,0, x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,Inf,1))
+      if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
       plot(niche.map, main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)))})
     output$enm.uncertainity <- renderPlot({
       if (!is.null(ranges$x)) {uncert.map = crop(x@enms[[which(choices == input$enmchoice)]]@uncertainity, c(ranges$x, ranges$y))} else {uncert.map = x@enms[[which(choices == input$enmchoice)]]@uncertainity}

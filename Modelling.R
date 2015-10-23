@@ -102,7 +102,7 @@ Ensemble.Modelling = function(algorithms,
                             Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = NULL,
                             PA = PA, train.frac = train.frac, thresh = thresh, ...))
       if (inherits(model, "try-error")) {cat(model)} else {
-        if (tmp) {model@projection[[1]] = writeRaster(model@projection[[1]], paste0('./.models/',j,model.name), overwrite = T)}
+        if (tmp) {model@projection = writeRaster(model@projection, paste0('./.models/',j,model.name), overwrite = T)}
         models[model.name] = model
       }
       cat('\n\n')
@@ -123,7 +123,7 @@ Ensemble.Modelling = function(algorithms,
     # Saving
     if(save) {
       cat('#### Saving ##### \n\n')
-      save.enm(enm, directory)
+      save.enm(enm, directory = directory)
     }
   }
   
@@ -161,14 +161,13 @@ Stack.Modelling = function(algorithms,
       enm.name = paste0(levels(as.factor(Occurences[,which(names(Occurences) == Spcol)]))[i])
       SpOccurences = subset(Occurences, Occurences[which(names(Occurences) == Spcol)] == levels(as.factor(Occurences[,which(names(Occurences) == Spcol)]))[i])
       cat('Ensemble modelling :', enm.name, '\n\n')
-      enm = try(Ensemble.Modelling(algorithms, pOccurences, Env, 
-                                   Xcol = Xcol, col = Ycol, Pcol = Pcol, rep, name = enm.name, save = F, 
+      enm = try(Ensemble.Modelling(algorithms, SpOccurences, Env, 
+                                   Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, rep, name = enm.name, save = F, 
                                    directory = directory, PA = PA, train.frac = train.frac, thresh = thresh, 
                                    AUCthresh = AUCthresh, uncertainity = uncertainity, tmp = tmp, ...))
       if (inherits(enm, "try-error")) {cat(enm)} else {
         if (tmp) {
-          enm@projection[[1]] = writeRaster(enm@projection[[1]], paste0('./.enms/proba',enm.name), overwrite = T)
-          enm@projection[[2]] = writeRaster(enm@projection[[2]], paste0('./.enms/niche',enm.name), overwrite = T)
+          enm@projection = writeRaster(enm@projection[[1]], paste0('./.enms/proba',enm.name), overwrite = T)
           enm@uncertainity = writeRaster(enm@uncertainity, paste0('./.enms/uncert',enm.name), overwrite = T)
           }
         enms[[i]] = enm
@@ -185,6 +184,8 @@ Stack.Modelling = function(algorithms,
     # Saving
     if(save) {
       cat('#### Saving ##### \n\n')
+      if (!is.null(name)) {save.stack(stack, name = name, directory = directory)} 
+      else {save.stack(stack, directory = directory)}
     }
   }
 
