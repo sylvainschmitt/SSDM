@@ -49,7 +49,7 @@ load.var <- function (directory = getwd(), files = NULL,
   if (is.null(files)) {files.null = T} else {files.null = F}
   for (j in 1:length(format)) {
     if(files.null) {
-      files = list.files(pattern = paste0('.',format,'$'))
+      files = list.files(pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
@@ -78,7 +78,7 @@ load.var <- function (directory = getwd(), files = NULL,
   cat('   resolution and extent adaptation...')
   for (j in 1:length(format)) {
     if(files.null) {
-      files = list.files(pattern = paste0('.',format,'$'))
+      files = list.files(pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
@@ -91,7 +91,10 @@ load.var <- function (directory = getwd(), files = NULL,
           row.names(Raster@data@attributes[[1]]) = Raster@data@attributes[[1]]$ID
           fun = max
         } else {fun = mean}
-        if (res(Raster)[1] != resostack[1] || res(Raster)[2] != resostack[2]) {Raster = aggregate(Raster, fact = c(res(Raster)[1]/resostack[1],res(Raster)[2]/resostack[2]), fun = fun)}
+        if (round(res(Raster)[1], digits = 6) != round(resostack[1], digits = 6) || round(res(Raster)[2], digits = 6) != round(resostack[2], digits = 6)) {
+          cat(c((res(Raster)[1]/resostack[1]),(res(Raster)[2]/resostack[2])))
+          Raster = aggregate(Raster, fact = (res(Raster)[1]/resostack[1]), fun = fun)
+          }
         Env = stack(Env, Raster)
       }
     }

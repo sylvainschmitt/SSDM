@@ -89,7 +89,7 @@ Ensemble.Modelling = function(algorithms,
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
-  if (tmp) {if (!("./.rasters" %in% list.dirs())) (dir.create('./.rasters'))}
+  if (tmp) {if (!("./.models" %in% list.dirs())) (dir.create('./.models'))}
   
   # Algorithms models creation
   cat('#### Algorithms models creation ##### \n\n')
@@ -98,10 +98,11 @@ Ensemble.Modelling = function(algorithms,
     for (j in 1:rep) {
       model.name = paste0(algorithms[i],'.',j)
       cat('Modelling :', model.name, '\n\n')
-      model = try(Modelling(algorithms[i], Occurences, Env, Xcol, Ycol, Pcol, name = NULL,
-                            PA = NULL, train.frac = 0.7, thresh = 1001, ...))
+      model = try(Modelling(algorithms[i], Occurences, Env, 
+                            Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = NULL,
+                            PA = PA, train.frac = train.frac, thresh = thresh, ...))
       if (inherits(model, "try-error")) {cat(model)} else {
-        if (tmp) {model@projection[[1]] = writeRaster(model@projection[[1]], paste0('./.rasters/',j,model.name), overwrite = T)}
+        if (tmp) {model@projection[[1]] = writeRaster(model@projection[[1]], paste0('./.models/',j,model.name), overwrite = T)}
         models[model.name] = model
       }
       cat('\n\n')
@@ -112,7 +113,7 @@ Ensemble.Modelling = function(algorithms,
   cat('#### Ensemble modelling with algorithms models ##### \n\n')
   algo = list()
   for (i in 1:length(models)) {algo[[i]] = models[[i]]}
-  algo['name'] = name
+  if (!is.null(name)) {algo['name'] = name}
   algo['AUCthresh'] = AUCthresh
   algo['thresh'] = thresh
   algo['uncertainity'] = uncertainity
@@ -127,7 +128,65 @@ Ensemble.Modelling = function(algorithms,
   }
   
   # Removing tmp
-  if (tmp) {unlink('./.rasters/', recursive = T, force = T)}
+  if (tmp) {unlink('./.models', recursive = T, force = T)}
   
   return(enm)
+}
+
+#### Stacked Species Ensemble Modelling function #### ----
+Stack.Modelling = function(algorithms,
+                           # Modelling data input
+                           Occurences, Env,
+                           # Occurences reading
+                           Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL, Spcol = 'SpeciesID',
+                           # Model creation
+                           rep = 1, name = NULL, save = F, directory = getwd(),
+                           # Pseudo-absences definition
+                           PA = NULL, train.frac = 0.7,
+                           # Evaluation parameters
+                           thresh = 1001, AUCthresh = 0.75, uncertainity = T, tmp = F,
+                           # Modelling parameters
+                           ...) {
+  
+  # Test if algorithm is available
+  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
+  for (i in 1:length(algorithms)) {
+    if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
+  if (tmp) {if (!("./.enms" %in% list.dirs())) (dir.create('./.enms'))}
+  
+  # Ensemble models creation
+  cat('#### Ensemble models creation ##### \n\n')
+  enms = list()
+  for (i in 1:length(levels(as.factor(Occurences[,which(names(Occurences) == Spcol)])))) {
+      enm.name = paste0(levels(as.factor(Occurences[,which(names(Occurences) == Spcol)]))[i])
+      SpOccurences = subset(Occurences, Occurences[which(names(Occurences) == Spcol)] == levels(as.factor(Occurences[,which(names(Occurences) == Spcol)]))[i])
+      cat('Ensemble modelling :', enm.name, '\n\n')
+      enm = try(Ensemble.Modelling(algorithms, pOccurences, Env, 
+                                   Xcol = Xcol, col = Ycol, Pcol = Pcol, rep, name = enm.name, save = F, 
+                                   directory = directory, PA = PA, train.frac = train.frac, thresh = thresh, 
+                                   AUCthresh = AUCthresh, uncertainity = uncertainity, tmp = tmp, ...))
+      if (inherits(enm, "try-error")) {cat(enm)} else {
+        if (tmp) {
+          enm@projection[[1]] = writeRaster(enm@projection[[1]], paste0('./.enms/proba',enm.name), overwrite = T)
+          enm@projection[[2]] = writeRaster(enm@projection[[2]], paste0('./.enms/niche',enm.name), overwrite = T)
+          enm@uncertainity = writeRaster(enm@uncertainity, paste0('./.enms/uncert',enm.name), overwrite = T)
+          }
+        enms[[i]] = enm
+      cat('\n\n')
+    }
+  }
+  
+  # Species stacking
+  cat('#### Species stacking with ensemble models ##### \n\n')
+  if (!is.null(name)) {enms['name'] = name}
+  stack = do.call(stacking, enms)
+  
+  if(!is.null(stack)) {
+    # Saving
+    if(save) {
+      cat('#### Saving ##### \n\n')
+    }
+  }
+
+  return(stack)
 }
