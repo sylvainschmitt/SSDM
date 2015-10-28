@@ -13,21 +13,24 @@ load.occ = function(directory = getwd(), Env, file = NULL, ...,
   
   # Geographical resampling
   if (is.null(Spcol)) {
-    Occurences$Sp = 1
-    Spcol = 'NULL'
+    Occurences$SpNULL = 1
+    Spcol = 'SpNULL'
   }
-  if (GeoRes) {
-    cat('Geographical resampling \n\n')
-    thin.result = thin(Occurences, long.col = Xcol, lat.col = Ycol, spec.col = 'Sp', 
-                      thin.par = reso, reps = 1, locs.thinned.list.return = T, 
-                      write.files = F, write.log.file = F, verbose = F)
-    deleted = {}
-    occ.indices = c(1:length(row.names(Occurences)))
-    res.indices = as.numeric(row.names(thin.result[[1]]))
-    for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
-    Occurences = Occurences[-deleted,]
+  for (i in 1:length(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)])))) {
+    if (GeoRes) {
+      cat(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i],'geographical resampling \n')
+      SpOccurences = subset(Occurences, Occurences[which(names(Occurences)==Spcol)] == levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i])
+      thin.result = thin(SpOccurences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol, 
+                         thin.par = reso, reps = 1, locs.thinned.list.return = T, 
+                         write.files = F, write.log.file = F, verbose = F)
+      deleted = {}
+      occ.indices = c(1:length(row.names(SpOccurences)))
+      res.indices = as.numeric(row.names(thin.result[[1]]))
+      for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
+      if (length(deleted) > 0) {Occurences = Occurences[-deleted,]}
+    }
+    if (Spcol == 'SpNULL') {Occurences = Occurences[-which(names(Occurences)=='SpNULL')]}
   }
-  if (Spcol == 'NULL') {Occurences = Occurences[-which(names(Occurences)=='Sp')]}
   
   setwd(pdir)
   return(Occurences)

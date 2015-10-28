@@ -9,11 +9,12 @@ Modelling = function(algorithm,
                      # Pseudo-absences definition
                      PA = NULL, train.frac = 0.7,
                      # Evaluation parameters
-                     thresh = 1001,
+                     thresh = 1001, metric = 'SES',
                      # Modelling parameters
                      ...) {
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
+  if (algorithm == 'all') {algorithm = available.algo}
   if(!(algorithm %in% available.algo)) {stop(algorithm,' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}
   
   # Empty Algorithm niche model object creation
@@ -60,7 +61,7 @@ Modelling = function(algorithm,
   
   # Evaluation
   cat('Model evaluation...\n')
-  model = evaluate(model, thresh)
+  model = evaluate(model, thresh, metric)
   cat('   done. \n\n')
   
   # Evaluation
@@ -82,11 +83,12 @@ Ensemble.Modelling = function(algorithms,
                               # Pseudo-absences definition
                               PA = NULL, train.frac = 0.7,
                               # Evaluation parameters
-                              thresh = 1001, AUCthresh = 0.75, uncertainity = T, tmp = F,
+                              thresh = 1001, metric = 'SES', AUCthresh = 0.75, uncertainity = T, tmp = F,
                               # Modelling parameters
                               ...) {
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
+  if (algorithms == 'all') {algorithms = available.algo}
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {if (!("./.models" %in% list.dirs())) (dir.create('./.models'))}
@@ -100,7 +102,7 @@ Ensemble.Modelling = function(algorithms,
       cat('Modelling :', model.name, '\n\n')
       model = try(Modelling(algorithms[i], Occurences, Env, 
                             Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = NULL,
-                            PA = PA, train.frac = train.frac, thresh = thresh, ...))
+                            PA = PA, train.frac = train.frac, thresh = thresh, metric = metric, ...))
       if (inherits(model, "try-error")) {cat(model)} else {
         if (tmp) {model@projection = writeRaster(model@projection, paste0('./.models/',j,model.name), overwrite = T)}
         models[model.name] = model
@@ -145,11 +147,14 @@ Stack.Modelling = function(algorithms,
                            PA = NULL, train.frac = 0.7,
                            # Evaluation parameters
                            thresh = 1001, AUCthresh = 0.75, uncertainity = T, tmp = F,
+                           # Diversity map computing
+                           method = 'P', metric = 'SES', rep.B = 1000,
                            # Modelling parameters
                            ...) {
   
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
+  if (algorithms == 'all') {algorithms = available.algo}
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {if (!("./.enms" %in% list.dirs())) (dir.create('./.enms'))}
@@ -164,12 +169,12 @@ Stack.Modelling = function(algorithms,
       enm = try(Ensemble.Modelling(algorithms, SpOccurences, Env, 
                                    Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, rep, name = enm.name, save = F, 
                                    directory = directory, PA = PA, train.frac = train.frac, thresh = thresh, 
-                                   AUCthresh = AUCthresh, uncertainity = uncertainity, tmp = tmp, ...))
+                                   metric = metric, AUCthresh = AUCthresh, uncertainity = uncertainity, tmp = tmp, ...))
       if (inherits(enm, "try-error")) {cat(enm)} else {
-        if (tmp) {
+        if (tmp && !is.null(enm)) {
           enm@projection = writeRaster(enm@projection[[1]], paste0('./.enms/proba',enm.name), overwrite = T)
           enm@uncertainity = writeRaster(enm@uncertainity, paste0('./.enms/uncert',enm.name), overwrite = T)
-          }
+        }
         enms[[i]] = enm
       cat('\n\n')
     }
@@ -178,6 +183,10 @@ Stack.Modelling = function(algorithms,
   # Species stacking
   cat('#### Species stacking with ensemble models ##### \n\n')
   if (!is.null(name)) {enms['name'] = name}
+  enms['method'] = method
+  enms['metric'] = metric
+  enms['thresh'] = thresh
+  enms['rep.B'] = rep.B
   stack = do.call(stacking, enms)
   
   if(!is.null(stack)) {
