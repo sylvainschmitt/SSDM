@@ -9,7 +9,7 @@ Modelling = function(algorithm,
                      # Pseudo-absences definition
                      PA = NULL, train.frac = 0.7,
                      # Evaluation parameters
-                     thresh = 1001, metric = 'SES',
+                     thresh = 1001, metric = 'SES', axes.metric = 'AUC',
                      # Modelling parameters
                      ...) {
   # Test if algorithm is available
@@ -21,6 +21,7 @@ Modelling = function(algorithm,
   model = Algorithm.Niche.Model(algorithm)
   if (!is.null(name)) {name = paste0(name,'.')}
   model@name = paste0(name,algorithm,'.Niche.Model')
+  model@parameters$data = 'presence/absence data set'
   
   cat('Data check ... \n')
   # Occurences data input test | Data frame needed
@@ -31,6 +32,7 @@ Modelling = function(algorithm,
   if (is.null(Pcol)) {
     PO = T # Presence only
     cat('No presence column, presence-only data set is supposed.\n')
+    model@parameters$data = 'presence-only data set'
   } else if ((Pcol %in% names(Occurences)) == F) {stop('Presence column is not well defined')}
   if (!is.null(PA)) {PO = T}
   if (PO) {cat('Pseudo-absence selection will be computed.\n')}
@@ -66,7 +68,7 @@ Modelling = function(algorithm,
   
   # Evaluation
   cat('Model axes contribution evaluation...\n')
-  model = evaluate.axes(model, thresh, Env, ...)
+  model = evaluate.axes(model, thresh, Env, axes.metric, ...)
   cat('   done. \n\n')
   
   return(model)
@@ -83,7 +85,9 @@ Ensemble.Modelling = function(algorithms,
                               # Pseudo-absences definition
                               PA = NULL, train.frac = 0.7,
                               # Evaluation parameters
-                              thresh = 1001, metric = 'SES', AUCthresh = 0.75, uncertainity = T, tmp = F,
+                              thresh = 1001, metric = 'SES',  axes.metric = 'AUC', uncertainity = T, tmp = F,
+                              # Assembling parameters
+                              ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T,
                               # Modelling parameters
                               ...) {
   # Test if algorithm is available
@@ -100,9 +104,9 @@ Ensemble.Modelling = function(algorithms,
     for (j in 1:rep) {
       model.name = paste0(algorithms[i],'.',j)
       cat('Modelling :', model.name, '\n\n')
-      model = try(Modelling(algorithms[i], Occurences, Env, 
-                            Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = NULL,
-                            PA = PA, train.frac = train.frac, thresh = thresh, metric = metric, ...))
+      model = try(Modelling(algorithms[i], Occurences, Env, Xcol = Xcol, Ycol = Ycol, Pcol = Pcol,
+                            name = NULL, PA = PA, train.frac = train.frac, thresh = thresh, 
+                            metric = metric, axes.metric =axes.metric,...))
       if (inherits(model, "try-error")) {cat(model)} else {
         if (tmp) {model@projection = writeRaster(model@projection, paste0('./.models/',j,model.name), overwrite = T)}
         models[model.name] = model
@@ -116,12 +120,20 @@ Ensemble.Modelling = function(algorithms,
   algo = list()
   for (i in 1:length(models)) {algo[[i]] = models[[i]]}
   if (!is.null(name)) {algo['name'] = name}
-  algo['AUCthresh'] = AUCthresh
   algo['thresh'] = thresh
   algo['uncertainity'] = uncertainity
+  algo[['ensemble.metric']] = ensemble.metric
+  algo[['ensemble.thresh']] = ensemble.thresh 
+  algo['weight'] = weight
   enm = do.call(ensemble, algo)
   
   if(!is.null(enm)) {
+    # Parameters
+    text.algorithms = character()
+    for (i in 1:length(algorithms)) {text.algorithms = paste0(text.algorithms,'.',algorithms[i])}
+    enm@parameters$algorithms = text.algorithms
+    enm@parameters$rep = rep
+    
     # Saving
     if(save) {
       cat('#### Saving ##### \n\n')
@@ -146,7 +158,9 @@ Stack.Modelling = function(algorithms,
                            # Pseudo-absences definition
                            PA = NULL, train.frac = 0.7,
                            # Evaluation parameters
-                           thresh = 1001, AUCthresh = 0.75, uncertainity = T, tmp = F,
+                           thresh = 1001, axes.metric = 'AUC', uncertainity = T, tmp = F,
+                           # Assembling parameters
+                           ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T,
                            # Diversity map computing
                            method = 'P', metric = 'SES', rep.B = 1000,
                            # Modelling parameters
@@ -167,29 +181,38 @@ Stack.Modelling = function(algorithms,
       SpOccurences = subset(Occurences, Occurences[which(names(Occurences) == Spcol)] == levels(as.factor(Occurences[,which(names(Occurences) == Spcol)]))[i])
       cat('Ensemble modelling :', enm.name, '\n\n')
       enm = try(Ensemble.Modelling(algorithms, SpOccurences, Env, 
-                                   Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, rep, name = enm.name, save = F, 
-                                   directory = directory, PA = PA, train.frac = train.frac, thresh = thresh, 
-                                   metric = metric, AUCthresh = AUCthresh, uncertainity = uncertainity, tmp = tmp, ...))
+                                   Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, directory = directory,
+                                   PA = PA, train.frac = train.frac, thresh = thresh, metric = metric,
+                                   axes.metric = axes.metric, uncertainity = uncertainity, tmp = tmp,
+                                   ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, 
+                                   weight = weight, ...))
       if (inherits(enm, "try-error")) {cat(enm)} else {
         if (tmp && !is.null(enm)) {
           enm@projection = writeRaster(enm@projection[[1]], paste0('./.enms/proba',enm.name), overwrite = T)
           enm@uncertainity = writeRaster(enm@uncertainity, paste0('./.enms/uncert',enm.name), overwrite = T)
         }
-        enms[[i]] = enm
+        if(!is.null(enm)) {enms[[length(enms)+1]] = enm}
       cat('\n\n')
     }
   }
   
   # Species stacking
-  cat('#### Species stacking with ensemble models ##### \n\n')
-  if (!is.null(name)) {enms['name'] = name}
-  enms['method'] = method
-  enms['metric'] = metric
-  enms['thresh'] = thresh
-  enms['rep.B'] = rep.B
-  stack = do.call(stacking, enms)
+  if (length(enms) < 2) {
+    stop('You have less than two remaining specie ensemble models, maybe you should try an easier thresholding ?')
+  } else {
+    cat('#### Species stacking with ensemble models ##### \n\n')
+    if (!is.null(name)) {enms['name'] = name}
+    enms['method'] = method
+    enms['metric'] = metric
+    enms['thresh'] = thresh
+    enms['rep.B'] = rep.B
+    stack = do.call(stacking, enms)
+  }
   
   if(!is.null(stack)) {
+    # Paremeters
+    stack@parameters$sp.nb.origin = length(levels(as.factor(Occurences[,which(names(Occurences) == Spcol)])))
+    
     # Saving
     if(save) {
       cat('#### Saving ##### \n\n')

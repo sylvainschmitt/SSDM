@@ -22,8 +22,8 @@ setGeneric('PA.select', function(obj, Env, ...) {return(standardGeneric('PA.sele
 setGeneric('data.values', function(obj, Env, na.rm = T) {return(standardGeneric('data.values'))})
 setGeneric('get_model', function(obj, ...) {return(standardGeneric('get_model'))})
 setGeneric('project', function(obj, Env, ...) {return(standardGeneric('project'))})
-setGeneric('evaluate.axes', function(obj, thresh = 1001, Env, ...) {return(standardGeneric('evaluate.axes'))})
-setGeneric('ensemble', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, uncertainity = T) {return(standardGeneric('ensemble'))})
+setGeneric('evaluate.axes', function(obj, thresh = 1001, Env, axes.metric = 'AUC', ...) {return(standardGeneric('evaluate.axes'))})
+setGeneric('ensemble', function(x, ..., name = NULL,ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T, thresh = 1001, uncertainity = T) {return(standardGeneric('ensemble'))})
 setGeneric('save.enm', function (enm, ...) {return(standardGeneric('save.enm'))})
 setGeneric('save.stack', function (stack, ...) {return(standardGeneric('save.stack'))})
 setGeneric('stacking', function(enm, ...) {return(standardGeneric('stacking'))})
@@ -37,16 +37,17 @@ setClass('Niche.Model',
                         evaluation = 'data.frame', 
                         variables.importance = 'data.frame',
                         data = 'data.frame',
-                        parameters = 'list'),
+                        parameters = 'data.frame'),
          prototype(name = character(), 
                    projection = raster(), 
                    evaluation = data.frame(), 
                    variables.importance = data.frame(),
                    data = data.frame(),
-                   parameters = list()))
+                   parameters = data.frame()))
 
 # 2 - Methods definition #
 setMethod("evaluate", "Niche.Model", function(obj, thresh = 1001, metric = 'SES') {
+  obj@parameters$metric = metric
   data = obj@data[which(!obj@data$Train),]
   predicted.values = extract(obj@projection, data[c('X','Y')])
   predicted.values[which(is.na(predicted.values))] = 0
@@ -209,16 +210,21 @@ Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
                                   evaluation = data.frame(), 
                                   variables.importance = data.frame(),
                                   data = data.frame(),
-                                  parameters = list()) {
+                                  parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
   object.class = paste0(algorithm,'.Niche.Model')
-  return(new(object.class, name = name, projection = projection, evaluation = evaluation, variables.importance = variables.importance, data = data, parameters = list()))
+  return(new(object.class, name = name, projection = projection, evaluation = evaluation, variables.importance = variables.importance, data = data, parameters = parameters))
 }
 
 # 3 - Methods definition #
 setMethod('get_PA', "Algorithm.Niche.Model", function(obj) {return(obj)})
 
 setMethod('PA.select', "Algorithm.Niche.Model", function(obj, Env, PA = NULL, train.frac = 0.7) {
-  if (is.null(PA)) {PA = get_PA(obj)}
+  if (is.null(PA)) {
+    PA = get_PA(obj)
+    obj@parameters$PA = 'default'
+  } else {
+    obj@parameters$PA = paste0(as.character(PA$nb),'.',as.character(PA$strat))
+  }
   
   # Mask defining
   if (PA$strat == '2nd') {
@@ -306,35 +312,61 @@ setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
   obj@projection = proj
   return(obj)})
 
-setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, Env, ...) {
+setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, Env, 
+                                                             axes.metric = 'AUC', ...) {
+  obj@parameters$axes.metric = axes.metric
   obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
   names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
+  if (axes.metric == 'Pearson') {
+    data = obj@data[which(!obj@data$Train),]
+    o.predicted.values = extract(obj@projection, data[c('X','Y')]) # original model predicted values
+  }
+
   for (i in 5:length(obj@data)) {
+    # Get model predictions without one axis reeated for all axis
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
     data = obj.axes@data[which(!obj.axes@data$Train),]
     model = get_model(obj.axes,...)
     predicted.values = predict(model, data)
-    threshold = optim.thresh(data$Presence, predicted.values, thresh)
-    threshold = mean(threshold$`max.sensitivity+specificity`)
-    evaluation = accuracy(data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
+    if (axes.metric != 'Pearson') {
+      threshold = optim.thresh(data$Presence, predicted.values, thresh)
+      threshold = mean(threshold$`max.sensitivity+specificity`)
+      evaluation = accuracy(data$Presence, predicted.values, threshold)
+      obj@variables.importance[1,(i-4)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - evaluation[1,which(names(evaluation) == axes.metric)]
+    } else {
+      obj@variables.importance[(i-4)] = cor(predicted.values, o.predicted.values)
+    }
   }
+  
+  # Variable importance normalization (%)
   if(sum(obj@variables.importance) == 0) {
     all.null = T
     for (i in 1:length(obj@variables.importance[1,])) {if(obj@variables.importance[1,i] != 0) {all.null = F}}
     if (all.null) {
       obj@variables.importance[1,] = 100 / length(obj@variables.importance)
     } else {
-        obj@variables.importance = obj@variables.importance * 100
-        }
-  } else {obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100}
+      obj@variables.importance = obj@variables.importance * 100
+    }
+  } else {
+    obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  }
   row.names(obj@variables.importance) = "Axes.evaluation"
   return(obj)})
 
-setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, format = T, verbose = T, na.rm = F) {
+setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble.metric = c('AUC'), 
+                                                   ensemble.thresh = c(0.75), weight = T, 
+                                                   thresh = 1001, format = T, verbose = T, na.rm = F) {
   models = list(x, ...)
-  if(format) {for(i in 1:length(models)) {if(!inherits(models[[i]], class(x)[[1]])) {stop('You can only sum models from the same algorithm')}}}
+  if (length(ensemble.metric) != length(ensemble.thresh)) {stop('You must have the same number of metrics and associated thresholds in models assembling step (see ensemble.metric and ensemble.thresh)')}
+  if(format) {
+    for(i in 1:length(models)) {
+      if(!inherits(models[[i]], class(x)[[1]])) {
+        stop('You can only sum models from the same algorithm')
+      }
+    }
+  }
+  
   smodel =  new(class(x)[[1]], 
                 projection = reclassify(x@projection[[1]], c(-Inf,Inf,0)),
                 data = x@data[1,],
@@ -347,14 +379,30 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
   smodel@name = paste0(name,class(x)[[1]],'.ensemble')
   
   # Datas, Projections, and Variables importance fusion
-  sAUC = 0
+  sweight = 0
   kept.model = 0
   for (i in 1:length(models)) {
-    if (models[[i]]@evaluation$AUC > AUCthresh) {
-      smodel@projection = smodel@projection + models[[i]]@projection * models[[i]]@evaluation$AUC
-      smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance*models[[i]]@evaluation$AUC
+    # Assembling selection test depending on parameters
+    test = T
+    weight.value = c()
+    for (j in 1:length(ensemble.metric)) {
+      if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
+        test = F
+        }
+      weight.value = c(weight.value, ensemble.thresh[j])
+    }
+    weight.value = mean(weight.value)
+    if (test) {
+      if (weight) {
+        smodel@projection = smodel@projection + models[[i]]@projection * weight.value
+        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance * weight.value
+        sweight = sweight + weight.value
+      } else {
+        smodel@projection = smodel@projection + models[[i]]@projection
+        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance
+        sweight = sweight + 1
+      }
       smodel@data = rbind(smodel@data, models[[i]]@data)
-      sAUC = sAUC + models[[i]]@evaluation$AUC
       kept.model = kept.model + 1
     }
   }
@@ -364,25 +412,35 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthres
     if (verbose) {cat('No model were kept with this threshold, Null is return. \n')}
     return(NULL)} else {
       
-      smodel@projection = smodel@projection / sAUC
+      smodel@projection = smodel@projection / sweight
       names(smodel@projection) = 'Probability'
       
       # Variables importance
-      if (sum(smodel@variables.importance) == 0) {
-        all.null = T
-        for(i in 1:length(smodel@variables.importance)) {if(smodel@variables.importance[1,i] != 0) {all.null = F}}
-        if(all.null) {smodel@variables.importance[1,] = (100/length(smodel@variables.importance))} else {smodel@variables.importance = smodel@variables.importance * 100}
+      if (!is.numeric(sum(smodel@variables.importance))) {
+        cat('Error variables importance is not numeric : \n')
+        print(smodel@variables.importance)
+        smodel@variables.importance = x@variables.importance
+        smoadel@variable.importance[1,] = 0
+      } else {
+        if(is.nan(sum(smodel@variables.importance))) {
+          cat('Error variables importance is NaN')
+          smodel@variables.importance[1,] = (100/length(smodel@variables.importance))
+        } else {
+          if (sum(smodel@variables.importance) == 0) {
+            all.null = T
+            for(i in 1:length(smodel@variables.importance)) {if(smodel@variables.importance[1,i] != 0) {all.null = F}}
+            if(all.null) {smodel@variables.importance[1,] = (100/length(smodel@variables.importance))} else {smodel@variables.importance = smodel@variables.importance * 100}
+          }
+          else {smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100}
+        }
       }
-      else {smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100}
-      
-      # Parameters
-      smodel@parameters = x@parameters
-      smodel@parameters['kept.model'] = kept.model
       
       # Evaluation
       smodel = evaluate(smodel, thresh = 1001)}})
 
-setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUCthresh = 0.75, thresh = 1001, uncertainity = T) {
+setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, 
+                                                        ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
+                                                        weight = T, thresh = 1001, uncertainity = T) {
   models = list(x, ...)
   enm = Ensemble.Niche.Model()
   
@@ -406,11 +464,13 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
       }
     }
     type.model['name'] = name
-    type.model['AUCthresh'] = AUCthresh
+    type.model[['ensemble.metric']] = ensemble.metric
+    type.model[['ensemble.thresh']] = ensemble.thresh
+    type.model['weight'] = weight
     type.model['thresh'] = thresh
     type.model['format'] = T
     type.model['verbose'] = F
-   algo.ensemble[type] = do.call(sum, type.model)
+    algo.ensemble[type] = do.call(sum, type.model)
   }
   cat('   done. \n')
   
@@ -424,77 +484,98 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL, AUC
     algo.list = list()
     for (i in 1:length(algo.ensemble)) {algo.list[[i]] = algo.ensemble[[i]]}
     algo.list['name'] = 'sum'
-    algo.list['AUCthresh'] = 0
+    algo.list[['ensemble.metric']] = ensemble.metric
+    algo.list[['ensemble.thresh']] = ensemble.thresh
+    algo.list['weight'] = weight
     algo.list['thresh'] = thresh
     algo.list['format'] = F
     sum.algo.ensemble = do.call(sum, algo.list)
-    
-    # Name
-    if (!is.null(name)) {name = paste0(name,'.')} else {name = 'Specie.'}
-    enm@name = paste0(name,'Ensemble.Niche.Model')
-    
-    # Projection
-    enm@projection = sum.algo.ensemble@projection
-    cat('   done \n')
-    
-    # Data
-    enm@data = algo.ensemble[[1]]@data
-    if (length(algo.ensemble) > 1) {
-      for (i in 2:length(algo.ensemble)) {
-        enm@data = rbind(enm@data, algo.ensemble[[i]]@data)
-      }
-    }
-    
-    # Evaluation
-    cat('Model evaluation...')
-    enm = evaluate(enm)
-    cat('   done \n')
-    
-    # Axes evaluation
-    cat('Axes evaluation...')
-    enm@variables.importance = sum.algo.ensemble@variables.importance
-    cat('   done \n')
-    
-    # Projections stack
-    projections = stack()
-    for (i in 1:length(algo.ensemble)) {
-      projections = stack(projections, algo.ensemble[[i]]@projection)
-      names(projections[[i]]) = algo.ensemble[[i]]@name
-    }
-    
-    # Algorithms Correlation
-    if (!(uncertainity)) {cat('Algorithm correlation computing is unactivated \n')}
-    if (uncertainity && length(projections@layers) > 1) {
-      cat('Algorithms correlation...')
-      enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
+    if (length(sum.algo.ensemble) < 1) {
+      return(NULL)
+    } else {
+      
+      # Name
+      if (!is.null(name)) {name = paste0(name,'.')} else {name = 'Specie.'}
+      enm@name = paste0(name,'Ensemble.Niche.Model')
+      
+      # Projection
+      enm@projection = sum.algo.ensemble@projection
       cat('   done \n')
-    }
-    
-    # Uncertainity map
-    if (!(uncertainity)) {cat('Uncertainty mapping is unactivated \n')}
-    if (uncertainity && length(projections@layers) > 1) {
-      cat('Uncertainity mapping...')
-      enm@uncertainity = calc(projections, var)
-      names(enm@uncertainity) = 'Uncertainity map'
+      
+      # Data
+      enm@data = algo.ensemble[[1]]@data
+      if (length(algo.ensemble) > 1) {
+        for (i in 2:length(algo.ensemble)) {
+          enm@data = rbind(enm@data, algo.ensemble[[i]]@data)
+        }
+      }
+      
+      # Evaluation
+      cat('Model evaluation...')
+      enm = evaluate(enm)
       cat('   done \n')
+      
+      # Axes evaluation
+      cat('Axes evaluation...')
+      enm@variables.importance = sum.algo.ensemble@variables.importance
+      cat('   done \n')
+      
+      # Projections stack
+      projections = stack()
+      for (i in 1:length(algo.ensemble)) {
+        projections = stack(projections, algo.ensemble[[i]]@projection)
+        names(projections[[i]]) = algo.ensemble[[i]]@name
+      }
+      
+      # Algorithms Correlation
+      if (!(uncertainity)) {cat('Algorithm correlation computing is unactivated \n')}
+      if (uncertainity && length(projections@layers) > 1) {
+        cat('Algorithms correlation...')
+        enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
+        cat('   done \n')
+      }
+      
+      # Uncertainity map
+      if (!(uncertainity)) {cat('Uncertainty mapping is unactivated \n')}
+      if (uncertainity && length(projections@layers) > 1) {
+        cat('Uncertainity mapping...')
+        enm@uncertainity = calc(projections, var)
+        names(enm@uncertainity) = 'Uncertainity map'
+        cat('   done \n')
+      }
+      
+      # Algorithms Evaluation
+      cat('Algorithms evaluation...')
+      enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
+      row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
+      if (length(algo.ensemble) > 1) {
+        for (i in 2:length(algo.ensemble)) {
+          enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
+          row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
+        }
+      }
+      enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
+      if (length(algo.ensemble) > 1) {
+        for (i in 2:length(algo.ensemble)) {
+          enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
+        }
+        
+      }
+      
+      # Parameters
+      enm@parameters = algo.ensemble[[1]]@parameters
+      text.ensemble.metric = character()
+      text.ensemble.thresh = character()
+      for (i in 1:length(ensemble.metric)) {
+        text.ensemble.metric = paste0(text.ensemble.metric,'.',ensemble.metric[i])
+        text.ensemble.thresh = paste0(text.ensemble.thresh,'|',ensemble.thresh[i])
+      }
+      smodel@parameters$ensemble.metric = text.ensemble.metric 
+      smodel@parameters$ensemble.thresh = text.ensemble.thresh
+      smodel@parameters$weight = weight
+      smodel@parameters$kept.model = kept.model
     }
     
-    # Algorithms Evaluation
-    cat('Algorithms evaluation...')
-    enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
-    row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
-    if (length(algo.ensemble) > 1) {
-      for (i in 2:length(algo.ensemble)) {
-        enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
-        row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
-      }
-    }
-    enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
-    if (length(algo.ensemble) > 1) {
-      for (i in 2:length(algo.ensemble)) {
-        enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
-      }
-    }
     cat('   done \n')
     
     return(enm)}})
@@ -779,20 +860,20 @@ Ensemble.Niche.Model <- function(name = character(),
                                  evaluation = data.frame(), 
                                  variables.importance = data.frame(),
                                  data = data.frame(),
-                                 parameters = list(),
                                  uncertainity = raster(),
                                  algorithm.correlation = data.frame(),
-                                 algorithm.evaluation = data.frame()) {
+                                 algorithm.evaluation = data.frame(),
+                                 parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
   return(new('Ensemble.Niche.Model', 
              name = name, 
              projection = projection, 
              evaluation = evaluation, 
              variables.importance = variables.importance, 
              data = data, 
-             parameters = parameters,
              uncertainity = uncertainity,
              algorithm.correlation = algorithm.correlation,
-             algorithm.evaluation = algorithm.evaluation))}
+             algorithm.evaluation = algorithm.evaluation,
+             parameters = parameters))}
 
 load.enm = function (name, directory = getwd()) {
   directory = paste0(directory, '/', name)
@@ -808,7 +889,8 @@ load.enm = function (name, directory = getwd()) {
                              algorithm.evaluation  = read.csv(paste0(directory,'/Tables/AlgoEval'), row.names = 1),
                              algorithm.correlation = a,
                              data = read.csv(paste0(directory,'/Tables/Data'), row.names = 1),
-                             variables.importance = read.csv(paste0(directory,'/Tables/VarImp'), row.names = 1))
+                             variables.importance = read.csv(paste0(directory,'/Tables/VarImp'), row.names = 1),
+                             parameters = read.csv(paste0(directory,'/Tables/Parameters'), row.names = 1))
   return(enm)
 }
 
@@ -837,6 +919,7 @@ setMethod('save.enm', 'Ensemble.Niche.Model', function (enm,
   write.csv(enm@variables.importance, paste0(directory, "/", name, '/Tables/VarImp'))
   write.csv(enm@data, paste0(directory, "/", name, '/Tables/Data'))
   write.csv(enm@name, paste0(directory, "/", name, '/Tables/Name'))
+  write.csv(enm@parameters, paste0(directory, "/", name, '/Tables/Parameters'))
   cat('saved \n \n')
 })
 
@@ -848,7 +931,8 @@ setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, me
   for (i in 1:length(enms)) {if(enms[[i]]@name %in% names) {stop('Ensemble models can\'t have the same name, you need to rename one of ',enms[[i]]@name)} else {names = c(names, enms[[i]]@name)}}
   cat('Stack creation... \n')
   stack = Stack.Species.Ensemble.Niche.Model(diversity.map = reclassify(enm@projection[[1]], c(-Inf,Inf,0)), 
-                                             uncertainity = reclassify(enm@uncertainity, c(-Inf,Inf,NA)))
+                                             uncertainity = reclassify(enm@uncertainity, c(-Inf,Inf,NA)),
+                                             parameters = enm@parameters)
   
   # Name
   cat('   naming...')
@@ -914,17 +998,20 @@ setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, me
   for (i in 2:length(enms)) {stack@evaluation = rbind(stack@evaluation, enms[[i]]@evaluation)}
   a = stack@evaluation[1:2,]
   row.names(a) = c('Mean', 'SD')
-  for (i in 1:length(stack@evaluation)) {a[i] = c(mean(stack@evaluation[,i], na.rm = T), var(stack@evaluation[i], na.rm = T))}
+  for (i in 1:length(stack@evaluation)) {a[i] = c(mean(stack@evaluation[,i], na.rm = T), sd(stack@evaluation[,i], na.rm = T))}
   stack@evaluation = a
   cat(' done. \n')
   
   # Variables Importance
   cat('   comparing variables importnace...')
   stack@variables.importance = enm@variables.importance
-  for (i in 2:length(enms)) {stack@variables.importance = rbind(stack@variables.importance, enms[[i]]@variables.importance)}
+  for (i in 2:length(enms)) {
+    a  = try(rbind(stack@variables.importance, enms[[i]]@variables.importance))
+    if (inherits(a, 'try-error')) {cat(a)} else {stack@variables.importance = a}
+  }
   a = stack@variables.importance[1:2,]
   row.names(a) = c('Mean', 'SD')
-  for (i in 1:length(stack@variables.importance)) {a[i] = c(mean(stack@variables.importance[,i]), var(stack@variables.importance[i]))}
+  for (i in 1:length(stack@variables.importance)) {a[i] = c(mean(stack@variables.importance[,i]), sd(stack@variables.importance[,i]))}
   stack@variables.importance = a
   cat(' done. \n')
   
@@ -935,8 +1022,10 @@ setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, me
   for (i in 1:length(enms)) {
     if(length(enms[[i]]@algorithm.correlation) == 0) {cat('\n', enms[[i]]@name,'algorithms correlation has not been computed. \n')} else {
       for (j in 1:length(enms[[i]]@algorithm.correlation)) {
-        names(enms[[i]]@algorithm.correlation)[j] = strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
-        row.names(enms[[i]]@algorithm.correlation)[j] = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
+        if (length(strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]]) > 1){
+          names(enms[[i]]@algorithm.correlation)[j] = strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
+          row.names(enms[[i]]@algorithm.correlation)[j] = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
+        }
         if(!(names(enms[[i]]@algorithm.correlation)[j] %in% algo)) {algo = c(algo, names(enms[[i]]@algorithm.correlation)[j])}
       }
     }
@@ -950,12 +1039,12 @@ setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, me
         if(i > j) {
           corr = c()
           for (k in 1:length(enms)) {
-            if(length(enms[[i]]@algorithm.correlation) != 0) {
+            if(length(enms[[k]]@algorithm.correlation) != 0) {
               row = which(row.names(enms[[k]]@algorithm.correlation) == row.names(mcorr)[j])
               col = which(names(enms[[k]]@algorithm.correlation) == names(mcorr)[i])
-              corr = c(corr, enms[[k]]@algorithm.correlation[row,col])
+              if(length(row) > 0 && length(col) > 0) {corr = c(corr, enms[[k]]@algorithm.correlation[row,col])}
             }
-            mcorr[i,j] = mean(corr)
+            mcorr[i,j] = mean(corr, na.rm = T)
           }
         }
       }
@@ -976,7 +1065,12 @@ setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, me
   stack@algorithm.evaluation = stack@algorithm.evaluation[-which(names(stack@algorithm.evaluation) == 'algo')]
   cat(' done. \n')
   
-  stack@enms = enms
+  # ENMS
+  for (i in 1:length(enms)) {stack@enms[enms[[i]]@name] = enms[[i]]} 
+  
+  # Parameters
+  stack@parameters$method = method
+  if (method == 'B') {stack@parameters$rep.B = rep.B}
   
   return(stack)})
 
@@ -991,7 +1085,8 @@ setClass('Stack.Species.Ensemble.Niche.Model',
                         variables.importance = 'data.frame',
                         algorithm.correlation = 'data.frame',
                         algorithm.evaluation = 'data.frame',
-                        enms = 'list'),
+                        enms = 'list',
+                        parameters = 'data.frame'),
          prototype(name = character(),
                    diversity.map = raster(),
                    uncertainity = raster(),
@@ -999,7 +1094,8 @@ setClass('Stack.Species.Ensemble.Niche.Model',
                    variables.importance = data.frame(),
                    algorithm.correlation = data.frame(),
                    algorithm.evaluation = data.frame(),
-                   enms = list()))
+                   enms = list(),
+                   parameters = data.frame()))
 
 # 2 - Class creation function #
 Stack.Species.Ensemble.Niche.Model <- function(name = character(),
@@ -1009,7 +1105,8 @@ Stack.Species.Ensemble.Niche.Model <- function(name = character(),
                                                variables.importance = data.frame(),
                                                algorithm.correlation = data.frame(),
                                                algorithm.evaluation = data.frame(),
-                                               enms = list()) {
+                                               enms = list(),
+                                               parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
   return(new('Stack.Species.Ensemble.Niche.Model', 
              name = name, 
              diversity.map = diversity.map, 
@@ -1018,7 +1115,8 @@ Stack.Species.Ensemble.Niche.Model <- function(name = character(),
              uncertainity = uncertainity,
              algorithm.correlation = algorithm.correlation,
              algorithm.evaluation = algorithm.evaluation,
-             enms = enms))}
+             enms = enms,
+             parameters = parameters))}
 
 load.stack = function (name = 'Stack', directory = getwd()) {
   directory = paste0(directory, '/', name)
@@ -1029,7 +1127,8 @@ load.stack = function (name = 'Stack', directory = getwd()) {
                                              variables.importance = read.csv(paste0(directory,'/Results/Tables/VarImp'), row.names = 1),
                                              algorithm.correlation = read.csv(paste0(directory,'/Results/Tables/AlgoCorr'), row.names = 1),
                                              algorithm.evaluation = read.csv(paste0(directory,'/Results/Tables/AlgoEval'), row.names = 1),
-                                             enms = list())
+                                             enms = list(),
+                                             parameters = read.csv(paste0(directory,'/Results/Tables/Parameters'), row.names = 1))
   enms = list.dirs(directory, recursive = F, full.names = F)
   enms = enms[-which(enms == 'Results')]
   for (i in 1:length(enms)) {stack@enms[[i]] = load.enm(enms[i], directory = directory)}
@@ -1060,6 +1159,7 @@ setMethod('save.stack', 'Stack.Species.Ensemble.Niche.Model', function (stack, n
   write.csv(stack@algorithm.correlation, paste0(directory, "/", 'Results', '/Tables/AlgoCorr'))
   write.csv(stack@variables.importance, paste0(directory, "/", 'Results', '/Tables/VarImp'))
   write.csv(stack@name, paste0(directory, "/", 'Results', '/Tables/Name'))
+  write.csv(stack@parameters, paste0(directory, "/", 'Results', '/Tables/Parameters'))
   cat('saved \n\n')
   
   # ENMS saving
@@ -1090,17 +1190,24 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
                 fluidRow(
                   tabBox(title = 'Maps',
                          tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                                   plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)), title = 'Diversity'),
-                         tabPanel(plotOutput('Uncertainity'), title = 'Uncertainty')
+                                   plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
+                                   textOutput('diversity.info'),
+                                   title = 'Diversity'),
+                         tabPanel(plotOutput('Uncertainity'), title = 'Uncertainty'),
+                         tabPanel(tableOutput('summary'), title = 'Summary')
                   ),
                   tabBox(title = 'Variable importance',
-                         tabPanel(plotOutput('varimp.barplot'), title = 'Barplot'), 
+                         tabPanel(plotOutput('varimp.barplot'), 
+                                  textOutput('varimp.info'),
+                                  title = 'Barplot'), 
                          tabPanel(tableOutput('varimp.table'), title = 'Table')
                   )
                 ),
                 fluidRow(
                   tabBox(title = 'Model evaluation',
-                         tabPanel(plotOutput('evaluation.barplot'), title = 'Barplot'), 
+                         tabPanel(plotOutput('evaluation.barplot'), 
+                                  textOutput('evaluation.info'),
+                                  title = 'Barplot'), 
                          tabPanel(tableOutput('evaluation.table'), title = 'Table')
                   ),
                   if (length(x@algorithm.correlation) > 0) {
@@ -1117,18 +1224,26 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
           fluidRow(
             tabBox(title = 'Maps',
                    tabPanel( actionButton('enmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                             plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)), title = 'Habitat suitability'),
-                   tabPanel(plotOutput('niche'), title = 'Binary map'),
-                   tabPanel(plotOutput('enm.uncertainity'), title = 'Uncertainty')
+                             plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)),
+                             title = 'Habitat suitability'),
+                   tabPanel(plotOutput('niche'), 
+                            textOutput('enm.binary.info'),
+                            title = 'Binary map'),
+                   tabPanel(plotOutput('enm.uncertainity'), title = 'Uncertainty'),
+                   tabPanel(tableOutput('enm.summary'), title = 'Summary')
             ),
             tabBox(title = 'Variable importance',
-                   tabPanel(plotOutput('enm.varimp.barplot'), title = 'Barplot'), 
+                   tabPanel(plotOutput('enm.varimp.barplot'), 
+                            textOutput('enm.varimp.info'),
+                            title = 'Barplot'), 
                    tabPanel(tableOutput('enm.varimp.table'), title = 'Table')
             )
           ),
           fluidRow(
             tabBox(title = 'Model evaluation',
-                   tabPanel(plotOutput('enm.evaluation.barplot'), title = 'Barplot'), 
+                   tabPanel(plotOutput('enm.evaluation.barplot'), 
+                            textOutput('enm.evaluation.info'),
+                            title = 'Barplot'), 
                    tabPanel(tableOutput('enm.evaluation.table'), title = 'Table')
             ),
             
@@ -1164,25 +1279,36 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       ranges$x <- NULL
       ranges$y <- NULL
     })
+    eval = character()
+    ensemble.metric = strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
+    for (i in 1:length(ensemble.metric)) {
+      eval = paste(eval, paste(ensemble.metric[i],':',round(x@evaluation[1,which(names(x@evaluation) == ensemble.metric[i])], digits = 3)))
+      if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
+    }
     output$Diversity <- renderPlot({
       if (!is.null(ranges$x)) {diversity = crop(x@diversity.map, c(ranges$x, ranges$y))} else {diversity = x@diversity.map}
       plot(diversity, 
-           main = paste('AUC :',round(x@evaluation$AUC[1],3),'  Kappa',round(x@evaluation$Kappa[1],3)),
+           main = eval,
            xlab = 'Longitude (°)',
            ylab = 'Latitude (°)',
            legend.args=list(text='Local \nspecies \nrichness', font = 3, line = 1))
     })
     output$Uncertainity <- renderPlot({
       if (!is.null(ranges$x)) {uncert = crop(x@uncertainity, c(ranges$x, ranges$y))} else {uncert = x@uncertainity}
-      plot(uncert, main = paste('AUC :',round(x@evaluation$AUC[1],3),'  Kappa',round(x@evaluation$Kappa[1],3)),
-           legend.args=list(text='Models \nvariance', font = 3, line = 1))})
+      plot(uncert, main = eval, legend.args=list(text='Models \nvariance', font = 3, line = 1))})
     # Evaluation
     output$evaluation.barplot <- renderPlot({
       evaluation = x@algorithm.evaluation
-      evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
-      table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
-      barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
-      legend('bottomright', c('AUC', 'Kappa','% of kept models'), fill = c("darkblue","red","green"))
+      evaluation$kept.model = evaluation$kept.model / x@parameters$rep
+      metrics = '% kept.model'
+      metrics.nb = c(which(names(evaluation) == 'kept.model'))
+      for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+        metrics = c(metrics, strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i])
+        metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i]))
+      }
+      table <- t(evaluation[metrics.nb])
+      barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
+      legend('bottomright', metrics, fill = rainbow(length(metrics)))
     })
     output$evaluation.table <- renderTable({x@algorithm.evaluation[c(2,4:8)]})
     if (length(x@algorithm.correlation) > 0) {
@@ -1191,7 +1317,7 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       output$algo.corr.heatmap <- renderPlot({
         m <- as.matrix(x@algorithm.correlation)
         heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                  cellnote = round(m,3), notecol = "black", notecex = 2,
+                  cellnote = round(m,2), notecol = "black", notecex = 2,
                   trace = "none", key = FALSE, margins = c(7, 11), na.rm = T)
       })
     }
@@ -1205,6 +1331,59 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       arrows(bar,varimp$Axes.evaluation+varimp[,2], bar, varimp$Axes.evaluation-varimp[,2], angle=90, code=3, length=0.1)
     })
     output$varimp.table <- renderTable({x@variables.importance})
+    # Parameters
+    output$summary <- renderTable({
+      summary = data.frame(matrix(nrow = 5, ncol = 1))
+      names(summary) = 'Summary'
+      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
+      # 'Original number of species'
+      algo.info = character()
+      for (i in 1:length(strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
+        algo.info = paste(algo.info, strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+      }
+      if (x@parameters$PA) {PA = 'default'}
+      summary$Summary = c(x@parameters$data, length(x@enms), algo.info, x@parameters$rep, PA)
+      if(!is.null(x@parameters$sp.nb.origin)) {
+        summary = rbind(summary, 
+                        data.frame(Summary = x@parameters$sp.nb.origin, row.names = 'Original number of species'))
+      }
+      summary
+    })
+    output$diversity.info <- renderText({
+      x@parameters$method = switch(x@parameters$method,
+                                   'P' = 'summing habitat suitability map probabilities.',
+                                   'T' = paste('summing habitat suitability binary map after thresholding with',x@parameters$metric),
+                                   'B' = paste('drawing repeatdly bernoulli repetitions with',x@parameters$rep.B))
+      text = paste('Local species richness map realized by', x@parameters$method)
+      text
+    })
+    output$varimp.info <- renderText({
+      varimp.info = 'Axes evaluated with the variation of '
+      for (i in 1:length(x@parameters$axes.metric)) {
+        if (i == 1) {
+          varimp.info = paste(varimp.info, x@parameters$axes.metric[i])
+        } else if (i == length(x@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', x@parameters$axes.metric[i], '.')
+        } else {
+          varimp.info = paste(varimp.info, ',', x@parameters$axes.metric[i])
+        }
+      }
+      varimp.info
+    })
+    output$evaluation.info <- renderText({
+      evaluation.info = 'Models evaluated with'
+      for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+        if (i == 1) {
+          evaluation.info = paste(evaluation.info, strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        } else if (i == length(x@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste(evaluation.info, 'and', strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+        } else {
+          evaluation.info = paste(evaluation.info, ',', strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        }
+      }
+      if (x@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      evaluation.info
+    })
     # Main page ending #
     
     # ENM beginning #
@@ -1280,6 +1459,62 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2, ylab = 'Variable relative contribution (%)')
     })
     output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variables.importance[-1]})
+    # Parameters
+    output$enm.summary <- renderTable({
+      summary = data.frame(matrix(nrow = 5, ncol = 1))
+      names(summary) = 'Summary'
+      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
+      algo.info = character()
+      for (i in 1:length(strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
+        algo.info = paste(algo.info, strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+      }
+      if (x@enms[[which(choices == input$enmchoice)]]@parameters$PA) {PA = 'default'}
+      summary$Summary = c(x@enms[[which(choices == input$enmchoice)]]@parameters$data, length(x@enms), algo.info, x@enms[[which(choices == input$enmchoice)]]@parameters$rep, PA)
+      if(!is.null(x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin)) {
+        summary = rbind(summary, 
+                        data.frame(Summary = x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin, row.names = 'Original number of species'))
+      }
+      summary
+    })
+    output$enm.binary.info <- renderText({
+      x@enms[[which(choices == input$enmchoice)]]@parameters$metric = switch(x@enms[[which(choices == input$enmchoice)]]@parameters$metric,
+                                                                                             'Kappa' = 'maximizing Kappa',
+                                                                                             'CCR' = 'maximizing correct proportion (CCR)',
+                                                                                             'TSS' = 'maximizing sensitivity and specificity sum (TSS)',
+                                                                                             'SES' = 'equalizing sensitivity and specificity',
+                                                                                             'LW' = 'taking the minimum occurence prediction',
+                                                                                             'ROC' = 'calculating the minimum ROC plot distance')
+      text = paste('Binary map realized by', x@enms[[which(choices == input$enmchoice)]]@parameters$metric, 
+                   'with a final threshold of',  round(x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold, digits = 3))
+      text
+    })
+    output$enm.varimp.info <- renderText({
+      varimp.info = 'Axes evaluated with the variation of '
+      for (i in 1:length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric)) {
+        if (i == 1) {
+          varimp.info = paste(varimp.info, x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i])
+        } else if (i == length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i], '.')
+        } else {
+          varimp.info = paste(varimp.info, ',', x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i])
+        }
+      }
+      varimp.info
+    })
+    output$enm.evaluation.info <- renderText({
+      evaluation.info = 'Models evaluated with'
+      for (i in 1:length(strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+        if (i == 1) {
+          evaluation.info = paste(evaluation.info, strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        } else if (i == length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste(evaluation.info, 'and', strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+        } else {
+          evaluation.info = paste(evaluation.info, ',', strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        }
+      }
+      if (x@enms[[which(choices == input$enmchoice)]]@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      evaluation.info
+    })
     # ENM end #
   }
     
