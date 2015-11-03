@@ -7,8 +7,28 @@
 #' @import shinydashboard
 NULL
 
+#' Number one package Global User Interface
+#'
+#' User interface to use the number one package
+#'
+#' @param browser logical. Option to plot or not the user in interface in you
+#'   internet browser
+#' @param maxmem numeric. Option to choose the maximum memory allocated to the
+#'   user interface
+#'
+#' @return Open a window with a shiny app allowing to use the number one package
+#'   with an easy user interface
+#'
+#' @details Due to the relatively important siez environmental data you should
+#'   gave enough memory to the interface
+#'
+#' @examples
+#' \dontrun{
+#' NumberOneGUI()
+#' }
+#'
 #' @export
-NumberOneGUI = function () {
+NumberOneGUI = function (browser = T, maxmem = 10e9) {
 
   #### User Interface ####
   ui <- dashboardPage(
@@ -185,7 +205,7 @@ NumberOneGUI = function () {
   }
 
   #### Launching server ####
-  options(shiny.launch.browser = T)
-  options(shiny.maxRequestSize = 10e9)
+  options(shiny.launch.browser = browser)
+  options(shiny.maxRequestSize = maxmem)
   shinyApp(ui, server)
 }

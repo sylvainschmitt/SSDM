@@ -2,37 +2,54 @@
 #' @importFrom raster raster stack reclassify
 NULL
 
-#' Function to stack different ensemble models in one stack species model
+#'Stack different ensemble models in one stack species model
 #'
-#' This is a function to stack several ensemble models in one stack species model. It takes in inputs several S4 Ensemble.Niche.Model class objects obtained with Ensemble.Modelling or ensemble functions. It returns an S4 Stack.Species.Ensemble.Niche.Model class object containing the local species richness map, and the uncertainty map based on the habitat suitability map variance inter algorithms, all evaluation tables comming with (model evaluation, algorithms evaluation, algorithms correlation matrix and variables importance), and all associated ensemble models for each species (see Ensemble.Modelling).
+#'This is a function to stack several ensemble models in one stack species
+#'model. It takes in inputs several S4 \linkS4class{Ensemble.Niche.Model} class
+#'objects obtained with \code{\link{Ensemble.Modelling}} or
+#'\code{\link{ensemble}} functions. It returns an S4
+#'\linkS4class{Stack.Species.Ensemble.Niche.Model} class object containing the
+#'local species richness map, and the uncertainty map based on the habitat
+#'suitability map variance inter algorithms, all evaluation tables comming with
+#'(model evaluation, algorithms evaluation, algorithms correlation matrix and
+#'variables importance), and all associated ensemble models for each species
+#'(see Ensemble.Modelling).
 #'
-#' @param enm,... character. Choice of the algorithm for the modelling (see details below).
-#' @param name character. Optionnal name given to the final Ensemble.Niche.Model producted.
-#' @param thresh numeric. binary map threshold computing precision parmeter, the higher it is the more accurate is the threshold but the longer is the modelling evaluation step !
-#' @param metric character. Metric used to compute the binary map threshold (see details below.)
-#' @param method character. Define the method used to create the local species richness map (see details below).
-#' @param rep.B integer. If the method used to create the local species richness is random bernoulli (\strong{B}), it defines the number of repetition used to create random bernoulli binary maps for each species.
+#'@param enm,... character. Choice of the algorithm for the modelling (see
+#'  details below).
+#'@param name character. Optionnal name given to the final Ensemble.Niche.Model
+#'  producted.
+#'@param thresh numeric. binary map threshold computing precision parmeter, the
+#'  higher it is the more accurate is the threshold but the longer is the
+#'  modelling evaluation step !
+#'@param metric character. Method used to compute the binary map threshold (see
+#'  details below.)
+#'@param method character. Define the method used to create the local species
+#'  richness map (see details below).
+#'@param rep.B integer. If the method used to create the local species richness
+#'  is random bernoulli (\strong{B}), it defines the number of repetition used
+#'  to create random bernoulli binary maps for each species.
 #'
-#' @return an S4 Stack.Species.Ensemble.Niche.Model Class object viewable with plot method
+#'@return an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
+#'  viewable with \code{\link{plot}} method
 #'
-#' @details
-#' \strong{Metric :} choice of the metric used to compute binary map threshold and confusion matrix :
-#' \describe{
-#'  \item{"Kappa"}{maximizes the model Kappa value}
-#'  \item{"TSS"}{\strong{True Skill Statistic} maximizes the sensitivity and specificity sum}
-#'  \item{"CCR"}{maximizes the correct predicted observations proportion}
-#'  \item{"SES"}{using the sensitivty specificity equality}
-#'  \item{"LW"}{using the lowest occurence prediction probability}
-#'  \item{"ROC"}{minimizing the distance between the ROC plot (receiving operative curve) and the upper left coin (1,1)}
-#' }
+#'@details \strong{Metric :} choice of the metric used to compute binary map
+#'  threshold and confusion matrix : \describe{ \item{"Kappa"}{maximizes the
+#'  model Kappa value} \item{"TSS"}{\strong{True Skill Statistic} maximizes the
+#'  sensitivity and specificity sum} \item{"CCR"}{maximizes the correct
+#'  predicted observations proportion} \item{"SES"}{using the sensitivty
+#'  specificity equality} \item{"LW"}{using the lowest occurence prediction
+#'  probability} \item{"ROC"}{minimizing the distance between the ROC plot
+#'  (receiving operative curve) and the upper left coin (1,1)} }
 #' @examples
 #'\dontrun{
 #' stacking(Specie1.enm, Specie2.enm)
 #'}
 #'
-#' @seealso Stack.Modelling for stack species ensemble modelling with multiple algorithms and multiples species
+#'@seealso \code{\link{Stack.Modelling}} for stack species ensemble modelling
+#'  with multiple algorithms and multiples species
 #'
-#' @export
+#'@export
 setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, method = 'P',
                                                        metric = 'SES', thresh = 1001, rep.B = 1000) {
   enms = list(enm, ...)

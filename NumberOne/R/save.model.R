@@ -2,23 +2,26 @@
 #' @importFrom raster writeRaster
 NULL
 
-#' Save models functions
+#' Save models
 #'
-#' Allow to save S4 Ensemble.Niche.Model and Stack.Species.Ensemble.Niche.Model objects.
+#' Allow to save S4 \linkS4class{Ensemble.Niche.Model} and
+#' \linkS4class{Stack.Species.Ensemble.Niche.Model} classes objects.
 #'
 #' @param enm Ensemble.Niche.Model. Ensemble model to be saved.
-#' @param stack Stack.Species.Ensemble.Niche.Model.Stack species ensemble models to be saved.
+#' @param stack Stack.Species.Ensemble.Niche.Model.Stack species ensemble models
+#'   to be saved.
 #' @param name character. Folder name of the saved model.
-#' @param directory character. Path to the directory containing the saved model folder, by default the current directory.
+#' @param directory character. Path to the directory containing the saved model
+#'   folder, by default the current directory.
 #'
-#' @return Nothing in R environment. Create folders and tables and rasters associated to the model. Tables are in .csv and rasters in .grd/.gri.
+#' @return Nothing in R environment. Create folders and tables and rasters
+#'   associated to the model. Tables are in .csv and rasters in .grd/.gri.
 #'
-#' @seealso load.model
+#' @seealso \code{\link{load.model}}
 #'
 #' @name save.model
 #'
 NULL
-#> NULL
 
 #' @rdname save.model
 #' @export

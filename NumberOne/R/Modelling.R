@@ -7,9 +7,9 @@ NULL
 #'This is a function for modelling one specie distribution with one algorithm.
 #'It takes in inputs an occurences data frame made with presence/absence or
 #'presence-only records and a raster objects for data extractions and
-#'projections. It returns an S4 Algorithm.Niche.Model class object containing
-#'the habitat suitability map and all evaluation tables comming with (model
-#'evaluation and variables importance).
+#'projections. It returns an S4 \linkS4class{Algorithm.Niche.Model} class object
+#'containing the habitat suitability map and all evaluation tables comming with
+#'(model evaluation and variables importance).
 #'
 #'@param algorithm character. Choice of the algorithm for the modelling (see
 #'  details below).
@@ -34,88 +34,102 @@ NULL
 #'@param thresh numeric. binary map threshold computing precision parmeter, the
 #'  higher it is the more accurate is the threshold but the longer is the
 #'  modelling evaluation step !
-#'@param metric character. metric used to compute the binary map threshold (see
+#'@param metric character. Metric used to compute the binary map threshold (see
 #'  details below.)
+#'@param axes.metric Metric used to evaluate the variables relative importance
+#'  in percent (see details below).
 #'@param ... additionnal parameters for the algorithm modelling function (see
 #'  details below).
 #'
-#'@return an S4 Algorithm.Niche.Model Class object viewable with plot method
+#'@return an S4 \linkS4class{Algorithm.Niche.Model} Class object viewable with
+#'  \code{\link{plot}} method
 #'
-#'@details \describe{ \item{"algorithm"}{Currently available algorithms are
-#'Generalized linear models (\strong{GLM}), Generalized additive models
-#'(\strong{GAM}), Multivaraite adaptative regression splines (\strong{MARS}),
-#'Generalized boosted regressions models (\strong{GBM}), Classification tree
-#'analysis (\strong{CTA}), Random forests (\strong{RF}), Maximum Entropy
-#'(\strong{MAXENT}), Artificial Neural Network (\strong{ANN}, and Support vector
-#'machines (\strong{SVM}). Each algorithm have his own parameters settable with
-#'the (\strong{...}, see each algorithm section below to set theim.)}
-#'\item{"PA"}{list with two values : \strong{nb} number of pseudo absence
-#'selected, and \strong{strat} strategy used for pseudo-absence selection :
-#'either random selection either disk selection. We set to default the Barbet
-#'and Massin 200X recommendation (link).} \item{"metric"}{Choice of the metric
-#'used to compute binary map threshold and confusion matrix : \strong{Kappa}
-#'maximizes the model Kappa value, \strong{CCR} maximizes the correct predicted
-#'observations proportion, \strong{TSS} (True Skill Statistic) maximizes the
-#'sensitivity and specificity sum, \strong{SES} using the sensitivty specificity
-#'equality, \strong{LW} using the lowest occurence prediction probability,
-#'\strong{ROC} minimizing the distance between the ROC plot (receiving operative
-#'curve) and the upper left coin (1,1).} \item{"..."}{See algorithm in detail
-#'section} }
+#'@details \describe{ \item{algorithm}{Currently available algorithms are
+#'  Generalized linear models (\strong{GLM}), Generalized additive models
+#'  (\strong{GAM}), Multivaraite adaptative regression splines (\strong{MARS}),
+#'  Generalized boosted regressions models (\strong{GBM}), Classification tree
+#'  analysis (\strong{CTA}), Random forests (\strong{RF}), Maximum Entropy
+#'  (\strong{MAXENT}), Artificial Neural Network (\strong{ANN}, and Support
+#'  vector machines (\strong{SVM}). Each algorithm have his own parameters
+#'  settable with the (\strong{...}, see each algorithm section below to set
+#'  theim.)} \item{PA}{list with two values : \strong{nb} number of pseudo
+#'  absence selected, and \strong{strat} strategy used for pseudo-absence
+#'  selection : either random selection either disk selection. We set to default
+#'  the Barbet and Massin 200X recommendation (link).} \item{metric}{Choice of
+#'  the metric used to compute binary map threshold and confusion matrix :
+#'  \strong{Kappa} maximizes the model Kappa value, \strong{CCR} maximizes the
+#'  correct predicted observations proportion, \strong{TSS} (True Skill
+#'  Statistic) maximizes the sensitivity and specificity sum, \strong{SES} using
+#'  the sensitivty specificity equality, \strong{LW} using the lowest occurence
+#'  prediction probability, \strong{ROC} minimizing the distance between the ROC
+#'  plot (receiving operative curve) and the upper left coin (1,1).}
+#'  \item{axes.metric}{Choice of the metric used to evaluate the variables
+#'  relative importance in percent (variation of the model evaluation without
+#'  this axis) : \strong{Pearson} pearson correlation coefficient, \strong{AUC}
+#'  area under the receiving operating curve (ROC), \strong{Kappa},
+#'  \strong{omission.rate} omission rate, \strong{sensitivity},
+#'  \strong{specificity}, and \strong{prop.correct} correct predicted
+#'  occurences proportion.} \item{...}{See algorithm in detail section} }
 #'
 #'@section Generalized linear models (\strong{GLM}) : it uses the glm function
-#'  from package stats, you can set those parameters (see glm for more details):
-#'  \describe{ \item{"test"}{character. Test used to evaluate the model, default
-#'  'AIC'.} \item{"epsilon"}{numeric. Epsilon value used to fit the model,
-#'  default 10e-08.} \item{"maxit"}{numeric. Maximimu iterations allowed to fit
-#'  the model, default 500.} }
+#'  from package stats, you can set those parameters (see
+#'  \code{\link[stats]{glm}} for more details): \describe{
+#'  \item{test}{character. Test used to evaluate the model, default 'AIC'.}
+#'  \item{epsilon}{numeric. Epsilon value used to fit the model, default
+#'  10e-08.} \item{maxit}{numeric. Maximimu iterations allowed to fit the model,
+#'  default 500.} }
 #'
 #'@section Generalized additive models (\strong{GAM}) : It uses the gam function
-#'  from package mgcv, you can set those parameters (see gam for more details):
-#'  \describe{ \item{"test"}{character. Test used to evaluate the model, default
-#'  'AIC'.} \item{"epsilon"}{numeric. Epsilon value used to fit the model,
-#'  default 10e-08.} \item{"maxit"}{numeric. Maximimu iterations allowed to fit
-#'  the model, default 500.} }
+#'  from package mgcv, you can set those parameters (see \code{\link[mgcv]{gam}}
+#'  for more details): \describe{ \item{test}{character. Test used to evaluate
+#'  the model, default 'AIC'.} \item{epsilon}{numeric. Epsilon value used to fit
+#'  the model, default 10e-08.} \item{maxit}{numeric. Maximimu iterations
+#'  allowed to fit the model, default 500.} }
 #'
 #'@section Multivaraite adaptative regression splines (\strong{MARS}) : It uses
 #'  the earth function from package earth, you can set those parameters (see
-#'  earth for more details): \describe{ \item{"degree"}{integer. Number of
-#'  interactions degrees allowed in the model, default 2.} }
+#'  \code{\link[earth]{earth}} for more details): \describe{
+#'  \item{degree}{integer. Number of interactions degrees allowed in the model,
+#'  default 2.} }
 #'
 #'@section Generalized boosted regressions models (\strong{GBM}) : It uses the
-#'  gbm function from package gbm, you can set those parameters (see gbm for
-#'  more details): \describe{ \item{"trees"}{integer. Number of trees used in
-#'  the model, default 2500.} \item{"final.leave"}{integer. Minimum of
-#'  observations allowed in the final leaves of trees, default 1.}
-#'  \item{"cv"}{integer. Number of cross-validations, default 3.}
-#'  \item{"thresh.shrink"}{integer. Trees shrinkage coefficient, default 1e-03.}
-#'  }
+#'  gbm function from package gbm, you can set those parameters (see
+#'  \code{\link[gbm]{gbm}} for more details): \describe{ \item{trees}{integer.
+#'  Number of trees used in the model, default 2500.}
+#'  \item{final.leave}{integer. Minimum of observations allowed in the final
+#'  leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+#'  default 3.} \item{thresh.shrink}{integer. Trees shrinkage coefficient,
+#'  default 1e-03.} }
 #'
 #'@section Classification tree analysis (\strong{CAT}) : It uses the rpart
-#'  function from package rpart, you can set those parameters (see rpart for
-#'  more details): \describe{ \item{"final.leave"}{integer. Minimum of
-#'  observations allowed in the final leaves of trees, default 1.}
-#'  \item{"cv"}{integer. Number of cross-validations, default 3.} }
+#'  function from package rpart, you can set those parameters (see
+#'  \code{\link[rpart]{rpart}} for more details): \describe{
+#'  \item{final.leave}{integer. Minimum of observations allowed in the final
+#'  leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+#'  default 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : It uses the randomForest function from
-#'  package randomForest, you can set those parameters (see randomForest for
-#'  more details): \describe{ \item{"trees"}{integer. Number of trees used in
-#'  the model, default 2500.} \item{"final.leave"}{integer. Minimum of
-#'  observations allowed in the final leaves of trees, default 1.} }
+#'  package randomForest, you can set those parameters (see
+#'  \code{\link[randomForest]{randomForest}} for more details): \describe{
+#'  \item{trees}{integer. Number of trees used in the model, default 2500.}
+#'  \item{final.leave}{integer. Minimum of observations allowed in the final
+#'  leaves of trees, default 1.} }
 #'
 #'@section Maximum Entropy (\strong{MAXENT}) : It uses the maxent function from
 #'  package dismo. Take care to have correctly put the maxent.jar file in dismo
-#'  folder in your library folder (see maxent for more details).
+#'  folder in your library folder (see \code{\link[dismo]{maxent}} for more
+#'  details).
 #'
 #'@section Artificial Neural Network (\strong{ANN}) : It uses the nnet function
-#'  from package nnet, you can set those parameters (see nnet for more details):
-#'  \describe{ \item{"maxit"}{integer. Maximum number of iteration, default
-#'  500.} }
+#'  from package nnet, you can set those parameters (see
+#'  \code{\link[nnet]{nnet}} for more details): \describe{ \item{maxit}{integer.
+#'  Maximum number of iteration, default 500.} }
 #'
 #'@section Support vector machines (\strong{SVM}) : it uses the svm function
-#'  from package e1071, you can set those parameters (see svm for more details):
-#'  \describe{ \item{"epsilon"}{float. Epsilon parameter in the insensitive loss
-#'  function , default 1e-08.} \item{"cv"}{integer. Number of cross-validations,
-#'  default 3.} }
+#'  from package e1071, you can set those parameters (see
+#'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
+#'  Epsilon parameter in the insensitive loss function , default 1e-08.}
+#'  \item{cv}{integer. Number of cross-validations, default 3.} }
 #'
 #'@section Warning : Depending on the raster object resolution the computing can
 #'  be more or less time and memory consuming. You can use the function estimate
@@ -127,11 +141,11 @@ NULL
 #' Modelling('GLM', Occurences, Env)
 #'}
 #'
-#'@seealso Ensemble.Modelling for specie ensemble distribution modelling with
-#'  multiple algorithms, Stack.Modelling for stack species ensemble modelling
-#'  with multiple algorithms and species
+#'@seealso \code{\link{Ensemble.Modelling}} for specie distribution ensemble
+#'  modelling with multiple algorithms, \code{\link{Stack.Modelling}} for stack
+#'  species ensemble modelling with multiple algorithms and species
 #'
-#' @export
+#'@export
 Modelling = function(algorithm,
                      # Modelling data input
                      Occurences, Env,

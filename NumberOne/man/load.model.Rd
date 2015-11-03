@@ -13,15 +13,18 @@ load.stack(name = "Stack", directory = getwd())
 \arguments{
 \item{name}{character. Folder name of the saved model.}
 
-\item{directory}{character. Path to the directory containing the saved model folder, by default the current directory.}
+\item{directory}{character. Path to the directory containing the saved model
+  folder, by default the current directory.}
 }
 \value{
 The corresponding model object
 }
 \description{
-Allow to load S4 Ensemble.Niche.Model and Stack.Species.Ensemble.Niche.Model objects saved with their respective save functions
+Allow to load S4 \linkS4class{Ensemble.Niche.Model} and
+\linkS4class{Stack.Species.Ensemble.Niche.Model} objects saved with their
+respective save functions
 }
 \seealso{
-save.model
+\code{\link{save.model}}
 }
 

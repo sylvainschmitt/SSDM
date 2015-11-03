@@ -2,9 +2,34 @@
 #' @importFrom raster raster stack
 NULL
 
-##### Stack Species Ensemble Niche Model Class ##### -----
-
-# 1 - Class definition #
+#'An S4 class to represent a stack species distribution ensemble model of
+#'multiple algorithms and multiple species
+#'
+#'This is an S4 class to represent a stack species distribution ensemble model
+#'of multiple algorithms (among generalized linear model, general additive
+#'model, multivariate adpatative splines, generalized boosted regression models,
+#'classification tree analysis, random forest, maximum entropy, artificial
+#'neural network, and support vector machines). It can be obtain with
+#'\code{\link{Stack.Modelling}} or \code{\link{stacking}}.
+#'
+#'@slot name character. Name of the model (by default
+#'  Stacked.Species.Niche.Model)
+#'@slot diversity.map raster. Local species richness map of the model
+#'@slot uncertainity raster. Intermodel variance map
+#'@slot evaluation data frame. Evaluation of the model (threshold, AUC, omission
+#'  rate, sensitivity, specificity, correct proportion and Kappa)
+#'@slot algorithm.evluation data frame. Evaluation of each algorihtm with the
+#'  same metrics as evaluation slot
+#'@slot variables.importance data frame. Relative percentage of importance for
+#'  each variable used in the model
+#'@slot algorithm.correlation data.frame. Correlation matrix inter algorithms
+#'  calculated with pearson coefficient on habitat suitability map
+#'@slot enms list. List with each ensemble model used for the stack model
+#'@slot parameters data frame. Parameters used to realized the model
+#'
+#'@seealso \linkS4class{Ensemble.Niche.Model} an S4 class for ensemble models,
+#'  and \linkS4class{Algorithm.Niche.Model} an S4 class for algorithm models.
+#'
 setClass('Stack.Species.Ensemble.Niche.Model',
          representation(name = 'character',
                         diversity.map = 'Raster',
@@ -25,7 +50,7 @@ setClass('Stack.Species.Ensemble.Niche.Model',
                    enms = list(),
                    parameters = data.frame()))
 
-# 2 - Class creation function #
+# Class Generator
 #' @export
 Stack.Species.Ensemble.Niche.Model <- function(name = character(),
                                                diversity.map = raster(),

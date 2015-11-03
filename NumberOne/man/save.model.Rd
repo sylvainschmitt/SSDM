@@ -5,7 +5,7 @@
 \alias{save.enm,Ensemble.Niche.Model-method}
 \alias{save.model}
 \alias{save.stack,Stack.Species.Ensemble.Niche.Model-method}
-\title{Save models functions}
+\title{Save models}
 \usage{
 \S4method{save.enm}{Ensemble.Niche.Model}(enm, name = strsplit(enm@name, ".",
   fixed = T)[[1]][1], directory = getwd())
@@ -18,17 +18,21 @@
 
 \item{name}{character. Folder name of the saved model.}
 
-\item{directory}{character. Path to the directory containing the saved model folder, by default the current directory.}
+\item{directory}{character. Path to the directory containing the saved model
+  folder, by default the current directory.}
 
-\item{stack}{Stack.Species.Ensemble.Niche.Model.Stack species ensemble models to be saved.}
+\item{stack}{Stack.Species.Ensemble.Niche.Model.Stack species ensemble models
+to be saved.}
 }
 \value{
-Nothing in R environment. Create folders and tables and rasters associated to the model. Tables are in .csv and rasters in .grd/.gri.
+Nothing in R environment. Create folders and tables and rasters
+  associated to the model. Tables are in .csv and rasters in .grd/.gri.
 }
 \description{
-Allow to save S4 Ensemble.Niche.Model and Stack.Species.Ensemble.Niche.Model objects.
+Allow to save S4 \linkS4class{Ensemble.Niche.Model} and
+\linkS4class{Stack.Species.Ensemble.Niche.Model} classes objects.
 }
 \seealso{
-load.model
+\code{\link{load.model}}
 }
 

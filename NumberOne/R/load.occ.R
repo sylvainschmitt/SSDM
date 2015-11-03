@@ -1,7 +1,40 @@
 #' @importFrom spThin thin
 NULL
 
-#' @export
+#'Load occurences data
+#'
+#'Function to load occurences data from a table to do \code{\link{Modelling}},
+#'\code{\link{Ensemble.Modelling}} or \code{\link{Stack.Modelling}}.
+#'
+#'@param directory character. Directory where is the occurences table file
+#'@param Env raster stack. Environment vraiables as a raster stack used to do
+#'  the spatial thinning, it can be the result of the \code{\link{load.var}}
+#'  function
+#'@param file character. File containing the occurences table, if NULL (default)
+#'  .csv file present in the directory will be loaded
+#'@param ... additional parameters gave to \code{\link[utils]{read.csv}}
+#'@param Xcol character. Name of the X coordinates column (Longitude)
+#'@param Ycol character. Name of the Y coordinates column (Latitude)
+#'@param Spcol character. Name of the column containing the species name or ID
+#'@param GeoRes logical. Geographical thinning will be computed on occurences by
+#'  species to avoid geographical bias in models
+#'@param reso numeric. Resolution used to do the geographical thinnig, by
+#'  default the environmental variables raster stack resolution (Env)
+#'@param verbose logical. If true allow the function to print text in the
+#'  console
+#'@param GUI logical. Don't take that argument into account (parameter for the user interface) !
+#'
+#'@return A data frame containing the occurences data set (spatially thinned or
+#'  not)
+#'
+#' @examples
+#'\dontrun{
+#' load.occ(directory)
+#'}
+#'
+#'@seealso \code{\link{load.var}} to load environmental variables
+#'
+#'@export
 load.occ = function(directory = getwd(), Env, file = NULL, ...,
                      Xcol = 'Longitude', Ycol = 'Latitude', Spcol = NULL,
                      GeoRes = T, reso = max(res(Env@layers[[1]])), verbose = T, GUI = F) {

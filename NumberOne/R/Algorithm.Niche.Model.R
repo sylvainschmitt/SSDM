@@ -26,7 +26,6 @@ setGeneric('save.stack', function (stack, ...) {return(standardGeneric('save.sta
 setGeneric('stacking', function(enm, ...) {return(standardGeneric('stacking'))})
 
 ##### Niche Model Class ##### -----
-
 # 1 - Class definition #
 setClass('Niche.Model',
          representation(name = 'character',
@@ -57,12 +56,31 @@ setMethod('print', 'Niche.Model', function(x, ...) {
 })
 
 ##### Algorithm Niche Model Class ##### -----
-
-# 1 - Class definition #
+#'An S4 class to represent a specie distribution model of one algorithm
+#'
+#'This is an S4 class to represent a specie distribution model of one algorithm
+#'(among generalized linear model, general additive model, multivariate
+#'adpatative splines, generalized boosted regression models, classification tree
+#'analysis, random forest, maximum entropy, artificial neural network, and
+#'support vector machines). It can be obtain with \code{\link{Modelling}}.
+#'
+#'@slot name character. Name of the model (by default
+#'  Specie.Algorithm.Niche.Model)
+#'@slot projection raster. Habitat suitability map of the model
+#'@slot evaluation data frame. Evaluation of the model (threshold, AUC, omission
+#'  rate, sensitivity, specificity, correct proportion and Kappa)
+#'@slot variables.importance data frame. Relative percentage of importance for each variable used in the model
+#'@slot data data frame. Data used to realized the model
+#'@slot parameters data frame. Parameters used to realized the model
+#'
+#'@seealso \linkS4class{Ensemble.Niche.Model} an S4 class for ensemble models,
+#'  and \linkS4class{Stack.Species.Ensemble.Niche.Model} an S4 class for stack
+#'  species enemble models.
+#'
 setClass('Algorithm.Niche.Model',
          contains = 'Niche.Model')
 
-# 2 - Class creation function #
+# Class generator
 #' @export
 Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
                                   name = character(),

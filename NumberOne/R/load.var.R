@@ -1,7 +1,40 @@
 #' @importFrom raster raster stack res extent crop reclassify as.factor
 NULL
 
-#' @export
+#'Load environmental variables data
+#'
+#'Function to load environmental variables data from rasters to do
+#'\code{\link{Modelling}}, \code{\link{Ensemble.Modelling}} or
+#'\code{\link{Stack.Modelling}}.
+#'
+#'@param directory character. Directory where are the environmental data
+#'  variables files
+#'@param files character. Files containing the environmental data variables, if
+#'  NULL (default) all files with the precised format present in the directory
+#'  will be loaded.
+#'@param format character. Format used to load environmental data variables
+#'  files (among .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img)
+#'@param factors character. Environmental data variables which should be
+#'  considered as factor variables
+#'@param Norm logical. If true environmental data are normalized.
+#'@param tmp logical. If true loaded environmental data variables rasters are
+#'  read in temporary file avoiding to overload the random access memory
+#'@param verbose logical. If true allow the function to print text in the
+#'  console
+#'@param GUI logical. Don't take that argument into account (parameter for the
+#'  user interface) !
+#'
+#'@return A stack containing the environmental variables raster (normalized or
+#'  not)
+#'
+#' @examples
+#'\dontrun{
+#' load.var(directory)
+#'}
+#'
+#'@seealso \code{\link{load.occ}} to load occurences
+#'
+#'@export
 load.var <- function (directory = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {

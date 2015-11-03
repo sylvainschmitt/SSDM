@@ -3,7 +3,7 @@
 \docType{methods}
 \name{ensemble,Algorithm.Niche.Model-method}
 \alias{ensemble,Algorithm.Niche.Model-method}
-\title{Function to assemble different algorithms models in one ensemble model}
+\title{Method to assemble different algorithms models in one ensemble model}
 \usage{
 \S4method{ensemble}{Algorithm.Niche.Model}(x, ..., name = NULL,
   ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = T,
@@ -12,19 +12,48 @@
 \arguments{
 \item{x,...}{Algorithm.Niche.Model. Algortihms models to assemble.}
 
-\item{name}{character. Optionnal name given to the final Ensemble.Niche.Model producted.}
+\item{name}{character. Optionnal name given to the final Ensemble.Niche.Model
+producted.}
 
-\item{thresh}{numeric. binary map threshold computing precision parmeter, the higher it is the more accurate is the threshold but the longer is the modelling evaluation step !}
+\item{ensemble.metric}{character. Metric used to compute the selection among
+algorithms different models (see details below)}
 
-\item{uncertainity}{logical. If false uncertainity mapping and algorithms correlation matrix is not computed.}
+\item{ensemble.thresh}{numeric. Threshold associated with the metric used to
+compute the selection.}
 
-\item{AUCthresh}{numeric. Value under wich models will be rejected (corresponding to the metric parameter).}
+\item{weight}{logical. Choose if the model are weighted or not by the
+selection associated metrics mean.}
+
+\item{thresh}{numeric. Binary map threshold computing precision parmeter, the
+higher it is the more accurate is the threshold but the longer is the
+modelling evaluation step !}
+
+\item{uncertainity}{logical. If false uncertainity mapping and algorithms
+ correlation matrix is not computed.}
 }
 \value{
-an S4 Ensemble.Niche.Model Class object viewable with plot method
+an S4 \linkS4class{Ensemble.Niche.Model} Class object viewable with
+ \code{\link{plot}} method
 }
 \description{
-This is a function to assemble several algorithms models in one ensemble model. It takes in inputs several S4 Algorithm.Niche.Model class objects obtained with the Modelling function. It returns an S4 Ensemble.Niche.Model class object containing the habitat suitability map, the binary map, and the uncertainty map based on the habitat suitability map variance inter algorithms and all evaluation tables comming with (model evaluation, algorithms evaluation, algorithms correlation matrix and variables importance).
+This is a method to assemble several algorithms models in one ensemble model.
+It takes in inputs several S4 \linkS4class{Algorithm.Niche.Model} class
+objects obtained with the \code{\link{Modelling}} function. It returns an S4
+\linkS4class{Ensemble.Niche.Model} class object containing the habitat
+suitability map, the binary map, and the uncertainty map based on the habitat
+suitability map variance inter algorithms and all evaluation tables comming
+with (model evaluation, algorithms evaluation, algorithms correlation matrix
+and variables importance).
+}
+\details{
+Ensemble metric (Metric used to compute the selection among
+ algorithms different models) can be choosed among those : \describe{
+ \item{AUC}{Area under the receiving operative curve (ROC)}
+ \item{Kappa}{Kappa metric issued from the confusion matrix}
+ \item{sensitivity}{Sensitivity metric issued from the confusion matrix}
+ \item{specificity}{Specificity metric issued from the confusion matrix}
+ \item{prop.correct}{Correct predicted occurences proportion issued from the
+ confusion matrix} }
 }
 \examples{
 \dontrun{
@@ -32,6 +61,7 @@ ensemble(GLM1, GLM2, GAM1, GAM2)
 }
 }
 \seealso{
-Ensemble.Modelling for stack ensemble modelling with multiple algorithms
+\code{\link{Ensemble.Modelling}} for stack ensemble modelling with
+ multiple algorithms
 }
 

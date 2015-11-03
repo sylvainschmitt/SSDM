@@ -4,19 +4,21 @@ NULL
 
 #' Load models functions
 #'
-#' Allow to load S4 Ensemble.Niche.Model and Stack.Species.Ensemble.Niche.Model objects saved with their respective save functions
+#' Allow to load S4 \linkS4class{Ensemble.Niche.Model} and
+#' \linkS4class{Stack.Species.Ensemble.Niche.Model} objects saved with their
+#' respective save functions
 #'
 #' @param name character. Folder name of the saved model.
-#' @param directory character. Path to the directory containing the saved model folder, by default the current directory.
+#' @param directory character. Path to the directory containing the saved model
+#'   folder, by default the current directory.
 #'
 #' @return The corresponding model object
 #'
-#' @seealso save.model
+#' @seealso \code{\link{save.model}}
 #'
 #' @name load.model
 #'
 NULL
-#> NULL
 
 #' @rdname load.model
 #' @export

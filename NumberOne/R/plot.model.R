@@ -1,20 +1,27 @@
 #' @include Algorithm.Niche.Model.R Ensemble.Niche.Model.R Stack.Niche.Model.R
-#' @import shiny
-#' @import shinydashboard
+#' @import shiny shinydashboard
 #' @importFrom gplots heatmap.2
 #' @importFrom raster stack reclassify extent
 NULL
 
-#' Plot models functions
+#' Plot models
 #'
-#' Allow to plot S4 Algorithm.Niche.Model, Ensemble.Niche.Model and Stack.Species.Ensemble.Niche.Model objects.
+#' Allow to plot S4 \linkS4class{Algorithm.Niche.Model},
+#' \linkS4class{Ensemble.Niche.Model} and
+#' \linkS4class{Stack.Species.Ensemble.Niche.Model} classes objects.
 #'
-#' @param x Object to pe plot (S4 Algorithm.Niche.Model, Ensemble.Niche.Model or Stack.Species.Ensemble.Niche.Model object)
+#' @param x Object to pe plot (S4 Algorithm.Niche.Model, Ensemble.Niche.Model or
+#'   Stack.Species.Ensemble.Niche.Model object)
+#' @param y,... Don't used plot base parameters
 #'
-#' @return Open a window with a shiny app rendering all the results in an easy way to see all results in one glance
+#' @return Open a window with a shiny app rendering all the results in an easy
+#'   way to see all results in one glance
 #'
 #' @name plot.model
 #'
+NULL
+
+#' @rdname plot.model
 #' @export
 setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
   choices = list()
@@ -369,6 +376,8 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
   shinyApp(ui, server)
 })
 
+#' @rdname plot.model
+#' @export
 setMethod('plot', 'Niche.Model', function(x, y, ...) {
   if (inherits(x, 'Algorithm.Niche.Model')) {full = F} else {full = T}
   ui <- dashboardPage(

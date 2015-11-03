@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stack.Modelling.R
 \name{Stack.Modelling}
 \alias{Stack.Modelling}
-\title{Multi-algorithms stacked species ensemble distribution modelling}
+\title{Multi-algorithms stacked species distribution ensemble modelling}
 \usage{
 Stack.Modelling(algorithms, Occurences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 1,
@@ -13,6 +13,9 @@ Stack.Modelling(algorithms, Occurences, Env, Xcol = "Longitude",
   rep.B = 1000, ...)
 }
 \arguments{
+\item{algorithms}{character. Choice of the algorithm for the modelling (see
+details below).}
+
 \item{Occurences}{data frame. Occurences table (can be treated first by
 load.occ).}
 
@@ -53,11 +56,23 @@ the model), in case of data split evaluation method (see details below).}
 higher it is the more accurate is the threshold but the longer is the
 modelling evaluation step !}
 
+\item{axes.metric}{Metric used to evaluate the variables relative importance
+in percent (see details below).}
+
 \item{uncertainity}{logical. If false uncertainity mapping and algorithms
 correlation matrix is not computed.}
 
 \item{tmp}{logical. If true ensemble models habitat suitability map and
 uncertainty map rasters are saved in temporary files to release memory.}
+
+\item{ensemble.metric}{character. Metric used to compute the selection among
+algorithms different models (see details below)}
+
+\item{ensemble.thresh}{numeric. Threshold associated with the metric used to
+compute the selection.}
+
+\item{weight}{logical. Choose if the model are weighted or not by the
+selection associated metrics mean.}
 
 \item{method}{character. Define the method used to create the local species
 richness map (see details below).}
@@ -71,127 +86,137 @@ to create random bernoulli binary maps for each species.}
 
 \item{...}{additionnal parameters for the algorithm modelling function (see
  details below).}
-
-\item{algorithm}{character. Choice of the algorithm for the modelling (see
-details below).}
-
-\item{AUCthresh}{numeric. Value under wich models will be rejected
-(corresponding to the metric parameter).}
 }
 \value{
-an S4 Stack.Species.Ensemble.Niche.Model Class object viewable with
- plot method
+an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
+ viewable with \code{\link{plot}} method
 }
 \description{
 This is a function for modelling stack specise distribution with several
 algorithms and make a stack of the different ensemble models. It takes in
 inputs an occurences data frame made with presence/absence or presence-only
 records and a raster objects for data extractions and projections. It returns
-an S4 Stack.Species.Ensemble.Niche.Model class object containing the local
-species richness map, and the uncertainty map based on the habitat suitability
-map variance inter algorithms, all evaluation tables comming with (model
-evaluation, algorithms evaluation, algorithms correlation matrix and variables
-importance), and all associated ensemble models for each species (see
-Ensemble.Modelling).
+an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} class object containing
+the local species richness map, and the uncertainty map based on the habitat
+suitability map variance inter algorithms, all evaluation tables comming with
+(model evaluation, algorithms evaluation, algorithms correlation matrix and
+variables importance), and all associated ensemble models for each species
+(see \code{\link{Ensemble.Modelling}}).
 }
 \details{
-\describe{ \item{"algorithm"}{'all' allows you to call directly all
-availables algorithms. Currently available algorithms are Generalized linear
-models (\strong{GLM}), Generalized additive models (\strong{GAM}),
-Multivaraite adaptative regression splines (\strong{MARS}), Generalized
-boosted regressions models (\strong{GBM}), Classification tree analysis
-(\strong{CTA}), Random forests (\strong{RF}), Maximum Entropy
-(\strong{MAXENT}), Artificial Neural Network (\strong{ANN}, and Support vector
-machines (\strong{SVM}). Each algorithm have his own parameters settable with
-the (\strong{...}, see each algorithm section below to set theim.)}
-\item{"PA"}{list with two values : \strong{nb} number of pseudo absence
-selected, and \strong{strat} strategy used for pseudo-absence selection :
-either random selection either disk selection. We set to default the Barbet
-and Massin 200X recommendation (link).} \item{"metric"}{Choice of the metric
-used to compute binary map threshold and confusion matrix : \strong{Kappa}
-maximizes the model Kappa value, \strong{CCR} maximizes the correct predicted
-observations proportion, \strong{TSS} (True Skill Statistic) maximizes the
-sensitivity and specificity sum, \strong{SES} using the sensitivty specificity
-equality, \strong{LW} using the lowest occurence prediction probability,
-\strong{ROC} minimizing the distance between the ROC plot (receiving operative
-curve) and the upper left coin (1,1).} \item{"method"}{Choice of the method
-used to compute the local species richness map : \strong{P} (Probablity) sum
-the habitat suitability maps probabilities, \strong{B} (Random bernoulli)
-drawing repeatedly from a Bernoulli distribution, \strong{T} (Threshold) sum
-the binary map obtained with the thresholding (depending of the metric, see
-metric parameter).} \item{"..."}{See algorithm in detail section} }
+\describe{ \item{algorithm}{'all' allows you to call directly all
+ availables algorithms. Currently available algorithms are Generalized linear
+ models (\strong{GLM}), Generalized additive models (\strong{GAM}),
+ Multivaraite adaptative regression splines (\strong{MARS}), Generalized
+ boosted regressions models (\strong{GBM}), Classification tree analysis
+ (\strong{CTA}), Random forests (\strong{RF}), Maximum Entropy
+ (\strong{MAXENT}), Artificial Neural Network (\strong{ANN}, and Support
+ vector machines (\strong{SVM}). Each algorithm have his own parameters
+ settable with the (\strong{...}, see each algorithm section below to set
+ theim.)} \item{PA}{list with two values : \strong{nb} number of pseudo
+ absence selected, and \strong{strat} strategy used for pseudo-absence
+ selection : either random selection either disk selection. We set to default
+ the Barbet and Massin 200X recommendation (link).} \item{metric}{Choice of
+ the metric used to compute binary map threshold and confusion matrix :
+ \strong{Kappa} maximizes the model Kappa value, \strong{CCR} maximizes the
+ correct predicted observations proportion, \strong{TSS} (True Skill
+ Statistic) maximizes the sensitivity and specificity sum, \strong{SES} using
+ the sensitivty specificity equality, \strong{LW} using the lowest occurence
+ prediction probability, \strong{ROC} minimizing the distance between the ROC
+ plot (receiving operative curve) and the upper left coin (1,1).}
+ \item{axes.metric}{Choice of the metric used to evaluate the variables
+ relative importance in percent (variation of the model evaluation without
+ this axis) : \strong{Pearson} pearson correlation coefficient, \strong{AUC}
+ area under the receiving operating curve (ROC), \strong{Kappa},
+ \strong{sensitivity}, \strong{specificity}, and \strong{prop.correct}
+ correct predicted occurences proportion.} \item{ensemble.metric}{Ensemble
+ metric (Metric used to compute the selection among algorithms different
+ models) can be choosed among those : \strong{AUC} area under the receiving
+ operating curve (ROC), \strong{Kappa}, \strong{sensitivity},
+ \strong{specificity}, and \strong{prop.correct}correct predicted occurences
+ proportion.} \item{method}{Choice of the method used to compute the local
+ species richness map : \strong{P} (Probablity) sum the habitat suitability
+ maps probabilities, \strong{B} (Random bernoulli) drawing repeatedly from a
+ Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
+ with the thresholding (depending of the metric, see metric parameter).}
+ \item{...}{See algorithm in detail section} }
 }
 \section{Generalized linear models (\strong{GLM}) }{
  it uses the glm function
- from package stats, you can set those parameters (see glm for more details):
- \describe{ \item{"test"}{character. Test used to evaluate the model, default
- 'AIC'.} \item{"epsilon"}{numeric. Epsilon value used to fit the model,
- default 10e-08.} \item{"maxit"}{numeric. Maximimu iterations allowed to fit
- the model, default 500.} }
+ from package stats, you can set those parameters (see
+ \code{\link[stats]{glm}} for more details): \describe{
+ \item{test}{character. Test used to evaluate the model, default 'AIC'.}
+ \item{epsilon}{numeric. Epsilon value used to fit the model, default
+ 10e-08.} \item{maxit}{numeric. Maximimu iterations allowed to fit the model,
+ default 500.} }
 }
 
 \section{Generalized additive models (\strong{GAM}) }{
  It uses the gam function
- from package mgcv, you can set those parameters (see gam for more details):
- \describe{ \item{"test"}{character. Test used to evaluate the model, default
- 'AIC'.} \item{"epsilon"}{numeric. Epsilon value used to fit the model,
- default 10e-08.} \item{"maxit"}{numeric. Maximimu iterations allowed to fit
- the model, default 500.} }
+ from package mgcv, you can set those parameters (see \code{\link[mgcv]{gam}}
+ for more details): \describe{ \item{test}{character. Test used to evaluate
+ the model, default 'AIC'.} \item{epsilon}{numeric. Epsilon value used to fit
+ the model, default 10e-08.} \item{maxit}{numeric. Maximimu iterations
+ allowed to fit the model, default 500.} }
 }
 
 \section{Multivaraite adaptative regression splines (\strong{MARS}) }{
  It uses
  the earth function from package earth, you can set those parameters (see
- earth for more details): \describe{ \item{"degree"}{integer. Number of
- interactions degrees allowed in the model, default 2.} }
+ \code{\link[earth]{earth}} for more details): \describe{
+ \item{degree}{integer. Number of interactions degrees allowed in the model,
+ default 2.} }
 }
 
 \section{Generalized boosted regressions models (\strong{GBM}) }{
  It uses the
- gbm function from package gbm, you can set those parameters (see gbm for
- more details): \describe{ \item{"trees"}{integer. Number of trees used in
- the model, default 2500.} \item{"final.leave"}{integer. Minimum of
- observations allowed in the final leaves of trees, default 1.}
- \item{"cv"}{integer. Number of cross-validations, default 3.}
- \item{"thresh.shrink"}{integer. Trees shrinkage coefficient, default 1e-03.}
- }
+ gbm function from package gbm, you can set those parameters (see
+ \code{\link[gbm]{gbm}} for more details): \describe{ \item{trees}{integer.
+ Number of trees used in the model, default 2500.}
+ \item{final.leave}{integer. Minimum of observations allowed in the final
+ leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+ default 3.} \item{thresh.shrink}{integer. Trees shrinkage coefficient,
+ default 1e-03.} }
 }
 
 \section{Classification tree analysis (\strong{CAT}) }{
  It uses the rpart
- function from package rpart, you can set those parameters (see rpart for
- more details): \describe{ \item{"final.leave"}{integer. Minimum of
- observations allowed in the final leaves of trees, default 1.}
- \item{"cv"}{integer. Number of cross-validations, default 3.} }
+ function from package rpart, you can set those parameters (see
+ \code{\link[rpart]{rpart}} for more details): \describe{
+ \item{final.leave}{integer. Minimum of observations allowed in the final
+ leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+ default 3.} }
 }
 
 \section{Random Forest (\strong{RF}) }{
  It uses the randomForest function from
- package randomForest, you can set those parameters (see randomForest for
- more details): \describe{ \item{"trees"}{integer. Number of trees used in
- the model, default 2500.} \item{"final.leave"}{integer. Minimum of
- observations allowed in the final leaves of trees, default 1.} }
+ package randomForest, you can set those parameters (see
+ \code{\link[randomForest]{randomForest}} for more details): \describe{
+ \item{trees}{integer. Number of trees used in the model, default 2500.}
+ \item{final.leave}{integer. Minimum of observations allowed in the final
+ leaves of trees, default 1.} }
 }
 
 \section{Maximum Entropy (\strong{MAXENT}) }{
  It uses the maxent function from
  package dismo. Take care to have correctly put the maxent.jar file in dismo
- folder in your library folder (see maxent for more details).
+ folder in your library folder (see \code{\link[dismo]{maxent}} for more
+ details).
 }
 
 \section{Artificial Neural Network (\strong{ANN}) }{
  It uses the nnet function
- from package nnet, you can set those parameters (see nnet for more details):
- \describe{ \item{"maxit"}{integer. Maximum number of iteration, default
- 500.} }
+ from package nnet, you can set those parameters (see
+ \code{\link[nnet]{nnet}} for more details): \describe{ \item{maxit}{integer.
+ Maximum number of iteration, default 500.} }
 }
 
 \section{Support vector machines (\strong{SVM}) }{
  it uses the svm function
- from package e1071, you can set those parameters (see svm for more details):
- \describe{ \item{"epsilon"}{float. Epsilon parameter in the insensitive loss
- function , default 1e-08.} \item{"cv"}{integer. Number of cross-validations,
- default 3.} }
+ from package e1071, you can set those parameters (see
+ \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
+ Epsilon parameter in the insensitive loss function , default 1e-08.}
+ \item{cv}{integer. Number of cross-validations, default 3.} }
 }
 
 \section{Warning }{
@@ -206,7 +231,8 @@ Stack.Modelling('all', Occurences, Env)
 }
 }
 \seealso{
-Modelling for specie distribution modelling with one algorithm,
- Ensemble.Modelling for specie ensemble modelling with multiple algorithms
+\code{\link{Modelling}} for specie distribution modelling with one
+ algorithm, \code{\link{Ensemble.Modelling}} for specie ensemble modelling
+ with multiple algorithms
 }
 
