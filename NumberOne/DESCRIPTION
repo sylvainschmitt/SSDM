@@ -1,0 +1,44 @@
+Package: NumberOne
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1
+Date: 2015-11-02
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
+LazyData: TRUE
+Imports:
+    sp,
+    raster,
+    rgdal,
+    methods,
+    SDMTools,
+    mgcv,
+    earth,
+    rpart,
+    gbm,
+    randomForest,
+    dismo,
+    nnet,
+    e1071,
+    shiny,
+    shinydashboard,
+    gplots,
+    spThin
+Collate:
+    'Algorithm.Niche.Model.R'
+    'ensemble.R'
+    'evaluate.R'
+    'Modelling.R'
+    'Ensemble.Niche.Model.R'
+    'Ensemble.Modelling.R'
+    'stacking.R'
+    'Stack.Niche.Model.R'
+    'save.model.R'
+    'plot.model.R'
+    'load.var.R'
+    'load.occ.R'
+    'load.model.R'
+    'Stack.Modelling.R'
+    'GUI.R'
