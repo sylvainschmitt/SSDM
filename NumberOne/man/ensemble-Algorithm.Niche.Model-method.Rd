@@ -33,7 +33,7 @@ modelling evaluation step !}
 }
 \value{
 an S4 \linkS4class{Ensemble.Niche.Model} Class object viewable with
- \code{\link{plot}} method
+ \code{\link{plot.model}} method
 }
 \description{
 This is a method to assemble several algorithms models in one ensemble model.

@@ -10,7 +10,7 @@ NULL
 #'multivariate adpatative splines, generalized boosted regression models,
 #'classification tree analysis, random forest, maximum entropy, artificial
 #'neural network, and support vector machines). It can be obtain with
-#'\code{\link{Ensemble.Modelling}} or \code{\link{ensemble}}.
+#'\code{\link{Ensemble.Modelling}} or \code{\link{ensemble,Algorithm.Niche.Model-method}}.
 #'
 #'@slot name character. Name of the model (by default
 #'  Specie.Ensemble.Niche.Model)

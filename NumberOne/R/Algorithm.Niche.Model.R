@@ -1,5 +1,5 @@
 #' @import methods
-#' @importFrom sp Polygon Polygons SpatialPolygons
+#' @importFrom sp Polygon Polygons SpatialPolygons bbox
 #' @importFrom raster raster stack extract predict reclassify
 #' @importFrom SDMTools optim.thresh accuracy
 #' @importFrom mgcv gam gam.control

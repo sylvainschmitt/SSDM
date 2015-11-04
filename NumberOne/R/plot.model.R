@@ -1,7 +1,7 @@
 #' @include Algorithm.Niche.Model.R Ensemble.Niche.Model.R Stack.Niche.Model.R
-#' @import shiny shinydashboard
+#' @import shiny shinydashboard raster
 #' @importFrom gplots heatmap.2
-#' @importFrom raster stack reclassify extent
+#@importFrom raster stack reclassify extent
 NULL
 
 #' Plot models
@@ -144,8 +144,8 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       if (!is.null(ranges$x)) {diversity = crop(x@diversity.map, c(ranges$x, ranges$y))} else {diversity = x@diversity.map}
       plot(diversity,
            main = eval,
-           xlab = 'Longitude (°)',
-           ylab = 'Latitude (°)',
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)',
            legend.args=list(text='Local \nspecies \nrichness', font = 3, line = 1))
     })
     output$Uncertainity <- renderPlot({
@@ -154,7 +154,7 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
     # Evaluation
     output$evaluation.barplot <- renderPlot({
       evaluation = x@algorithm.evaluation
-      evaluation$kept.model = evaluation$kept.model / x@parameters$rep
+      evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
       metrics = '% kept.model'
       metrics.nb = c(which(names(evaluation) == 'kept.model'))
       for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
@@ -259,13 +259,12 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       ranges$x <- NULL
       ranges$y <- NULL
     })
-
     output$probability <- renderPlot({
       if (!is.null(ranges$x)) {proba = crop(x@enms[[which(choices == input$enmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@enms[[which(choices == input$enmchoice)]]@projection}
       plot(proba,
            main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
-           xlab = 'Longitude (°)',
-           ylab = 'Latitude (°)',
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)',
            legend.args=list(text='Presence\nprobability', font = 3, line = 1))
       points(x@enms[[which(choices == input$enmchoice)]]@data$X[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
              x@enms[[which(choices == input$enmchoice)]]@data$Y[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
@@ -280,7 +279,7 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
       plot(uncert.map, main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)), legend.args=list(text='Models \nvariance', font = 3, line = 1))})
     # Evaluation
     output$enm.evaluation.barplot <- renderPlot({
-      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixe = T)[[1]][2]}
+      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = T)[[1]][2]}
       evaluation = x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation
       evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
       table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
@@ -449,8 +448,8 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
       if (!is.null(ranges$x)) {proba.map = crop(x@projection, c(ranges$x, ranges$y))} else {proba.map = x@projection}
       plot(proba.map,
            main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
-           xlab = 'Longitude (°)',
-           ylab = 'Latitude (°)')
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)')
       points(x@data$X[which(x@data$Presence == 1)],
              x@data$Y[which(x@data$Presence == 1)],
              pch = 16, cex = 0.7)

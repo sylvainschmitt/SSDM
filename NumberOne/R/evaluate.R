@@ -28,7 +28,7 @@ NULL
 #'
 #'@return S4 \linkS4class{Algorithm.Niche.Model} or
 #'  \linkS4class{Ensemble.Niche.Model} classes objects. viewable with
-#'  \code{\link{plot}} method depending on the input.
+#'  \code{\link{plot.model}} method depending on the input.
 #'
 #' @examples
 #'\dontrun{

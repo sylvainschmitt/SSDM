@@ -10,7 +10,7 @@ NULL
 #'model, multivariate adpatative splines, generalized boosted regression models,
 #'classification tree analysis, random forest, maximum entropy, artificial
 #'neural network, and support vector machines). It can be obtain with
-#'\code{\link{Stack.Modelling}} or \code{\link{stacking}}.
+#'\code{\link{Stack.Modelling}} or \code{\link{stacking,Ensemble.Niche.Model-method}}.
 #'
 #'@slot name character. Name of the model (by default
 #'  Stacked.Species.Niche.Model)

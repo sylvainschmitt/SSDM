@@ -59,7 +59,7 @@ NULL
 #'  details below).
 #'
 #'@return an S4 \linkS4class{Ensemble.Niche.Model} Class object viewable with
-#'  \code{\link{plot}} method
+#'  \code{\link{plot.model}} method
 #'
 #'@details \describe{ \item{algorithm}{'all' allows you to call directly all
 #'  availables algorithms. Currently available algorithms are Generalized linear

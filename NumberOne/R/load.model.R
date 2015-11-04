@@ -11,6 +11,7 @@ NULL
 #' @param name character. Folder name of the saved model.
 #' @param directory character. Path to the directory containing the saved model
 #'   folder, by default the current directory.
+#' @param GUI logical. Don't take that argument into account (parameter for the user interface) !
 #'
 #' @return The corresponding model object
 #'
@@ -37,13 +38,13 @@ load.enm = function (name, directory = getwd()) {
                              algorithm.correlation = a,
                              data = read.csv(paste0(directory,'/Tables/Data'), row.names = 1),
                              variables.importance = read.csv(paste0(directory,'/Tables/VarImp'), row.names = 1),
-                             parameters = read.csv(paste0(directory,'/Tables/Parameters'), row.names = 1))
+                             parameters = read.csv(paste0(directory,'/Tables/Parameters'), row.names = 1, colClasses = "character"))
   return(enm)
 }
 
 #' @rdname load.model
 #' @export
-load.stack = function (name = 'Stack', directory = getwd()) {
+load.stack = function (name = 'Stack', directory = getwd(), GUI = F) {
   directory = paste0(directory, '/', name)
   stack = Stack.Species.Ensemble.Niche.Model(name = as.character(read.csv(paste0(directory,'/Results/Tables/Name'))[1,2]),
                                              diversity.map = raster(paste0(directory,'/Results/Rasters/Diversity.tif')),
@@ -53,9 +54,14 @@ load.stack = function (name = 'Stack', directory = getwd()) {
                                              algorithm.correlation = read.csv(paste0(directory,'/Results/Tables/AlgoCorr'), row.names = 1),
                                              algorithm.evaluation = read.csv(paste0(directory,'/Results/Tables/AlgoEval'), row.names = 1),
                                              enms = list(),
-                                             parameters = read.csv(paste0(directory,'/Results/Tables/Parameters'), row.names = 1))
+                                             parameters = read.csv(paste0(directory,'/Results/Tables/Parameters'), row.names = 1, colClasses = "character"))
   enms = list.dirs(directory, recursive = F, full.names = F)
   enms = enms[-which(enms == 'Results')]
-  for (i in 1:length(enms)) {stack@enms[[i]] = load.enm(enms[i], directory = directory)}
+  if(GUI) {incProgress(1/(length(enms)+1), detail = 'stack main results')}
+  for (i in 1:length(enms)) {
+    enm = load.enm(enms[i], directory = directory)
+    stack@enms[[enm@name]] = enm
+    if(GUI) {incProgress(1/(length(enms)+1), detail = enm@name)}
+    }
   return(stack)
 }

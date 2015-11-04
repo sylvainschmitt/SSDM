@@ -3,7 +3,7 @@
 #' @importFrom raster stack writeRaster
 NULL
 
-#'Multi-algorithms stacked species distribution ensemble modelling
+#'Multi-algorithms stack species distribution ensemble modelling
 #'
 #'This is a function for modelling stack specise distribution with several
 #'algorithms and make a stack of the different ensemble models. It takes in
@@ -68,7 +68,7 @@ NULL
 #'  details below).
 #'
 #'@return an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
-#'  viewable with \code{\link{plot}} method
+#'  viewable with \code{\link{plot.model}} method
 #'
 #'@details \describe{ \item{algorithm}{'all' allows you to call directly all
 #'  availables algorithms. Currently available algorithms are Generalized linear

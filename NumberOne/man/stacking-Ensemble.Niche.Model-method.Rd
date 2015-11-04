@@ -31,19 +31,18 @@ modelling evaluation step !}
 }
 \value{
 an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
- viewable with \code{\link{plot}} method
+ viewable with \code{\link{plot.model}} method
 }
 \description{
 This is a function to stack several ensemble models in one stack species
 model. It takes in inputs several S4 \linkS4class{Ensemble.Niche.Model} class
-objects obtained with \code{\link{Ensemble.Modelling}} or
-\code{\link{ensemble}} functions. It returns an S4
-\linkS4class{Stack.Species.Ensemble.Niche.Model} class object containing the
-local species richness map, and the uncertainty map based on the habitat
-suitability map variance inter algorithms, all evaluation tables comming with
-(model evaluation, algorithms evaluation, algorithms correlation matrix and
-variables importance), and all associated ensemble models for each species
-(see Ensemble.Modelling).
+objects obtained with \code{\link{Ensemble.Modelling}} or \code{ensemble}
+functions. It returns an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model}
+class object containing the local species richness map, and the uncertainty
+map based on the habitat suitability map variance inter algorithms, all
+evaluation tables comming with (model evaluation, algorithms evaluation,
+algorithms correlation matrix and variables importance), and all associated
+ensemble models for each species (see Ensemble.Modelling).
 }
 \details{
 \strong{Metric :} choice of the metric used to compute binary map

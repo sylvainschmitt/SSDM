@@ -133,7 +133,7 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble
 #'  confusion matrix} }
 #'
 #'@return an S4 \linkS4class{Ensemble.Niche.Model} Class object viewable with
-#'  \code{\link{plot}} method
+#'  \code{\link{plot.model}} method
 #'
 #' @examples
 #'\dontrun{

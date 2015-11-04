@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stack.Modelling.R
 \name{Stack.Modelling}
 \alias{Stack.Modelling}
-\title{Multi-algorithms stacked species distribution ensemble modelling}
+\title{Multi-algorithms stack species distribution ensemble modelling}
 \usage{
 Stack.Modelling(algorithms, Occurences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 1,
@@ -89,7 +89,7 @@ to create random bernoulli binary maps for each species.}
 }
 \value{
 an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
- viewable with \code{\link{plot}} method
+ viewable with \code{\link{plot.model}} method
 }
 \description{
 This is a function for modelling stack specise distribution with several

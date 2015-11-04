@@ -8,13 +8,15 @@
 \usage{
 load.enm(name, directory = getwd())
 
-load.stack(name = "Stack", directory = getwd())
+load.stack(name = "Stack", directory = getwd(), GUI = F)
 }
 \arguments{
 \item{name}{character. Folder name of the saved model.}
 
 \item{directory}{character. Path to the directory containing the saved model
-  folder, by default the current directory.}
+folder, by default the current directory.}
+
+\item{GUI}{logical. Don't take that argument into account (parameter for the user interface) !}
 }
 \value{
 The corresponding model object

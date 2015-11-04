@@ -42,7 +42,7 @@ NULL
 #'  details below).
 #'
 #'@return an S4 \linkS4class{Algorithm.Niche.Model} Class object viewable with
-#'  \code{\link{plot}} method
+#'  \code{\link{plot.model}} method
 #'
 #'@details \describe{ \item{algorithm}{Currently available algorithms are
 #'  Generalized linear models (\strong{GLM}), Generalized additive models
@@ -173,7 +173,7 @@ Modelling = function(algorithm,
 
   cat('Data check ... \n')
   # Occurences data input test | Data frame needed
-  if (is.matrix(Occurences)) {Occurences = data.frame(occurences)}
+  if (is.matrix(Occurences)) {Occurences = data.frame(Occurences)}
   if (!is.data.frame(Occurences)) {stop('Occurences data set is not a data frame or a matrix')}
   if ((Xcol %in% names(Occurences)) == F) {stop('X column is not well defined')}
   if ((Ycol %in% names(Occurences)) == F) {stop('Y column is not well defined')}

@@ -11,7 +11,7 @@ multiple algorithms (among generalized linear model, general additive model,
 multivariate adpatative splines, generalized boosted regression models,
 classification tree analysis, random forest, maximum entropy, artificial
 neural network, and support vector machines). It can be obtain with
-\code{\link{Ensemble.Modelling}} or \code{\link{ensemble-Algorithm.Niche.Model-method}}.
+\code{\link{Ensemble.Modelling}} or \code{\link{ensemble,Algorithm.Niche.Model-method}}.
 }
 \section{Slots}{
 

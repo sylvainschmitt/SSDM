@@ -21,7 +21,7 @@ details below)}
 \value{
 S4 \linkS4class{Algorithm.Niche.Model} or
  \linkS4class{Ensemble.Niche.Model} classes objects. viewable with
- \code{\link{plot}} method depending on the input.
+ \code{\link{plot.model}} method depending on the input.
 }
 \description{
 This is a method to evaluate models from S4

@@ -96,7 +96,7 @@ load.var <- function (directory = getwd(), files = NULL,
           Raster = aggregate(Raster, fact = (res(Raster)[1]/resostack[1]), fun = fun)
         }
         Env = stack(Env, Raster)
-        if(GUI) {incProgress((1/(length(files)*3) + 1/3), detail = paste(i,'treated'))}
+        if(GUI) {incProgress((1/(length(files)*3)), detail = paste(i,'treated'))}
       }
     }
   }
@@ -111,7 +111,7 @@ load.var <- function (directory = getwd(), files = NULL,
       if (!Env[[i]]@data@isfactor) {
         Env[[i]] = Env[[i]]/Env[[i]]@data@max
       }
-      if(GUI) {incProgress((1/length(Env@layers)/3 + 2/3), detail = paste(i,'normalized'))}
+      if(GUI) {incProgress((1/length(Env@layers)/3), detail = paste(i,'normalized'))}
     }
   }
 
