@@ -2,16 +2,24 @@
 % Please edit documentation in R/save.model.R
 \docType{methods}
 \name{save.model}
+\alias{save.enm}
 \alias{save.enm,Ensemble.Niche.Model-method}
 \alias{save.model}
+\alias{save.stack}
 \alias{save.stack,Stack.Species.Ensemble.Niche.Model-method}
 \title{Save models}
 \usage{
+save.enm(enm, name = strsplit(enm@name, ".", fixed = T)[[1]][1],
+  directory = getwd(), verbose = T, GUI = F)
+
 \S4method{save.enm}{Ensemble.Niche.Model}(enm, name = strsplit(enm@name, ".",
-  fixed = T)[[1]][1], directory = getwd())
+  fixed = T)[[1]][1], directory = getwd(), verbose = T, GUI = F)
+
+save.stack(stack, name = "Stack", directory = getwd(), verbose = T,
+  GUI = F)
 
 \S4method{save.stack}{Stack.Species.Ensemble.Niche.Model}(stack,
-  name = "Stack", directory = getwd())
+  name = "Stack", directory = getwd(), verbose = T, GUI = F)
 }
 \arguments{
 \item{enm}{Ensemble.Niche.Model. Ensemble model to be saved.}
@@ -19,7 +27,13 @@
 \item{name}{character. Folder name of the saved model.}
 
 \item{directory}{character. Path to the directory containing the saved model
-  folder, by default the current directory.}
+folder, by default the current directory.}
+
+\item{verbose}{logical. If true allow the function to print text in the
+console}
+
+\item{GUI}{logical. Don't take that argument into account (parameter for the
+ user interface) !}
 
 \item{stack}{Stack.Species.Ensemble.Niche.Model.Stack species ensemble models
 to be saved.}

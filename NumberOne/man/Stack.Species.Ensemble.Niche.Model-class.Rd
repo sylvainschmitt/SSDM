@@ -11,7 +11,7 @@ of multiple algorithms (among generalized linear model, general additive
 model, multivariate adpatative splines, generalized boosted regression models,
 classification tree analysis, random forest, maximum entropy, artificial
 neural network, and support vector machines). It can be obtain with
-\code{\link{Stack.Modelling}} or \code{\link{stacking,Ensemble.Niche.Model-method}}.
+\code{\link{Stack.Modelling}} or \code{\link{stacking}}.
 }
 \section{Slots}{
 
@@ -26,9 +26,6 @@ Stacked.Species.Niche.Model)}
 \item{\code{evaluation}}{data frame. Evaluation of the model (threshold, AUC, omission
 rate, sensitivity, specificity, correct proportion and Kappa)}
 
-\item{\code{algorithm.evluation}}{data frame. Evaluation of each algorihtm with the
-same metrics as evaluation slot}
-
 \item{\code{variables.importance}}{data frame. Relative percentage of importance for
 each variable used in the model}
 
@@ -38,6 +35,9 @@ calculated with pearson coefficient on habitat suitability map}
 \item{\code{enms}}{list. List with each ensemble model used for the stack model}
 
 \item{\code{parameters}}{data frame. Parameters used to realized the model}
+
+\item{\code{algorithm.evaluation}}{data frame. Evaluation of each algorihtm with the
+ same metrics as evaluation slot}
 }}
 \seealso{
 \linkS4class{Ensemble.Niche.Model} an S4 class for ensemble models,

@@ -1,6 +1,6 @@
 #' @include load.occ.R load.var.R
 #' @include Algorithm.Niche.Model.R Ensemble.Niche.Model.R Stack.Niche.Model.R
-#' @include ensemble.R evaluate.R stacking.R
+#' @include ensemble.R stacking.R
 #' @include Modelling.R Ensemble.Modelling.R Stack.Modelling.R
 #' @include save.model.R load.model.R plot.model.R
 #' @import shiny shinydashboard raster
@@ -12,16 +12,16 @@ NULL
 #'
 #' User interface to use the number one package
 #'
-#' @param browser logical. Option to plot or not the user in interface in you
-#'   internet browser
+#' @param browser logical. Option to plot or not the user global interface in
+#'   your internet browser
 #' @param maxmem numeric. Option to choose the maximum memory allocated to the
 #'   user interface
 #'
 #' @return Open a window with a shiny app allowing to use the number one package
 #'   with an easy user interface
 #'
-#' @details Due to the relatively important siez environmental data you should
-#'   gave enough memory to the interface
+#' @details Due to the relatively important size of environmental data you
+#'   should gave enough memory to the interface
 #'
 #' @examples
 #' \dontrun{
@@ -29,7 +29,7 @@ NULL
 #' }
 #'
 #' @export
-NumberOneGUI = function (browser = T, maxmem = 10e9) {
+NumberOneGUI = function (browser = F, maxmem = 10e9) {
 
   #### User Interface ####
   ui <- dashboardPage(
@@ -72,11 +72,13 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
                   fluidRow(
                     box(title = 'Occurences table',
                         fileInput('Occ', 'Occurences', multiple = F, accept = '.csv'),
+                        textInput('sep','Separator'),
                         uiOutput('Xcol'),
                         uiOutput('Ycol'),
+                        uiOutput('Pcol'),
                         uiOutput('Spcol'),
                         checkboxInput('GeoRes', 'Geographic resampling', value = T),
-                        sliderInput('reso', 'Resmpling gird coefficient', 1,10,1),
+                        uiOutput('reso'),
                         actionButton('load2', 'Load')),
                     box(title = 'Preview',
                         dataTableOutput('occ')
@@ -105,13 +107,80 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
         ),
 
         ### Modelling Page ####
-
         tabItem('algom',
-                h2('Algorithm Modelling')),
+                fluidRow(
+                  tabBox(
+                    tabPanel('Easy'
+                    ),
+                    tabPanel('Intermediate'
+                    ),
+                    tabPanel('Professional'
+                    )
+                  )
+                )
+        ),
         tabItem('ensemblem',
-                h2('Ensemble Modelling')),
+                fluidRow(
+                  tabBox(
+                    tabPanel('Easy'
+                    ),
+                    tabPanel('Intermediate'
+                    ),
+                    tabPanel('Professional'
+                    )
+                  )
+                )
+                ),
         tabItem('stackm',
-                h2('Stack species Modelling')),
+                fluidRow(
+                  tabBox(
+                    tabPanel('Easy',
+                             selectInput('algo', 'Algorithms', c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM'), multiple = T, selectize = T),
+                             sliderInput('rep','Repetitions',1,50,10, step = 1),
+                             textInput('name','Name'),
+                             checkboxInput('uncert', 'Uncertainty mapping', value = T),
+                             selectInput('metric', 'Evaluation metric', c('Kappa','CCR','TSS','SES','LW','ROC'), selected = 'SES'),
+                             selectInput('method', 'Diversity mapping method', c('Probability','Random Bernoulli','Threshold'), selected = 'Probability'),
+                             uiOutput('repBslide')
+                    ),
+                    tabPanel('Intermediate',
+                             checkboxInput('PA', 'Automatic Pseudo-Absences', value = T),
+                             uiOutput('PAnbUI'),
+                             uiOutput('PAstratUI'),
+                             selectInput('cval', 'Cross validation', c('holdout','k-fold','LOO'), selected = 'holdout'),
+                             uiOutput('cvalparam1UI'),
+                             uiOutput('cvalparam2UI'),
+                             selectInput('axesmetric', 'Axes evaluation metric', c('Pearson','AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'Pearson'),
+                             selectInput('ensemblemetric', 'Ensemble selection metric', c('AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'AUC', multiple = T, selectize = T),
+                             uiOutput('AUCUI'),
+                             uiOutput('KappaUI'),
+                             uiOutput('sensitivityUI'),
+                             uiOutput('specificityUI'),
+                             uiOutput('propcorrectUI'),
+                             checkboxInput('weight', 'Ensemble weighted', value = T)
+                    ),
+                    tabPanel('Expert',
+                             sliderInput('thresh','Threshold precision',11,10001,101, step = 10),
+                             checkboxInput('tmp', 'Temporary files', value = F),
+                             checkboxGroupInput('algoparam', 'Algortims parameters', c('GLM','GAM','MARS','GBM','CTA','RF','ANN','SVM'), inline = T),
+                             uiOutput('testUI'),
+                             uiOutput('epsilonUI'),
+                             uiOutput('maxitUI'),
+                             uiOutput('threshshrinkUI'),
+                             uiOutput('treesUI'),
+                             uiOutput('finalleaveUI'),
+                             uiOutput('cvUI'),
+                             uiOutput('degreeUI')
+                    )
+                  )
+                ),
+                fluidRow(
+                  box(
+                    actionButton('model','Model'),
+                    textOutput('debug')
+                  )
+                )
+                ),
 
         ### Results Page ###
         tabItem('stack',
@@ -211,8 +280,8 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
       )
       load.var$formats = c()
       for (i in 1 :length(load.var$vars)) {
-        format = strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][2]
-        if (!(format %in% load.var$formats)) {load.var$formats = c(load.var$formats, format)}
+        format = paste0('.',strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][2])
+        if (!(load.var$vars %in% load.var$formats)) {load.var$formats = c(load.var$formats, format)}
       }
       load.var$factors = c()
       if (length(input$factors > 0)) {
@@ -258,15 +327,22 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
     observeEvent(input$Occ, {
       load.occ$columns = names(read.csv2(input$Occ$datapath))
     })
+    observeEvent(input$sep, {
+      if(is.null(input$sep)) {sep = ""} else {sep = input$sep}
+      if(!is.null(input$Occ$datapath)) {load.occ$columns = names(read.csv2(input$Occ$datapath, sep = input$sep))}
+    })
     output$Xcol <- renderUI({selectInput('Xcol', 'X column', load.occ$columns, multiple = F)})
     output$Ycol <- renderUI({selectInput('Ycol', 'Y column', load.occ$columns, multiple = F)})
+    output$Pcol <- renderUI({selectInput('Pcol', 'Presence column', c('None', load.occ$columns), multiple = F)})
     output$Spcol <- renderUI({selectInput('Spcol', 'Specie column', c('None', load.occ$columns), multiple = F)})
+    output$reso <- renderUI({if(input$GeoRes){sliderInput('reso', 'Resmpling gird coefficient', 1,10,1)}})
     observeEvent(input$load2, {
       validate(
         need(length(data$Env@layers) > 0, 'You need to load environmental variables before !'),
         need(length(input$Occ$datapath) > 0, 'Choose occurences file first !')
       )
       if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
+      if(is.null(input$sep)) {sep = ""} else {sep = input$sep}
       data$Occ = withProgress(message = 'Occurences loading',
                               load.occ(directory = {},
                                        file = as.character(input$Occ$datapath),
@@ -276,7 +352,8 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
                                        GeoRes = input$GeoRes,
                                        reso = max(res(data$Env@layers[[1]])) * as.numeric(input$reso),
                                        verbose = F,
-                                       GUI = T))
+                                       GUI = T,
+                                       sep = sep))
     })
     output$occ <- renderDataTable({if(length(data$Occ) > 0) {data$Occ}})
 
@@ -329,8 +406,70 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
     ## Ensemble Modelling ##
 
     ## Stack Modelling ##
+    output$repBslide <- renderUI({if(input$method=='Random Bernoulli'){sliderInput('repB','Bernoulli repetitions',1,10000,1000, step = 1)}})
+    output$PAnbUI <- renderUI(if(!input$PA){sliderInput('PAnb','PA number',1,10000,1000, step = 100)})
+    output$PAstratUI <- renderUI(if(!input$PA){selectInput('PAstrat', 'PA strategy', c('random','disk'), selected = 'random')})
+    output$cvalparam1UI <- renderUI({
+      if(input$cval == 'holdout'){sliderInput('cvalfrac', 'Holdout fraction', 0,1,0.7, step = 0.05)}
+      if(input$cval == 'k-fold'){sliderInput('cvalk', 'Number of k fold', 1,100,10, step = 1)}
+    })
+    output$cvalparam2UI <- renderUI({if(input$cval != 'LOO'){sliderInput('cvalrep', 'Cross validation repetitions', 1,20,1, step = 1)}})
+    output$AUCUI <- renderUI({if('AUC' %in% input$ensemblemetric){sliderInput('AUC','AUC threshold',0.5,1,0.75, step = 0.05)}})
+    output$KappaUI <- renderUI({if('Kappa' %in% input$ensemblemetric){sliderInput('Kappa','Kappa threshold',0,1,0.5, step = 0.05)}})
+    output$sensitivityUI <- renderUI({if('sensitivity' %in% input$ensemblemetric){sliderInput('sensitivity','Sensitivity threshold',0.5,1,0.75, step = 0.05)}})
+    output$specificityUI <- renderUI({if('specificity' %in% input$ensemblemetric){sliderInput('specificity','Specificity threshold',0.5,1,0.75, step = 0.05)}})
+    output$propcorrectUI <- renderUI({if('prop.correct' %in% input$ensemblemetric){sliderInput('propcorrect','Correct proportion threshold',0.5,1,0.75, step = 0.05)}})
+    output$testUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){selectInput('test','Test (GLM/GAM)',c('AIC'))}})
+    output$epsilonUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){sliderInput('epsilon','Epsilon (GLM/GAM/SVM) = 1e-X',1,20,8, step = 1)}})
+    output$maxitUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'ANN' %in% input$algoparam){sliderInput('maxit','Maximum iteration (GLM/GAM/ANN)',100,1000,500, step = 100)}})
+    output$degreeUI <- renderUI({if('MARS' %in% input$algoparam){sliderInput('degree','Degree of interaction (MARS)',1,10,2, step = 1)}})
+    output$threshshrinkUI <- renderUI({if('GBM' %in% input$algoparam){sliderInput('threshshrink','Shrinkage threshold (GBM)',1e-05,1,1e-03, step = 1e-04)}})
+    output$treesUI <- renderUI({if('GBM' %in% input$algoparam || 'RF' %in% input$algoparam){sliderInput('trees','Maximum trees (GBM/RF)',500,10000,2500, step = 500)}})
+    output$finalleaveUI <- renderUI({if('GBM' %in% input$algoparam || 'RF' %in% input$algoparam || 'CTA' %in% input$algoparam){sliderInput('finalleave','Final leave size (GBM/CTA/RF)',1,20,1, step = 1)}})
+    output$cvUI <- renderUI({if('GBM' %in% input$algoparam || 'CTA' %in% input$algoparam || 'SVM' %in% input$algoparam){sliderInput('cv','Cross validation number (GBM/CTA/SVM)',1,20,3, step = 1)}})
+    observeEvent(input$model,{
+      if (input$Pcol == 'None') {Pcol = NULL} else {Pcol = input$Pcol}
+      if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
+      if (length(input$name)<1) {name = 'Caca'} else {name = input$name}
+      algo = c()
+      for (i in 1:length(input$algo)){algo = c(algo, input$algo[i])}
+      if(input$PA) {PA = NULL} else {PA = list('nb' = input$PAnb, 'strat' = input$PAstrat)}
+      ensemble.metric = c()
+      ensemblethresh = c(input$AUC, input$Kappa, input$sensitivity, input$specificity, input$propcorrect)
+      ensemble.thresh = c()
+      for (i in 1:length(input$ensemblemetric)){
+        ensemble.metric = c(ensemble.metric, input$ensemblemetric[i])
+        ensemble.thresh = c(ensemble.thresh, ensemblethresh[i])
+        }
+      output$debug <- renderText(paste(paste(algo, collapse = ','),
+                                       'data$Occ, data$Env',
+                                       'Xcol =', input$Xcol,
+                                       'Ycol =', input$Ycol,
+                                       'Pcol = ', Pcol,
+                                       'Spcol =', Spcol,
+                                       'rep =', input$rep,
+                                       'name =', name,
+                                       'save = F,',
+                                       'PA =', paste(PA, collapse = ','),
+                                       'cv = ', input$cval,
+                                       'cv.param = ', input$cvalrep,
+                                       'thresh = ', input$thresh,
+                                       'axes.metric = ', input$axesmetric,
+                                       'uncertainity = ', input$uncert,
+                                       'tmp = ', input$tmp,
+                                       'ensemble.metric =', paste(ensemble.metric, collapse = ','),
+                                       'ensemble.thresh =', paste(ensemble.thresh, collapse = ','),
+                                       'weight =', input$weight,
+                                       'method =', input$method,
+                                       'metric =', input$metric,
+                                       'rep.B = ', input$repB,
+                                       'verbose = F',
+                                       'GUI = T',
+                                       '... = algoparam'
+                                       ))
+      })
 
-    ### Results Menu ###
+     ### Results Menu ###
     output$plotting.menu <- renderUI({
       if(!is.null(data$Stack)) {
         enms = list()
@@ -550,15 +689,20 @@ NumberOneGUI = function (browser = T, maxmem = 10e9) {
     output$enm.varimp.table <- renderTable({data$ENM@variables.importance[-1]})
     # Parameters
     output$enm.summary <- renderTable({
-      summary = data.frame(matrix(nrow = 5, ncol = 1))
+      summary = data.frame(matrix(nrow = 6, ncol = 1))
       names(summary) = 'Summary'
-      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
+      row.names(summary) = c('Occurences type', 'Occurences number', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
       algo.info = character()
       for (i in 1:length(strsplit(data$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
         algo.info = paste(algo.info, strsplit(data$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
       }
       if (data$ENM@parameters$PA) {PA = 'default'}
-      summary$Summary = c(data$ENM@parameters$data, length(data$Stack@enms), algo.info, data$ENM@parameters$rep, PA)
+      if (data$ENM@parameters$data == "presence-only data set") {
+        nb.occ =  length(as.factor(data$ENM@data$Presence[which(data$ENM@data$Presence==1)])) / sum(data$ENM@algorithm.evaluation$kept.model)
+      } else {
+        nb.occ =  length(as.factor(data$ENM@data$Presence)) / sum(data$ENM@algorithm.evaluation$kept.model)
+      }
+      summary$Summary = c(data$ENM@parameters$data, nb.occ, length(data$Stack@enms), algo.info, data$ENM@parameters$rep, PA)
       if(!is.null(data$ENM@parameters$sp.nb.origin)) {
         summary = rbind(summary,
                         data.frame(Summary = data$ENM@parameters$sp.nb.origin, row.names = 'Original number of species'))

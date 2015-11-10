@@ -188,16 +188,25 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
     output$varimp.table <- renderTable({x@variables.importance})
     # Parameters
     output$summary <- renderTable({
-      summary = data.frame(matrix(nrow = 5, ncol = 1))
+      summary = data.frame(matrix(nrow = 7, ncol = 1))
       names(summary) = 'Summary'
-      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
-      # 'Original number of species'
+      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions',
+                             'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
       algo.info = character()
       for (i in 1:length(strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
         algo.info = paste(algo.info, strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
       }
       if (x@parameters$PA) {PA = 'default'}
-      summary$Summary = c(x@parameters$data, length(x@enms), algo.info, x@parameters$rep, PA)
+      if(x@parameters$cv == 'LOO') {cv.param = 'None'}
+      if(x@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                         strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                         'rep =',
+                                                         strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      if(x@parameters$cv == 'k-fold') {cv.param = paste('k =',
+                                                        strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                        'rep =',
+                                                        strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      summary$Summary = c(x@parameters$data, length(x@enms), algo.info, x@parameters$rep, PA, x@parameters$cv, cv.param)
       if(!is.null(x@parameters$sp.nb.origin)) {
         summary = rbind(summary,
                         data.frame(Summary = x@parameters$sp.nb.origin, row.names = 'Original number of species'))
@@ -315,15 +324,30 @@ setMethod('plot', 'Stack.Species.Ensemble.Niche.Model', function(x, y, ...) {
     output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variables.importance[-1]})
     # Parameters
     output$enm.summary <- renderTable({
-      summary = data.frame(matrix(nrow = 5, ncol = 1))
+      summary = data.frame(matrix(nrow = 8, ncol = 1))
       names(summary) = 'Summary'
-      row.names(summary) = c('Occurences type', 'Final number of species', 'Original algorithms', 'Number of repetitions', 'Pseudo-absences selection')
+      row.names(summary) = c('Occurences type', 'Occurences number', 'Final number of species', 'Original algorithms', 'Number of repetitions',
+                             'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
       algo.info = character()
       for (i in 1:length(strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
         algo.info = paste(algo.info, strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
       }
       if (x@enms[[which(choices == input$enmchoice)]]@parameters$PA) {PA = 'default'}
-      summary$Summary = c(x@enms[[which(choices == input$enmchoice)]]@parameters$data, length(x@enms), algo.info, x@enms[[which(choices == input$enmchoice)]]@parameters$rep, PA)
+      if (x@enms[[which(choices == input$enmchoice)]]@parameters$data == "presence-only data set") {
+        nb.occ =  length(as.factor(x@enms[[which(choices == input$enmchoice)]]@data$Presence[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence==1)])) / sum(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation$kept.model)
+      } else {
+        nb.occ =  length(as.factor(x@enms[[which(choices == input$enmchoice)]]@data$Presence)) / sum(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation$kept.model)
+      }
+      if(x@enms[[which(choices == input$enmchoice)]]@parameters$cv == 'LOO') {cv.param = 'None'}
+      if(x@enms[[which(choices == input$enmchoice)]]@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                         strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                         'rep =',
+                                                         strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      if(x@parameters$cv == 'k-fold') {cv.param = paste('k =',
+                                                        strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                        'rep =',
+                                                        strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      summary$Summary = c(x@enms[[which(choices == input$enmchoice)]]@parameters$data, nb.occ, length(x@enms), algo.info, x@enms[[which(choices == input$enmchoice)]]@parameters$rep, PA, x@enms[[which(choices == input$enmchoice)]]@parameters$cv, cv.param)
       if(!is.null(x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin)) {
         summary = rbind(summary,
                         data.frame(Summary = x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin, row.names = 'Original number of species'))
@@ -388,17 +412,22 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
                tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
                          plotOutput('probability', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)), title = 'Probability'),
                if(full) {tabPanel(plotOutput('niche'), title = 'Niche')},
-               if(full) {tabPanel(plotOutput('uncertainity'), title = 'Uncertainity')}
+               if(full) {tabPanel(plotOutput('uncertainity'), title = 'Uncertainity')},
+               tabPanel(tableOutput('summary'), title = 'Summary')
         ),
         tabBox(title = 'Variables importance',
-               tabPanel(plotOutput('varimp.barplot'), title = 'Barplot'),
+               tabPanel(plotOutput('varimp.barplot'),
+                        textOutput('varimp.info'),
+                        title = 'Barplot'),
                tabPanel(tableOutput('varimp.table'), title = 'Table')
         )
       ),
       if(full) {
         fluidRow(
           tabBox(title = 'Model evaluation',
-                 tabPanel(plotOutput('evaluation.barplot'), title = 'Barplot'),
+                 tabPanel(plotOutput('evaluation.barplot'),
+                          textOutput('evaluation.info'),
+                          title = 'Barplot'),
                  tabPanel(tableOutput('evaluation.table'), title = 'Table')
           ),
           if (length(x@algorithm.correlation) > 0) {
@@ -463,13 +492,18 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
       output$uncertainity <- renderPlot({
         if (!is.null(ranges$x)) {uncert.map = crop(x@uncertainity, c(ranges$x, ranges$y))} else {uncert.map = x@uncertainity}
         plot(uncert.map, main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
-      # Evaluation
       output$evaluation.barplot <- renderPlot({
         evaluation = x@algorithm.evaluation
-        evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
-        table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
-        barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
-        legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
+        evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
+        metrics = '% kept.model'
+        metrics.nb = c(which(names(evaluation) == 'kept.model'))
+        for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+          metrics = c(metrics, strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i])
+          metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i]))
+        }
+        table <- t(evaluation[metrics.nb])
+        barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
+        legend('bottomright', metrics, fill = rainbow(length(metrics)))
       })
       output$evaluation.table <- renderTable({x@algorithm.evaluation[c(2,4:8)]})
       if (length(x@algorithm.correlation) > 0) {
@@ -485,11 +519,65 @@ setMethod('plot', 'Niche.Model', function(x, y, ...) {
     }
     # Variable importance
     output$varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(x@variables.importance[-1]))
+      varimp = as.data.frame(t(x@variables.importance))
       names(varimp) = 'Axes.evaluation'
       barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2)
     })
-    output$varimp.table <- renderTable({x@variables.importance[-1]})
+    output$varimp.table <- renderTable({x@variables.importance})
+    # Parameters
+    output$summary <- renderTable({
+      summary = data.frame(matrix(nrow = 4, ncol = 1))
+      names(summary) = 'Summary'
+      row.names(summary) = c('Occurences type', 'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
+      if (x@parameters$PA) {PA = 'default'}
+      if(x@parameters$cv == 'LOO') {cv.param = 'None'}
+      if(x@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                         strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                         'rep =',
+                                                         strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      if(x@parameters$cv == 'k-fold') {cv.param = paste('k =',
+                                                        strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                        'rep =',
+                                                        strsplit(x@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      summary$Summary = c(x@parameters$data, PA, x@parameters$cv, cv.param)
+      if(!is.null(x@parameters$algorithms)) {
+        algo.info = character()
+        for (i in 1:length(strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
+          algo.info = paste(algo.info, strsplit(x@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+        }
+        summary = rbind(summary,
+                        data.frame(Summary = c(algo.info, x@parameters$rep)
+                                   , row.names = c('Original algorithms','Number of repetitions')))
+      }
+      summary
+    })
+    output$varimp.info <- renderText({
+      varimp.info = 'Axes evaluated with the variation of '
+      for (i in 1:length(x@parameters$axes.metric)) {
+        if (i == 1) {
+          varimp.info = paste(varimp.info, x@parameters$axes.metric[i])
+        } else if (i == length(x@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', x@parameters$axes.metric[i], '.')
+        } else {
+          varimp.info = paste(varimp.info, ',', x@parameters$axes.metric[i])
+        }
+      }
+      varimp.info
+    })
+    output$evaluation.info <- renderText({
+      evaluation.info = 'Models evaluated with'
+      for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+        if (i == 1) {
+          evaluation.info = paste(evaluation.info, strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        } else if (i == length(x@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste(evaluation.info, 'and', strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+        } else {
+          evaluation.info = paste(evaluation.info, ',', strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        }
+      }
+      if (x@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      evaluation.info
+    })
   }
 
   shinyApp(ui, server)

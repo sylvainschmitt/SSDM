@@ -1,4 +1,4 @@
-#' @include Ensemble.Niche.Model.R Stack.Niche.Model.R
+#' @include Ensemble.Niche.Model.R Stack.Niche.Model.R checkargs.R
 #' @importFrom raster writeRaster
 NULL
 
@@ -13,6 +13,10 @@ NULL
 #' @param name character. Folder name of the saved model.
 #' @param directory character. Path to the directory containing the saved model
 #'   folder, by default the current directory.
+#' @param verbose logical. If true allow the function to print text in the
+#'  console
+#' @param GUI logical. Don't take that argument into account (parameter for the
+#'  user interface) !
 #'
 #' @return Nothing in R environment. Create folders and tables and rasters
 #'   associated to the model. Tables are in .csv and rasters in .grd/.gri.
@@ -25,9 +29,17 @@ NULL
 
 #' @rdname save.model
 #' @export
+setGeneric('save.enm', function (enm, name = strsplit(enm@name, '.', fixed = T)[[1]][1],
+                                 directory = getwd(), verbose = T, GUI = F) {return(standardGeneric('save.enm'))})
+
+#' @rdname save.model
+#' @export
 setMethod('save.enm', 'Ensemble.Niche.Model', function (enm,
                                                         name = strsplit(enm@name, '.', fixed = T)[[1]][1],
-                                                        directory = getwd()) {
+                                                        directory = getwd(),
+                                                        verbose = T, GUI = F) {
+  # Check arguments
+  .checkargs(enm = enm, name = name, directory = directory,  verbose = verbose, GUI = GUI)
 
   cat('Saving ensemble model results \n')
   # Directories creation
@@ -55,7 +67,15 @@ setMethod('save.enm', 'Ensemble.Niche.Model', function (enm,
 
 #' @rdname save.model
 #' @export
-setMethod('save.stack', 'Stack.Species.Ensemble.Niche.Model', function (stack, name = 'Stack', directory = getwd()) {
+setGeneric('save.stack', function (stack, name = 'Stack', directory = getwd(), verbose = T, GUI = F) {return(standardGeneric('save.stack'))})
+
+#' @rdname save.model
+#' @export
+setMethod('save.stack', 'Stack.Species.Ensemble.Niche.Model', function (stack, name = 'Stack',
+                                                                        directory = getwd(),
+                                                                        verbose = T, GUI = F) {
+  # Check arguments
+  .checkargs(stack = stack, name = name, directory = directory,  verbose = verbose, GUI = GUI)
 
   cat('Saving stack species model results \n')
   # Directories creation

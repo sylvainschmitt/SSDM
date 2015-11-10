@@ -1,3 +1,4 @@
+#' @include checkargs.R
 #' @importFrom spThin thin
 NULL
 
@@ -38,6 +39,10 @@ NULL
 load.occ = function(directory = getwd(), Env, file = NULL, ...,
                      Xcol = 'Longitude', Ycol = 'Latitude', Spcol = NULL,
                      GeoRes = T, reso = max(res(Env@layers[[1]])), verbose = T, GUI = F) {
+  # Check arguments
+  .checkargs(directory = directory, file = file, Xcol = Xcol, Ycol = Ycol, Spcol = Spcol,
+             GeoRes = GeoRes, reso = reso, verbose = verbose, GUI = GUI)
+
   #pdir = getwd()
   if (verbose) {cat('Occurences loading \n')}
   #setwd(directory)

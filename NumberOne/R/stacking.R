@@ -1,4 +1,4 @@
-#' @include Ensemble.Niche.Model.R
+#' @include Ensemble.Niche.Model.R checkargs.R
 #' @importFrom raster raster stack reclassify
 NULL
 
@@ -6,18 +6,19 @@ NULL
 #'
 #'This is a function to stack several ensemble models in one stack species
 #'model. It takes in inputs several S4 \linkS4class{Ensemble.Niche.Model} class
-#'objects obtained with \code{\link{Ensemble.Modelling}} or \code{ensemble}
-#'functions. It returns an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model}
-#'class object containing the local species richness map, and the uncertainty
-#'map based on the habitat suitability map variance inter algorithms, all
-#'evaluation tables comming with (model evaluation, algorithms evaluation,
-#'algorithms correlation matrix and variables importance), and all associated
-#'ensemble models for each species (see Ensemble.Modelling).
+#'objects obtained with \code{\link{Ensemble.Modelling}} or
+#'\code{\link{ensemble}} functions. It returns an S4
+#'\linkS4class{Stack.Species.Ensemble.Niche.Model} class object containing the
+#'local species richness map, and the uncertainty map based on the habitat
+#'suitability map variance inter algorithms, all evaluation tables comming with
+#'(model evaluation, algorithms evaluation, algorithms correlation matrix and
+#'variables importance), and all associated ensemble models for each species
+#'(see \code{\link{Ensemble.Modelling}}).
 #'
 #'@param enm,... character. Choice of the algorithm for the modelling (see
 #'  details below).
-#'@param name character. Optionnal name given to the final Ensemble.Niche.Model
-#'  producted.
+#'@param name character. Optionnal name given to the final
+#'  Stack.Specie.Ensemble.Niche.Model producted.
 #'@param thresh numeric. binary map threshold computing precision parmeter, the
 #'  higher it is the more accurate is the threshold but the longer is the
 #'  modelling evaluation step !
@@ -28,18 +29,31 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is random bernoulli (\strong{B}), it defines the number of repetition used
 #'  to create random bernoulli binary maps for each species.
+#'@param verbose logical. If true allow the function to print text in the
+#'  console
+#'@param GUI logical. Don't take that argument into account (parameter for the
+#'  user interface) !
 #'
 #'@return an S4 \linkS4class{Stack.Species.Ensemble.Niche.Model} Class object
 #'  viewable with \code{\link{plot.model}} method
 #'
 #'@details \strong{Metric :} choice of the metric used to compute binary map
-#'  threshold and confusion matrix : \describe{ \item{"Kappa"}{maximizes the
-#'  model Kappa value} \item{"TSS"}{\strong{True Skill Statistic} maximizes the
+#'  threshold and confusion matrix (by default SES as recommanded by Liu et al.
+#'  2005,see references below): \describe{ \item{"Kappa"}{maximizes the model
+#'  Kappa value} \item{"TSS"}{\strong{True Skill Statistic} maximizes the
 #'  sensitivity and specificity sum} \item{"CCR"}{maximizes the correct
 #'  predicted observations proportion} \item{"SES"}{using the sensitivty
 #'  specificity equality} \item{"LW"}{using the lowest occurence prediction
 #'  probability} \item{"ROC"}{minimizing the distance between the ROC plot
 #'  (receiving operative curve) and the upper left coin (1,1)} }
+#'
+#'  \strong{Methos :} Choice of the method used to compute the local species
+#'  richness map (see Calabrez et al. 2014 for more informations, see references
+#'  below) : \describe{\item{P}{(Probablity) sum the habitat suitability maps
+#'  probabilities}\item{B}{(Random bernoulli) drawing repeatedly from a
+#'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
+#'  the thresholding (depending of the metric, see metric parameter).}}
+#'
 #' @examples
 #'\dontrun{
 #' stacking(Specie1.enm, Specie2.enm)
@@ -48,9 +62,26 @@ NULL
 #'@seealso \code{\link{Stack.Modelling}} for stack species ensemble modelling
 #'  with multiple algorithms and multiples species
 #'
+#'@references Liu,  C.  et  al.  2005.  Selecting  thresholds  of  occurrence in
+#'  the prediction  of  species  distributions./ Ecography  28:  385 / 393.
+#'
+#'  Calabrese, J.M., Certain, G., Kraan, C. & Dormann, C.F. (2014) Stacking
+#'  species  distribution  models  and  adjusting  bias  by linking them to
+#'  macroecological models. Global Ecology and Biogeography, 23, 99-112.
+#'
+#'@rdname stacking
 #'@export
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', metric = 'SES', thresh = 1001, rep.B = 1000, verbose = T, GUI = F) {return(standardGeneric('stacking'))})
+
+#' @rdname stacking
+#' @export
 setMethod('stacking', 'Ensemble.Niche.Model', function(enm, ..., name = NULL, method = 'P',
-                                                       metric = 'SES', thresh = 1001, rep.B = 1000) {
+                                                       metric = 'SES', thresh = 1001, rep.B = 1000,
+                                                       verbose = T, GUI = F) {
+  # Check arguments
+  .checkargs(enm = enm, name = name, method = method, metric = metric, thresh = thresh,
+             rep.B = rep.B, verbose = verbose, GUI = GUI)
+
   enms = list(enm, ...)
   if (length(enms) < 2) {stop('You neeed more than one enm to do stackings')}
   names = c()

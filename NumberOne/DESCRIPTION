@@ -35,11 +35,12 @@ Imports:
     spThin
 Collate:
     'Algorithm.Niche.Model.R'
+    'checkargs.R'
     'ensemble.R'
-    'evaluate.R'
     'Modelling.R'
     'Ensemble.Niche.Model.R'
     'Ensemble.Modelling.R'
+    'Env.R'
     'stacking.R'
     'Stack.Niche.Model.R'
     'save.model.R'
@@ -50,3 +51,6 @@ Collate:
     'Stack.Modelling.R'
     'GUI.R'
     'NumberOne.R'
+    'Occurences.R'
+    'update.stack.R'
+    'zzz.R'

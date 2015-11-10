@@ -1,101 +1,6 @@
-#' @include Algorithm.Niche.Model.R
+#' @include Algorithm.Niche.Model.R checkargs.R
 #' @importFrom raster raster stack reclassify
 NULL
-
-# Sum method used for ensemble function,
-# Not documented because only an intern function
-setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble.metric = c('AUC'),
-                                                   ensemble.thresh = c(0.75), weight = T,
-                                                   thresh = 1001, format = T, verbose = T, na.rm = F) {
-  models = list(x, ...)
-  if (length(ensemble.metric) != length(ensemble.thresh)) {stop('You must have the same number of metrics and associated thresholds in models assembling step (see ensemble.metric and ensemble.thresh)')}
-  if(format) {
-    for(i in 1:length(models)) {
-      if(!inherits(models[[i]], class(x)[[1]])) {
-        stop('You can only sum models from the same algorithm')
-      }
-    }
-  }
-
-  smodel =  new(class(x)[[1]],
-                projection = reclassify(x@projection[[1]], c(-Inf,Inf,0)),
-                data = x@data[1,],
-                variables.importance = x@variables.importance)
-  smodel@data = smodel@data[-1,]
-  smodel@variables.importance[1,] = 0
-
-  # Name
-  if (!is.null(name)) {name = paste0(name,'.')}
-  smodel@name = paste0(name,class(x)[[1]],'.ensemble')
-
-  # Datas, Projections, and Variables importance fusion
-  sweight = 0
-  kept.model = 0
-  for (i in 1:length(models)) {
-    # Assembling selection test depending on parameters
-    test = T
-    weight.value = c()
-    for (j in 1:length(ensemble.metric)) {
-      if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
-        test = F
-      }
-      weight.value = c(weight.value, ensemble.thresh[j])
-    }
-    weight.value = mean(weight.value)
-    if (test) {
-      if (weight) {
-        smodel@projection = smodel@projection + models[[i]]@projection * weight.value
-        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance * weight.value
-        sweight = sweight + weight.value
-      } else {
-        smodel@projection = smodel@projection + models[[i]]@projection
-        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance
-        sweight = sweight + 1
-      }
-      smodel@data = rbind(smodel@data, models[[i]]@data)
-      kept.model = kept.model + 1
-    }
-  }
-
-  # Return NULL if any model is kept
-  if( kept.model == 0) {
-    if (verbose) {cat('No model were kept with this threshold, Null is return. \n')}
-    return(NULL)} else {
-
-      smodel@projection = smodel@projection / sweight
-      names(smodel@projection) = 'Probability'
-
-      # Variables importance
-      if (!is.numeric(sum(smodel@variables.importance))) {
-        cat('Error variables importance is not numeric : \n')
-        print(smodel@variables.importance)
-        smodel@variables.importance = x@variables.importance
-        smoadel@variable.importance[1,] = 0
-      } else {
-        if(is.nan(sum(smodel@variables.importance))) {
-          cat('Error variables importance is NaN')
-          smodel@variables.importance[1,] = (100/length(smodel@variables.importance))
-        } else {
-          if (sum(smodel@variables.importance) == 0) {
-            all.null = T
-            for(i in 1:length(smodel@variables.importance)) {if(smodel@variables.importance[1,i] != 0) {all.null = F}}
-            if(all.null) {smodel@variables.importance[1,] = (100/length(smodel@variables.importance))} else {smodel@variables.importance = smodel@variables.importance * 100}
-          }
-          else {smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100}
-        }
-      }
-
-      # Evaluation
-      smodel = evaluate(smodel, thresh = 1001)
-
-      # Parameters
-      smodel@parameters = x@parameters
-      smodel@parameters$kept.model = kept.model
-
-      return(smodel)
-    }
-})
-
 
 #'Method to assemble different algorithms models in one ensemble model
 #'
@@ -122,6 +27,13 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble
 #'  modelling evaluation step !
 #'@param uncertainity logical. If false uncertainity mapping and algorithms
 #'  correlation matrix is not computed.
+#'@param format logical. Should always kept to true, it block the models sum to
+#'  only model from the same algorithm
+#'@param na.rm logical. Should NA be removed in models sum
+#'@param verbose logical. If true allow the function to print text in the
+#'  console
+#'@param GUI logical. Don't take that argument into account (parameter for the
+#'  user interface) !
 #'
 #'@details Ensemble metric (Metric used to compute the selection among
 #'  algorithms different models) can be choosed among those : \describe{
@@ -131,6 +43,10 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble
 #'  \item{specificity}{Specificity metric issued from the confusion matrix}
 #'  \item{prop.correct}{Correct predicted occurences proportion issued from the
 #'  confusion matrix} }
+#'
+#'  Sum method is an intermediate method to only sum multiple algoritms from one
+#'  origin in one model but without computing uncertainty mapping, algorithms
+#'  correlation and evaluation and model evaluation.
 #'
 #'@return an S4 \linkS4class{Ensemble.Niche.Model} Class object viewable with
 #'  \code{\link{plot.model}} method
@@ -143,10 +59,22 @@ setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble
 #'@seealso \code{\link{Ensemble.Modelling}} for stack ensemble modelling with
 #'  multiple algorithms
 #'
+#'@name ensemble
+#'
 #'@export
-setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL,
-                                                        ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
-                                                        weight = T, thresh = 1001, uncertainity = T) {
+setGeneric('ensemble',
+           function(x, ..., name = NULL,ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
+                    weight = T, thresh = 1001, uncertainity = T, verbose = T, GUI = F) {return(standardGeneric('ensemble'))})
+
+#' @rdname ensemble
+#' @export
+setMethod('ensemble', 'Algorithm.Niche.Model',
+          function(x, ..., name = NULL, ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
+                   weight = T, thresh = 1001, uncertainity = T, verbose = T, GUI = F) {
+  # Check agruments
+  .checkargs(name = name, ensemble.metric =ensemble.metric, ensemble.thresh = ensemble.thresh,
+             weight = weight, thresh = thresh, uncertainity = uncertainity, verbose = verbose, GUI = GUI)
+
   models = list(x, ...)
   enm = Ensemble.Niche.Model()
 
@@ -186,7 +114,7 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL,
   } else {
 
     # Sum of algorithm ensemble
-    cat('Projection, and variables importance computing...')
+    cat('Projection, evaluation and variables importance computing...')
     algo.list = list()
     for (i in 1:length(algo.ensemble)) {algo.list[[i]] = algo.ensemble[[i]]}
     algo.list['name'] = 'sum'
@@ -218,7 +146,7 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL,
 
       # Evaluation
       cat('Model evaluation...')
-      enm = evaluate(enm)
+      enm@evaluation = sum.algo.ensemble@evaluation
       cat('   done \n')
 
       # Axes evaluation
@@ -284,3 +212,99 @@ setMethod('ensemble', 'Algorithm.Niche.Model', function(x, ..., name = NULL,
     cat('   done \n')
 
     return(enm)}})
+
+#' @rdname ensemble
+#' @export
+setMethod('sum', 'Algorithm.Niche.Model', function(x, ..., name = NULL, ensemble.metric = c('AUC'),
+                                                   ensemble.thresh = c(0.75), weight = T,
+                                                   thresh = 1001, format = T, verbose = T, na.rm = F) {
+  models = list(x, ...)
+  if (length(ensemble.metric) != length(ensemble.thresh)) {stop('You must have the same number of metrics and associated thresholds in models assembling step (see ensemble.metric and ensemble.thresh)')}
+  if(format) {
+    for(i in 1:length(models)) {
+      if(!inherits(models[[i]], class(x)[[1]])) {
+        stop('You can only sum models from the same algorithm')
+      }
+    }
+  }
+
+  smodel =  new(class(x)[[1]],
+                projection = reclassify(x@projection[[1]], c(-Inf,Inf,0)),
+                data = x@data[1,],
+                variables.importance = x@variables.importance,
+                evaluation = x@evaluation)
+  smodel@data = smodel@data[-1,]
+  smodel@variables.importance[1,] = 0
+  smodel@evaluation[1,] = 0
+
+  # Name
+  if (!is.null(name)) {name = paste0(name,'.')}
+  smodel@name = paste0(name,class(x)[[1]],'.ensemble')
+
+  # Datas, Projections, Evaluation and Variables importance fusion
+  sweight = 0
+  kept.model = 0
+  for (i in 1:length(models)) {
+    # Assembling selection test depending on parameters
+    test = T
+    weight.value = c()
+    for (j in 1:length(ensemble.metric)) {
+      if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
+        test = F
+      }
+      weight.value = c(weight.value, ensemble.thresh[j])
+    }
+    weight.value = mean(weight.value)
+    if (test) {
+      if (weight) {
+        smodel@projection = smodel@projection + models[[i]]@projection * weight.value
+        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance * weight.value
+        smodel@evaluation = smodel@evaluation + models[[i]]@evaluation * weight.value
+        sweight = sweight + weight.value
+      } else {
+        smodel@projection = smodel@projection + models[[i]]@projection
+        smodel@variables.importance = smodel@variables.importance + models[[i]]@variables.importance
+        smodel@evaluation = smodel@evaluation + models[[i]]@evaluation
+        sweight = sweight + 1
+      }
+      smodel@data = rbind(smodel@data, models[[i]]@data)
+      kept.model = kept.model + 1
+    }
+  }
+
+  # Return NULL if any model is kept
+  if( kept.model == 0) {
+    if (verbose) {cat('No model were kept with this threshold, Null is return. \n')}
+    return(NULL)} else {
+
+      smodel@projection = smodel@projection / sweight
+      names(smodel@projection) = 'Probability'
+      smodel@evaluation = smodel@evaluation / sweight
+
+      # Variables importance
+      if (!is.numeric(sum(smodel@variables.importance))) {
+        cat('Error variables importance is not numeric : \n')
+        print(smodel@variables.importance)
+        smodel@variables.importance = x@variables.importance
+        smoadel@variable.importance[1,] = 0
+      } else {
+        if(is.nan(sum(smodel@variables.importance))) {
+          cat('Error variables importance is NaN')
+          smodel@variables.importance[1,] = (100/length(smodel@variables.importance))
+        } else {
+          if (sum(smodel@variables.importance) == 0) {
+            all.null = T
+            for(i in 1:length(smodel@variables.importance)) {if(smodel@variables.importance[1,i] != 0) {all.null = F}}
+            if(all.null) {smodel@variables.importance[1,] = (100/length(smodel@variables.importance))} else {smodel@variables.importance = smodel@variables.importance * 100}
+          }
+          else {smodel@variables.importance = smodel@variables.importance / sum(smodel@variables.importance) * 100}
+        }
+      }
+
+      # Parameters
+      smodel@parameters = x@parameters
+      smodel@parameters$kept.model = kept.model
+
+      return(smodel)
+    }
+})

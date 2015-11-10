@@ -5,18 +5,20 @@
 \title{One algorithm specie distribution modelling}
 \usage{
 Modelling(algorithm, Occurences, Env, Xcol = "Longitude", Ycol = "Latitude",
-  Pcol = NULL, name = NULL, PA = NULL, train.frac = 0.7,
-  thresh = 1001, metric = "SES", axes.metric = "AUC", ...)
+  Pcol = NULL, name = NULL, PA = NULL, cv = "holdout",
+  cv.param = c(0.7, 2), thresh = 1001, metric = "SES",
+  axes.metric = "Pearson", select = F, select.metric = c("AUC"),
+  select.thresh = c(0.75), verbose = T, GUI = F, ...)
 }
 \arguments{
 \item{algorithm}{character. Choice of the algorithm for the modelling (see
 details below).}
 
 \item{Occurences}{data frame. Occurences table (can be treated first by
-load.occ).}
+\code{\link{load.occ}}).}
 
 \item{Env}{raster object. Environnment raster object (can be treated first by
-load.env).}
+\code{\link{load.var}}).}
 
 \item{Xcol}{character. Name of the occurences table column containing Latitude
 or X coordinates.}
@@ -34,9 +36,11 @@ producted.}
 in case of presence only occurences, if PA is NULL recommended PA is used
 depending on the algorithms (see details below).}
 
-\item{train.frac}{float [0,1]. training fraction used to train the model
-(1-train.frac being the evaluating fraction of the data set used to evaluate
-the model), in case of data split evaluation method (see details below).}
+\item{cv}{character. Type of cross-validation used to evaluate the model (see
+details below).}
+
+\item{cv.param}{numeric. Parameters associated to the cross-validation used to
+evaluate the model (see details below).}
 
 \item{thresh}{numeric. binary map threshold computing precision parmeter, the
 higher it is the more accurate is the threshold but the longer is the
@@ -47,6 +51,22 @@ details below.)}
 
 \item{axes.metric}{Metric used to evaluate the variables relative importance
 in percent (see details below).}
+
+\item{select}{logical. If true models are evaluated before being projected on
+a raster, and don't keep if they don't match selection criteria. (see
+details below).}
+
+\item{select.metric}{character. Metric used to compute the selection (see
+details below).}
+
+\item{select.thresh}{numeric. Threshold associated with the metric used to
+compute the selection.}
+
+\item{verbose}{logical. If true allow the function to print text in the
+console}
+
+\item{GUI}{logical. Don't take that argument into account (parameter for the
+user interface) !}
 
 \item{...}{additionnal parameters for the algorithm modelling function (see
  details below).}
@@ -69,27 +89,40 @@ containing the habitat suitability map and all evaluation tables comming with
  (\strong{GAM}), Multivaraite adaptative regression splines (\strong{MARS}),
  Generalized boosted regressions models (\strong{GBM}), Classification tree
  analysis (\strong{CTA}), Random forests (\strong{RF}), Maximum Entropy
- (\strong{MAXENT}), Artificial Neural Network (\strong{ANN}, and Support
+ (\strong{MAXENT}), Artificial Neural Network (\strong{ANN}), and Support
  vector machines (\strong{SVM}). Each algorithm have his own parameters
  settable with the (\strong{...}, see each algorithm section below to set
  theim.)} \item{PA}{list with two values : \strong{nb} number of pseudo
  absence selected, and \strong{strat} strategy used for pseudo-absence
  selection : either random selection either disk selection. We set to default
- the Barbet and Massin 200X recommendation (link).} \item{metric}{Choice of
- the metric used to compute binary map threshold and confusion matrix :
+ the Barbet-Massin 2012 recommendation (see references)} \item{metric}{Choice
+ of the metric used to compute binary map threshold and confusion matrix (by
+ default SES as recommanded by Liu et al. 2005,see references below):
  \strong{Kappa} maximizes the model Kappa value, \strong{CCR} maximizes the
  correct predicted observations proportion, \strong{TSS} (True Skill
  Statistic) maximizes the sensitivity and specificity sum, \strong{SES} using
  the sensitivty specificity equality, \strong{LW} using the lowest occurence
  prediction probability, \strong{ROC} minimizing the distance between the ROC
  plot (receiving operative curve) and the upper left coin (1,1).}
- \item{axes.metric}{Choice of the metric used to evaluate the variables
- relative importance in percent (variation of the model evaluation without
- this axis) : \strong{Pearson} pearson correlation coefficient, \strong{AUC}
- area under the receiving operating curve (ROC), \strong{Kappa},
+ \item{cv}{\strong{Cross validation} method used for the evaluation among :
+ \strong{holdout} data are partitionned in a training set and evaluating set
+ regarding a fraction (\emph{cv.param[1]}) and the operation can be repeated
+ (\emph{cv.param[2]}), \strong{k-fols} data are partitionned in k fold
+ succesively being the evaluating set regarding a k parameter
+ (\emph{cv.param[1]}) and the operation can be repeated (\emph{cv.param[2]}),
+ \strong{LOO} (Leave One Out) each point are successively take as evaluation
+ data.} \item{axes.metric}{Choice of the metric used to evaluate the
+ variables relative importance in percent (variation of the model evaluation
+ without this axis) : \strong{Pearson} pearson correlation coefficient,
+ \strong{AUC} area under the receiving operating curve (ROC), \strong{Kappa},
  \strong{omission.rate} omission rate, \strong{sensitivity},
- \strong{specificity}, and \strong{prop.correct} correct predicted
- occurences proportion.} \item{...}{See algorithm in detail section} }
+ \strong{specificity}, and \strong{prop.correct} correct predicted occurences
+ proportion.} \item{...}{See algorithm in detail
+ section}\item{select.metric}{Selection metric (Metric used to reject a to
+ poor model ) can be choosed among those : \strong{AUC} area under the
+ receiving operating curve (ROC), \strong{Kappa}, \strong{sensitivity},
+ \strong{specificity}, and \strong{prop.correct}correct predicted occurences
+ proportion.} \item{"..."}{See algorithm in detail section}}
 }
 \section{Generalized linear models (\strong{GLM}) }{
  it uses the glm function
@@ -171,14 +204,20 @@ containing the habitat suitability map and all evaluation tables comming with
 
 \section{Warning }{
  Depending on the raster object resolution the computing can
- be more or less time and memory consuming. You can use the function estimate
- to have an estimation of both time and memory needed in your case with your
- hardware.
+ be more or less time and memory consuming.
 }
 \examples{
 \dontrun{
 Modelling('GLM', Occurences, Env)
 }
+}
+\references{
+Barbet-Massin, M., Jiguet, F., Albert, C. H. & Thuiller, W.
+ Selecting pseudo-absences for species distribution models: how, where and
+ how many? Methods Ecol. Evol. 3, 327-338 (2012)
+
+ Liu,  C.  et  al.  2005.  Selecting  thresholds  of  occurrence  in  the
+ prediction  of  species  distributions./ Ecography  28:  385 / 393.
 }
 \seealso{
 \code{\link{Ensemble.Modelling}} for specie distribution ensemble

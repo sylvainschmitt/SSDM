@@ -8,22 +8,19 @@
 #' @importFrom gbm gbm
 #' @importFrom randomForest randomForest
 #' @importFrom dismo maxent
-#' @import nnet nnet
+#' @importFrom nnet nnet
 #' @importFrom e1071 svm
 NULL
 
 ##### New generics ##### ----
-setGeneric('evaluate', function(obj, thresh = 1001, metric = 'AUC') {return(standardGeneric('evaluate'))})
 setGeneric('get_PA', function(obj) {return(standardGeneric('get_PA'))})
 setGeneric('PA.select', function(obj, Env, ...) {return(standardGeneric('PA.select'))})
 setGeneric('data.values', function(obj, Env, na.rm = T) {return(standardGeneric('data.values'))})
 setGeneric('get_model', function(obj, ...) {return(standardGeneric('get_model'))})
+setGeneric('evaluate', function(obj, cv = 'holdout', cv.param = c(0.7, 2), thresh = 1001, metric = 'SES', Env, ...) {return(standardGeneric('evaluate'))})
 setGeneric('project', function(obj, Env, ...) {return(standardGeneric('project'))})
-setGeneric('evaluate.axes', function(obj, thresh = 1001, Env, axes.metric = 'AUC', ...) {return(standardGeneric('evaluate.axes'))})
-setGeneric('ensemble', function(x, ..., name = NULL,ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T, thresh = 1001, uncertainity = T) {return(standardGeneric('ensemble'))})
-setGeneric('save.enm', function (enm, ...) {return(standardGeneric('save.enm'))})
-setGeneric('save.stack', function (stack, ...) {return(standardGeneric('save.stack'))})
-setGeneric('stacking', function(enm, ...) {return(standardGeneric('stacking'))})
+setGeneric('evaluate.axes', function(obj, cv = 'holdout', cv.param = c(0.7, 2), thresh = 1001,
+                                     metric = 'SES', axes.metric = 'Pearson', Env, ...) {return(standardGeneric('evaluate.axes'))})
 
 ##### Niche Model Class ##### -----
 # 1 - Class definition #
@@ -77,11 +74,11 @@ setMethod('print', 'Niche.Model', function(x, ...) {
 #'  and \linkS4class{Stack.Species.Ensemble.Niche.Model} an S4 class for stack
 #'  species enemble models.
 #'
+#' @export
 setClass('Algorithm.Niche.Model',
          contains = 'Niche.Model')
 
 # Class generator
-#' @export
 Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
                                   name = character(),
                                   projection = raster(),
@@ -93,10 +90,10 @@ Algorithm.Niche.Model <- function(algorithm = 'Algorithm',
   return(new(object.class, name = name, projection = projection, evaluation = evaluation, variables.importance = variables.importance, data = data, parameters = parameters))
 }
 
-# 3 - Methods definition #
+# 3 - Internal undocumented methods #
 setMethod('get_PA', "Algorithm.Niche.Model", function(obj) {return(obj)})
 
-setMethod('PA.select', "Algorithm.Niche.Model", function(obj, Env, PA = NULL, train.frac = 0.7) {
+setMethod('PA.select', "Algorithm.Niche.Model", function(obj, Env, PA = NULL) {
   if (is.null(PA)) {
     PA = get_PA(obj)
     obj@parameters$PA = 'default'
@@ -136,8 +133,6 @@ setMethod('PA.select', "Algorithm.Niche.Model", function(obj, Env, PA = NULL, tr
   }
   data.PA = data.PA[1:PA$nb,]
   data.PA$Presence = 0
-  data.PA$Train = F
-  data.PA$Train[sample.int(length(data.PA$Presence), round(length(data.PA$Presence)*train.frac))] = T
   obj@data = rbind(obj@data, data.PA)
 
   return(obj)})
@@ -171,9 +166,101 @@ setMethod('data.values', "Algorithm.Niche.Model", function(obj, Env, na.rm = T) 
 
 setMethod('get_model', "Algorithm.Niche.Model", function(obj, ....) {return(obj)})
 
+setMethod("evaluate", "Algorithm.Niche.Model", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env, ...) {
+  # Parameters
+  text.cv.param = character()
+  for (i in 1:length(cv.param)) {
+    text.cv.param = paste0(text.cv.param,'|',cv.param[i])
+  }
+  obj@parameters$cv = cv
+  obj@parameters$cv.param = text.cv.param
+  obj@parameters$metric = metric
+  # Cross validation
+  metric = switch(metric,
+                  'Kappa' = 'maxKappa',
+                  'CCR' = 'max.prop.correct',
+                  'TSS' = 'max.sensitivity+specificity',
+                  'SES' = 'sensitivity=specificity',
+                  'LW' = 'min.occurence.prediction',
+                  'ROC' = 'min.ROC.plot.distance')
+  if(cv == 'holdout') {
+    for (i in 1:cv.param[2]) {
+      data = obj@data
+      data$train = F
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
+        data[which(data$Presence == p),] = datap
+      }
+      evaldata = data[-which(data$train),]
+      evaldata = evaldata[-which(names(data) == 'train')]
+      traindata = data[which(data$train),]
+      traindata = traindata[-which(names(data) == 'train')]
+      trainobj = obj
+      trainobj@data = traindata
+      model = get_model(trainobj, ...)
+      predicted.values = predict(model, evaldata)
+      threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+      threshold = mean(threshold[[which(names(threshold) == metric)]])
+      roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+      if(i==1) {
+        evaluation = roweval
+      } else {
+        evaluation = rbind(evaluation, roweval)
+      }
+    }
+  } else {
+    if(cv == 'LOO') {
+      k = length(obj@data$Presence)
+      rep = cv.param[1]
+    }
+    if(cv == 'k-fold') {
+      k = cv.param[1]
+      rep = cv.param[2]
+    }
+    for (i in 1:length(rep)) {
+      data = obj@data
+      data$fold = 0
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        indices = c(1:length(datap$fold))
+        fold = 1
+        while(length(indices) > 0){
+          j = sample(indices, 1)
+          datap$fold[j] = fold
+          indices = indices[-which(indices == j)]
+          if(fold != k) {fold = fold + 1} else {fold = 1}
+        }
+        data[which(data$Presence == p),] = datap
+      }
+      for(j in 1:k) {
+        evaldata = data[which(data$fold == j),]
+        evaldata = evaldata[-which(names(data) == 'fold')]
+        traindata = data[which(data$fold != j),]
+        traindata = traindata[-which(names(data) == 'fold')]
+        trainobj = obj
+        trainobj@data = traindata
+        model = get_model(trainobj, ...)
+        predicted.values = predict(model, evaldata)
+        threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+        threshold = mean(threshold[[which(names(threshold) == metric)]])
+        roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+        if(i==1 && j==1) {
+          evaluation = roweval
+        } else {
+          evaluation = rbind(evaluation, roweval)
+        }
+      }
+    }
+  }
+  obj@evaluation = evaluation[1,]
+  for(i in 1:length(evaluation)){
+    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
+  }
+  return(obj)})
+
 setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
   model = get_model(obj, ...)
-  #proj = predict(Env, model) # Previous classic function that don't take correctly factors variable into account
   proj = raster::predict(Env, model,
                          fun = function(model, x){
                            x= as.data.frame(x)
@@ -193,30 +280,25 @@ setMethod('project', "Algorithm.Niche.Model",  function(obj, Env, ...) {
   obj@projection = proj
   return(obj)})
 
-setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, thresh = 1001, Env,
-                                                             axes.metric = 'AUC', ...) {
+setMethod('evaluate.axes', "Algorithm.Niche.Model", function(obj, cv, cv.param, thresh = 1001,
+                                                             metric = 'SES', axes.metric = 'Pearson', Env, ...) {
   obj@parameters$axes.metric = axes.metric
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
-  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
   if (axes.metric == 'Pearson') {
-    data = obj@data[which(!obj@data$Train),]
-    o.predicted.values = extract(obj@projection, data[c('X','Y')]) # original model predicted values
+    o.predicted.values = predict(get_model(obj, ...), obj@data) # original model predicted values
   }
 
-  for (i in 5:length(obj@data)) {
+  for (i in 4:length(obj@data)) {
     # Get model predictions without one axis reeated for all axis
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
-    data = obj.axes@data[which(!obj.axes@data$Train),]
-    model = get_model(obj.axes,...)
-    predicted.values = predict(model, data)
     if (axes.metric != 'Pearson') {
-      threshold = optim.thresh(data$Presence, predicted.values, thresh)
-      threshold = mean(threshold$`max.sensitivity+specificity`)
-      evaluation = accuracy(data$Presence, predicted.values, threshold)
-      obj@variables.importance[1,(i-4)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - evaluation[1,which(names(evaluation) == axes.metric)]
+      obj.axes = evaluate(obj.axes, cv, cv.param, thresh, metric)
+      obj@variables.importance[1,(i-3)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - obj.axes@evaluation[1,which(names(obj.axes@evaluation) == axes.metric)]
     } else {
-      obj@variables.importance[(i-4)] = cor(predicted.values, o.predicted.values)
+      predicted.values = predict(get_model(obj.axes, ...), obj.axes@data)
+      obj@variables.importance[(i-3)] = cor(predicted.values, o.predicted.values)
     }
   }
 
@@ -251,14 +333,14 @@ setMethod('get_PA', "GLM.Niche.Model",
 
 setMethod('get_model', "GLM.Niche.Model",
           function(obj, test = 'AIC', epsilon = 1e-08, maxit = 500) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             formula = "Presence ~"
             for (i in 2:length(data)) {
               var = names(data[i])
               if (i != 2) {formula = paste(formula,'+',var)} else {formula = paste(formula,var)}
             }
-            model = glm(formula(formula), data = data, test = test, control = glm.control(epsilon = epsilon, maxit = maxit))
+            model = glm(formula(formula), data = data, test = test,
+                        control = glm.control(epsilon = epsilon, maxit = maxit))
             for(i in 1:length(data)) {
               if(is.factor(data[,i])) {
                 model$xlevels[[which(names(model$xlevels) == paste0(names(data)[i]))]] = levels(data[,i])
@@ -282,20 +364,20 @@ setMethod('get_PA', "GAM.Niche.Model",
 
 setMethod('get_model', "GAM.Niche.Model",
           function(obj, test = 'AIC', epsilon = 1e-08, maxit = 500) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             formula = "Presence ~"
             for (i in 2:length(data)) {
               var = names(data[i])
               if (i != 2) {formula = paste(formula,'+',var)} else {formula = paste(formula,var)}
               if (!is.factor(data[,i])) {formula = paste0(formula,' + s(',var,')')}
             }
-            model = gam(formula(formula), data = data, test = test, control = gam.control(epsilon = epsilon, maxit = maxit))
-            #             for(i in 1:length(data)) {
-            #               if(is.factor(data[,i])) {
-            #                 model$xlevels[[which(names(model$xlevels) == names(data)[i])]] = levels(data[,i])
-            #               }
-            #             }
+            model = gam(formula(formula), data = data, test = test,
+                        control = gam.control(epsilon = epsilon, maxit = maxit))
+                        for(i in 1:length(data)) {
+                          if(is.factor(data[,i])) {
+                            model$xlevels[[which(names(model$xlevels) == names(data)[i])]] = levels(data[,i])
+                          }
+                        }
             return(model)})
 
 ##### MARS Niche Model Class ##### -----
@@ -314,8 +396,7 @@ setMethod('get_PA', "MARS.Niche.Model",
 
 setMethod('get_model', "MARS.Niche.Model",
           function(obj, degree = 2) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = earth(Presence ~ ., data = data, degree = 2)
             return(model)})
 
@@ -335,27 +416,131 @@ setMethod('get_PA', "CTA.Niche.Model",
 
 setMethod('get_model', "CTA.Niche.Model",
           function(obj, final.leave = 1, cv = 3) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = rpart(Presence ~ ., data = data, method = 'class',
                           control = rpart.control(minbucket = final.leave, xval = cv))
             return(model)})
 
-setMethod('evaluate.axes', "CTA.Niche.Model", function(obj, thresh = 1001, ...) {
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
-  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
-  for (i in 5:length(obj@data)) {
+setMethod("evaluate", "CTA.Niche.Model", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', ...) {
+  # Need to redefine method because CTA predict method doesn't return the same thing as other algorithms predict method !
+  metric = switch(metric,
+                  'Kappa' = 'maxKappa',
+                  'CCR' = 'max.prop.correct',
+                  'TSS' = 'max.sensitivity+specificity',
+                  'SES' = 'sensitivity=specificity',
+                  'LW' = 'min.occurence.prediction',
+                  'ROC' = 'min.ROC.plot.distance')
+  if(cv == 'holdout') {
+    for (i in 1:cv.param[2]) {
+      data = obj@data
+      data$train = F
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
+        data[which(data$Presence == p),] = datap
+      }
+      evaldata = data[-which(data$train),]
+      evaldata = evaldata[-which(names(data) == 'train')]
+      traindata = data[which(data$train),]
+      traindata = traindata[-which(names(data) == 'train')]
+      trainobj = obj
+      trainobj@data = traindata
+      model = get_model(trainobj, ...)
+      predicted.values = predict(model, evaldata)[,1]
+      threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+      threshold = mean(threshold[[which(names(threshold) == metric)]])
+      roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+      if(i==1) {
+        evaluation = roweval
+      } else {
+        evaluation = rbind(evaluation, roweval)
+      }
+    }
+  } else {
+    if(cv == 'LOO') {
+      k = length(obj@data$Presence)
+      rep = cv.param[1]
+    }
+    if(cv == 'k-fold') {
+      k = cv.param[1]
+      rep = cv.param[2]
+    }
+    for (i in 1:length(rep)) {
+      data = obj@data
+      data$fold = 0
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        indices = c(1:length(datap$fold))
+        fold = 1
+        while(length(indices) > 0){
+          j = sample(indices, 1)
+          datap$fold[j] = fold
+          indices = indices[-which(indices == j)]
+          if(fold != k) {fold = fold + 1} else {fold = 1}
+        }
+        data[which(data$Presence == p),] = datap
+      }
+      for(j in 1:k) {
+        evaldata = data[which(data$fold == j),]
+        evaldata = evaldata[-which(names(data) == 'fold')]
+        traindata = data[which(data$fold != j),]
+        traindata = traindata[-which(names(data) == 'fold')]
+        trainobj = obj
+        trainobj@data = traindata
+        model = get_model(trainobj, ...)
+        predicted.values = predict(model, evaldata)[,1]
+        threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+        threshold = mean(threshold[[which(names(threshold) == metric)]])
+        roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+        if(i==1 && j==1) {
+          evaluation = roweval
+        } else {
+          evaluation = rbind(evaluation, roweval)
+        }
+      }
+    }
+  }
+  obj@evaluation = evaluation[1,]
+  for(i in 1:length(evaluation)){
+    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
+  }
+  return(obj)})
+
+setMethod('evaluate.axes', "CTA.Niche.Model", function(obj, cv, cv.param, thresh = 1001,
+                                                             metric = 'SES', axes.metric = 'Pearson', ...) {
+  # Need to redefine method because CTA predict method doesn't return the same thing as other algorithms predict method !
+  obj@parameters$axes.metric = axes.metric
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  if (axes.metric == 'Pearson') {
+    o.predicted.values = predict(get_model(obj, ...), obj@data)[1,] # original model predicted values
+  }
+
+  for (i in 4:length(obj@data)) {
+    # Get model predictions without one axis reeated for all axis
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
-    data = obj.axes@data[which(!obj.axes@data$Train),]
-    model = get_model(obj.axes,...)
-    predicted.values = predict(model,data)[,2]
-    threshold = optim.thresh(data$Presence, predicted.values, thresh)
-    threshold = mean(threshold$`max.sensitivity+specificity`)
-    evaluation = accuracy(data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
+    if (axes.metric != 'Pearson') {
+      obj.axes = evaluate(obj.axes, cv, cv.param, thresh, metric)
+      obj@variables.importance[1,(i-3)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - obj.axes@evaluation[1,which(names(obj.axes@evaluation) == axes.metric)]
+    } else {
+      predicted.values = predict(get_model(obj.axes, ...), obj.axes@data)[1,]
+      obj@variables.importance[(i-3)] = cor(predicted.values, o.predicted.values)
+    }
   }
-  obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+
+  # Variable importance normalization (%)
+  if(sum(obj@variables.importance) == 0) {
+    all.null = T
+    for (i in 1:length(obj@variables.importance[1,])) {if(obj@variables.importance[1,i] != 0) {all.null = F}}
+    if (all.null) {
+      obj@variables.importance[1,] = 100 / length(obj@variables.importance)
+    } else {
+      obj@variables.importance = obj@variables.importance * 100
+    }
+  } else {
+    obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  }
   row.names(obj@variables.importance) = "Axes.evaluation"
   return(obj)})
 
@@ -375,8 +560,7 @@ setMethod('get_PA', "GBM.Niche.Model",
 
 setMethod('get_model', "GBM.Niche.Model",
           function(obj, trees = 2500, final.leave = 1, cv = 3, thresh.shrink = 1e-03) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = gbm(Presence ~ ., data = data,
                         distribution = 'bernoulli', n.minobsinnode = final.leave,
                         shrinkage = thresh.shrink, bag.fraction = 0.5,
@@ -399,8 +583,7 @@ setMethod('get_PA', "RF.Niche.Model",
 
 setMethod('get_model', "RF.Niche.Model",
           function(obj, trees = 2500, final.leave = 1) {
-            data = obj@data[which(obj@data$Train),]
-            data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+            data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = randomForest(Presence ~ ., data = data, do.classif = TRUE, ntree = trees,
                                  nodesize = final.leave, maxnodes = NULL)
             return(model)})
@@ -421,15 +604,109 @@ setMethod('get_PA', "MAXENT.Niche.Model",
 
 setMethod('get_model', "MAXENT.Niche.Model", function(obj, Env) {
   factors = c()
-  data = obj@data[which(obj@data$Train),]
   for(i in 4:length(names(obj@data))) {if(is.factor(obj@data[,i])) {factors = c(factors, names(obj@data)[i])}}
-  model = maxent(x = Env, p = obj@data[which(data$Presence == 1),1:2],
-                 a = obj@data[which(data$Presence == 0),1:2], factors = factors)
+  model = maxent(x = Env, p = obj@data[which(obj@data$Presence == 1),1:2],
+                 a = obj@data[which(obj@data$Presence == 0),1:2], factors = factors)
   return(model)})
 
-setMethod('project', "MAXENT.Niche.Model", function(obj, Env, ...) {
+setMethod("evaluate", "MAXENT.Niche.Model", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env) {
+  metric = switch(metric,
+                  'Kappa' = 'maxKappa',
+                  'CCR' = 'max.prop.correct',
+                  'TSS' = 'max.sensitivity+specificity',
+                  'SES' = 'sensitivity=specificity',
+                  'LW' = 'min.occurence.prediction',
+                  'ROC' = 'min.ROC.plot.distance')
+  if(cv == 'holdout') {
+    for (i in 1:cv.param[2]) {
+      data = obj@data
+      data$train = F
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
+        data[which(data$Presence == p),] = datap
+      }
+      evaldata = data[-which(data$train),]
+      evaldata = evaldata[-which(names(data) == 'train')]
+      traindata = data[which(data$train),]
+      traindata = traindata[-which(names(data) == 'train')]
+      trainobj = obj
+      trainobj@data = traindata
+      model = get_model(trainobj, Env)
+      predicted.values = predict(model, evaldata)
+      threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+      threshold = mean(threshold[[which(names(threshold) == metric)]])
+      roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+      if(i==1) {
+        evaluation = roweval
+      } else {
+        evaluation = rbind(evaluation, roweval)
+      }
+    }
+  } else {
+    if(cv == 'LOO') {
+      k = length(obj@data$Presence)
+      rep = cv.param[1]
+    }
+    if(cv == 'k-fold') {
+      k = cv.param[1]
+      rep = cv.param[2]
+    }
+    for (i in 1:length(rep)) {
+      data = obj@data
+      data$fold = 0
+      for (p in 0:1) {
+        datap = data[which(data$Presence == p),]
+        indices = c(1:length(datap$fold))
+        fold = 1
+        while(length(indices) > 0){
+          j = sample(indices, 1)
+          datap$fold[j] = fold
+          indices = indices[-which(indices == j)]
+          if(fold != k) {fold = fold + 1} else {fold = 1}
+        }
+        data[which(data$Presence == p),] = datap
+      }
+      for(j in 1:k) {
+        evaldata = data[which(data$fold == j),]
+        evaldata = evaldata[-which(names(data) == 'fold')]
+        traindata = data[which(data$fold != j),]
+        traindata = traindata[-which(names(data) == 'fold')]
+        trainobj = obj
+        trainobj@data = traindata
+        model = get_model(trainobj, Env)
+        predicted.values = predict(model, evaldata)
+        threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
+        threshold = mean(threshold[[which(names(threshold) == metric)]])
+        roweval = accuracy(evaldata$Presence, predicted.values, threshold)
+        if(i==1 && j==1) {
+          evaluation = roweval
+        } else {
+          evaluation = rbind(evaluation, roweval)
+        }
+      }
+    }
+  }
+  obj@evaluation = evaluation[1,]
+  for(i in 1:length(evaluation)){
+    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
+  }
+  return(obj)})
+
+setMethod('project', "MAXENT.Niche.Model",  function(obj, Env) {
   model = get_model(obj, Env)
-  proj = predict(Env, model)
+  proj = raster::predict(Env, model,
+                         fun = function(model, x){
+                           x= as.data.frame(x)
+                           for (i in 1:length(Env@layers)) {
+                             if(Env[[i]]@data@isfactor) {
+                               x[,i] = as.factor(x[,i])
+                               x[,i] = droplevels(x[,i])
+                               levels(x[,i]) = Env[[i]]@data@attributes[[1]]$ID
+                             }
+                           }
+                           return(predict(model, x))
+                         })
   # Rescaling projection
   proj = reclassify(proj, c(-Inf,0,0))
   proj = proj / proj@data@max
@@ -437,21 +714,40 @@ setMethod('project', "MAXENT.Niche.Model", function(obj, Env, ...) {
   obj@projection = proj
   return(obj)})
 
-setMethod('evaluate.axes', "MAXENT.Niche.Model", function(obj, thresh = 1001, Env, ...) {
-  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-4)))
-  names(obj@variables.importance) = names(obj@data)[5:length(obj@data)]
-  for (i in 5:length(obj@data)) {
+setMethod('evaluate.axes', "MAXENT.Niche.Model", function(obj, cv, cv.param, thresh = 1001,
+                                                             metric = 'SES', axes.metric = 'Pearson', Env) {
+  obj@parameters$axes.metric = axes.metric
+  obj@variables.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
+  names(obj@variables.importance) = names(obj@data)[4:length(obj@data)]
+  if (axes.metric == 'Pearson') {
+    o.predicted.values = predict(get_model(obj, Env), obj@data) # original model predicted values
+  }
+
+  for (i in 4:length(obj@data)) {
+    # Get model predictions without one axis reeated for all axis
     obj.axes = obj
     obj.axes@data = obj.axes@data[-i]
-    model = get_model(obj.axes, Env[[-(i-4)]])
-    obj.axes@data = obj.axes@data[which(!obj.axes@data$Train),]
-    predicted.values = predict(model, obj.axes@data)
-    threshold = optim.thresh(obj.axes@data$Presence, predicted.values, thresh)
-    threshold = mean(threshold$`max.sensitivity+specificity`)
-    evaluation = accuracy(obj.axes@data$Presence, predicted.values, threshold)
-    obj@variables.importance[(i-4)] = obj@evaluation$AUC - evaluation$AUC
+    if (axes.metric != 'Pearson') {
+      obj.axes = evaluate(obj.axes, cv, cv.param, thresh, metric, Env[[-(i-3)]])
+      obj@variables.importance[1,(i-3)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - obj.axes@evaluation[1,which(names(obj.axes@evaluation) == axes.metric)]
+    } else {
+      predicted.values = predict(get_model(obj.axes, Env[[-(i-3)]]), obj.axes@data)
+      obj@variables.importance[(i-3)] = cor(predicted.values, o.predicted.values)
+    }
   }
-  obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+
+  # Variable importance normalization (%)
+  if(sum(obj@variables.importance) == 0) {
+    all.null = T
+    for (i in 1:length(obj@variables.importance[1,])) {if(obj@variables.importance[1,i] != 0) {all.null = F}}
+    if (all.null) {
+      obj@variables.importance[1,] = 100 / length(obj@variables.importance)
+    } else {
+      obj@variables.importance = obj@variables.importance * 100
+    }
+  } else {
+    obj@variables.importance = obj@variables.importance / sum(obj@variables.importance) * 100
+  }
   row.names(obj@variables.importance) = "Axes.evaluation"
   return(obj)})
 
@@ -470,8 +766,7 @@ setMethod('get_PA', "ANN.Niche.Model",
             return(PA)})
 
 setMethod('get_model', "ANN.Niche.Model", function(obj, maxit = 500) {
-  data = obj@data[which(obj@data$Train),]
-  data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+  data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
   model = nnet(Presence ~ ., data = data, size = 6, maxit = maxit)
   return(model)})
 
@@ -489,8 +784,7 @@ setMethod('get_PA', "SVM.Niche.Model", function(obj) {
   return(PA)})
 
 setMethod('get_model', "SVM.Niche.Model", function(obj, epsilon = 1e-08, cv = 3) {
-  data = obj@data[which(obj@data$Train),]
-  data = data[-c(which(names(data) == 'X'),which(names(data) == 'Y'),which(names(data) == 'Train'))]
+  data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
   model = svm(Presence ~ ., data = data, type = 'eps-regression',
               gamma = 1/(length(data)-1), kernel = 'radial', epsilon = epsilon, cross = cv)
   return(model)})

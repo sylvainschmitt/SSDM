@@ -11,33 +11,16 @@ multiple algorithms (among generalized linear model, general additive model,
 multivariate adpatative splines, generalized boosted regression models,
 classification tree analysis, random forest, maximum entropy, artificial
 neural network, and support vector machines). It can be obtain with
-\code{\link{Ensemble.Modelling}} or \code{\link{ensemble,Algorithm.Niche.Model-method}}.
+\code{\link{Ensemble.Modelling}} or \code{\link{ensemble}}.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{character. Name of the model (by default
-Specie.Ensemble.Niche.Model)}
-
-\item{\code{projection}}{raster. Habitat suitability map of the model}
-
 \item{\code{uncertainity}}{raster. Intermodel variance map}
 
-\item{\code{evaluation}}{data frame. Evaluation of the model (threshold, AUC, omission
-rate, sensitivity, specificity, correct proportion and Kappa)}
+\item{\code{algorithm.correlation}}{data.frame. Correlation matrix inter algorithms}
 
-\item{\code{algorithm.evluation}}{data frame. Evaluation of each algorihtm with the
-same metrics as evaluation slot}
-
-\item{\code{variables.importance}}{data frame. Relative percentage of importance for
-each variable used in the model}
-
-\item{\code{algorithm.correlation}}{data.frame. Correlation matrix inter algorithms
-calculated with pearson coefficient on habitat suitability map}
-
-\item{\code{data}}{data frame. Data used to realized the model}
-
-\item{\code{parameters}}{data frame. Parameters used to realized the model}
+\item{\code{algorithm.evaluation}}{calculated with pearson coefficient on habitat suitability map}
 }}
 \seealso{
 \linkS4class{Algorithm.Niche.Model} an S4 class for specie models

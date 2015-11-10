@@ -25,7 +25,9 @@ considered as factor variables}
 \item{Norm}{logical. If true environmental data are normalized.}
 
 \item{tmp}{logical. If true loaded environmental data variables rasters are
-read in temporary file avoiding to overload the random access memory}
+read in temporary file avoiding to overload the random access memory. But
+beware, if you close R temporary files will be destructed and you'll need to
+reload your environmental datas directly from their files.}
 
 \item{verbose}{logical. If true allow the function to print text in the
 console}

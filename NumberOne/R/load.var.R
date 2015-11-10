@@ -1,3 +1,4 @@
+#' @include checkargs.R
 #' @importFrom raster raster stack res extent crop reclassify as.factor
 NULL
 
@@ -18,7 +19,9 @@ NULL
 #'  considered as factor variables
 #'@param Norm logical. If true environmental data are normalized.
 #'@param tmp logical. If true loaded environmental data variables rasters are
-#'  read in temporary file avoiding to overload the random access memory
+#'  read in temporary file avoiding to overload the random access memory. But
+#'  beware, if you close R temporary files will be destructed and you'll need to
+#'  reload your environmental datas directly from their files.
 #'@param verbose logical. If true allow the function to print text in the
 #'  console
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -38,6 +41,10 @@ NULL
 load.var <- function (directory = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
+  # Check arguments
+  .checkargs(directory = directory, files = files, format = format, factors = factors,
+             Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
+
   # pdir = getwd()
   if(verbose) {cat('Variables loading \n')}
   # setwd(directory)
@@ -119,8 +126,9 @@ load.var <- function (directory = getwd(), files = NULL,
 
   # Temporary files
   if (tmp) {
-    if (!("./.rasters" %in% list.dirs())) (dir.create('./.rasters'))
-    for (i in 1:length(Env@layers)) {Env[[i]] = writeRaster(Env[[i]], paste(".rasters/", names(Env[[i]])), overwrite = T)}
+    path = get("tmpdir",envir=.PkgEnv)
+    if (!("./.rasters" %in% list.dirs())) (dir.create(paste0(path,'/.rasters')))
+    for (i in 1:length(Env@layers)) {Env[[i]] = writeRaster(Env[[i]], paste0(path,"/.rasters/", names(Env[[i]])), overwrite = T)}
   }
 
   return(Env)

@@ -12,7 +12,7 @@
 #' NumberOne package contain also a Global User Interface for easier utilisation
 #' (\code{\link{NumberOneGUI}}).
 #'
-#' Number one provides x categories of functions (that you can find in details
+#' Number one provides 4 categories of functions (that you can find in details
 #' below): Data preparation, Modelling main functions, Model main methods, Model
 #' classes, and Miscellaneous.
 #'
@@ -28,21 +28,22 @@
 #'   distribution model with multiple species, algorithms and repetitions}}
 #'
 #' @section Model main methods: \describe{
-#'   \item{\code{\link{evaluate,Niche.Model-method}}}{Evaluate a model with his
-#'   own data set according to choosen metrics}
 #'   \item{\code{\link{ensemble,Algorithm.Niche.Model-method}}}{Make an ensemble
 #'   distribution model from multiple simple models}
 #'   \item{\code{\link{stacking,Ensemble.Niche.Model-method}}}{Make a stack
 #'   species ensemble distribution model from multiple ensemble distribution
-#'   model}}
+#'   model}
+#'   \item{\code{\link{update,Stack.Species.Ensemble.Niche.Model-method}}}{Update
+#'    a previous stack with new occurences data}}
+#'
 #'
 #' @section Model classes: \describe{
 #'   \item{\code{\linkS4class{Algorithm.Niche.Model}}}{S4 class to represent a
 #'   specie distribution model of one algorithm}
 #'   \item{\code{\linkS4class{Ensemble.Niche.Model}}}{S4 class to represent a
 #'   specie ensemble distribution model}
-#'   \item{\code{\linkS4class{Stack.Species.Ensemble.Niche.Model}}}{S4 class to represent
-#'   a stack species ensemble distribution model}}
+#'   \item{\code{\linkS4class{Stack.Species.Ensemble.Niche.Model}}}{S4 class to
+#'   represent a stack species ensemble distribution model}}
 #'
 #' @section Miscellaneous: \describe{ \item{\code{\link{NumberOneGUI}}}{A global
 #'   user interface for easier utilisation of the NumberOne package}

@@ -4,11 +4,11 @@
 \alias{NumberOneGUI}
 \title{Number one package Global User Interface}
 \usage{
-NumberOneGUI(browser = T, maxmem = 1e+10)
+NumberOneGUI(browser = F, maxmem = 1e+10)
 }
 \arguments{
-\item{browser}{logical. Option to plot or not the user in interface in you
-internet browser}
+\item{browser}{logical. Option to plot or not the user global interface in
+your internet browser}
 
 \item{maxmem}{numeric. Option to choose the maximum memory allocated to the
   user interface}
@@ -21,8 +21,8 @@ Open a window with a shiny app allowing to use the number one package
 User interface to use the number one package
 }
 \details{
-Due to the relatively important siez environmental data you should
-  gave enough memory to the interface
+Due to the relatively important size of environmental data you
+  should gave enough memory to the interface
 }
 \examples{
 \dontrun{
