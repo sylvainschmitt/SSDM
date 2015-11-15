@@ -1,0 +1,20 @@
+#' A stack of three environmental variables
+#'
+#' A stack of three 5 km-resolution rasters convering the main island of New
+#' Caldeonia 'Grande Terre'. Climatic variables (RAINFALL and TEMPERATURE) are
+#' from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of
+#' New Caledonia (see references below).
+#'
+#' @format A stack of three rasters: \describe{ \item{RAINFALL}{Annual mean
+#'   rainfall} \item{TEMPERATURE}{Annual mean temperature}
+#'   \item{SUBSTRATE}{Substratete (type categorical variable)} }
+#'
+#' @references Hijmans,  R.J.  &  Graham,  C.H. The  ability  of
+#'   climate envelope  models  to  predict  the  effect  of  climate  change  on
+#'   species distributions. Glob. Chang. Biol. (2006)
+#'
+#'   Fritsch, E. Les sols. Atlas de la Nouvelle-Caledonie (ed. by J.
+#'   Bonvallot, J.-C. Gay and E. Habert), pp. 73-76. IRD-Congres de la
+#'   Nouvelle-Caledonie, Marseille. (2012)
+#'
+"Env"

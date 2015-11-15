@@ -1,0 +1,55 @@
+Package: SSDM
+Type: Package
+Title: Stacked Species Distribution Modelling
+Version: 0.1
+Date: 2015-11-02
+Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
+Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
+Description: SSDM is a package to build multi-species distribution models. You
+    can create SDMs using a single or multiple algorithms (ensemble models) with
+    or without repetition. For each species, an SDM can yield a habitat suitability
+    map, a binary map, an uncertainty map, and can asses variables importance,
+    algorithm accuracy, and between-algorithms correlation. The SSDM package also
+    provides a user-friendly interface.
+License: GPL
+LazyData: TRUE
+Imports:
+    sp,
+    raster,
+    methods,
+    SDMTools,
+    mgcv,
+    earth,
+    rpart,
+    gbm,
+    randomForest,
+    dismo,
+    nnet,
+    e1071,
+    shiny,
+    shinydashboard,
+    gplots,
+    spThin
+Depends:
+    R (>= 3.2.2)
+Collate:
+    'Algorithm.SDM.R'
+    'Ensemble.SDM.R'
+    'Env.R'
+    'Occurences.R'
+    'SSDM.R'
+    'Stacked.SDM.R'
+    'checkargs.R'
+    'ensemble.R'
+    'modelling.R'
+    'ensemble_modelling.R'
+    'stacking.R'
+    'stack_modelling.R'
+    'save.model.R'
+    'plot.model.R'
+    'load_var.R'
+    'load_occ.R'
+    'load_model.R'
+    'gui.R'
+    'update.stack.R'
+    'zzz.R'
