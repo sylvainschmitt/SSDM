@@ -4,10 +4,10 @@ NULL
 
 #'Load occurrence data
 #'
-#'Function to load occurrences data from a table to perform \code{\link{modelling}},
+#'Function to load occurrence data from a table to perform \code{\link{modelling}},
 #'\code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 #'
-#'@param directory character. Directory that contains the occurrences table.
+#'@param directory character. Directory that contains the occurrence table.
 #'@param Env raster stack. Environmental variables as a raster stack used to
 #'  perform spatial thinning, it can be the result of the
 #'  \code{\link{load_var}} function.
@@ -22,19 +22,19 @@ NULL
 #'@param reso numeric. Resolution used to perform the geographical thinning, by
 #'  default the resolution of the raster stack (Env).
 #'@param verbose logical. If true allows the function to print text in the
-#'  console
+#'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface) !
+#'  user interface).
 #'
-#'@return A data frame containing the occurrences data set (spatially thinned or
-#'  not)
+#'@return A data frame containing the occurrence data set (spatially thinned or
+#'  not).
 #'
 #' @examples
 #'\dontrun{
 #' load.occ(directory)
 #'}
 #'
-#'@seealso \code{\link{load_var}} to load environmental variables
+#'@seealso \code{\link{load_var}} to load environmental variables.
 #'
 #'@export
 load_occ = function(directory = getwd(), Env, file = NULL, ...,
@@ -65,6 +65,8 @@ load_occ = function(directory = getwd(), Env, file = NULL, ...,
       thin.result = thin(SpOccurences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol,
                          thin.par = reso, reps = 1, locs.thinned.list.return = T,
                          write.files = F, write.log.file = F, verbose = F)
+      if(GUI) {incProgress(1/length(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))),
+                           detail = paste(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i],'thinned'))}
       deleted = {}
       occ.indices = c(1:length(row.names(SpOccurences)))
       res.indices = as.numeric(row.names(thin.result[[1]]))
@@ -72,8 +74,6 @@ load_occ = function(directory = getwd(), Env, file = NULL, ...,
       if (length(deleted) > 0) {Occurences = Occurences[-deleted,]}
     }
     if (Spcol == 'SpNULL') {Occurences = Occurences[-which(names(Occurences)=='SpNULL')]}
-    if(GUI) {incProgress(1/length(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))),
-                            detail = paste(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i],'thinned'))}
   }
 
   #setwd(pdir)

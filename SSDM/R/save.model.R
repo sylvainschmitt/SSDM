@@ -2,7 +2,7 @@
 #' @importFrom raster writeRaster
 NULL
 
-#' Function to save models
+#' Function to save ensemble SDMs and SSDMs
 #'
 #' Allow to save S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
 #' classes objects.
@@ -10,15 +10,15 @@ NULL
 #' @param enm Ensemble.SDM. Ensemble SDM to be saved.
 #' @param stack Stacked.SDM. SSDM to be saved.
 #' @param name character. Folder name of the model to save.
-#' @param directory character. Path to the directory chosen to save the model,
+#' @param directory character. Path to the directory chosen to save the SDM,
 #'   by default the current directory.
 #' @param verbose logical. If true allow the function to print text in the
-#'   console
+#'   console.
 #' @param GUI logical. Don't take that argument into account (parameter for the
-#'   user interface) !
+#'   user interface).
 #'
 #' @return Nothing in R environment. Create folders and tables and rasters
-#'   associated to the model. Tables are in .csv and rasters in .grd/.gri.
+#'   associated to the SDM. Tables are in .csv and rasters in .grd/.gri.
 #'
 #' @seealso \code{\link{load.model}}
 #'

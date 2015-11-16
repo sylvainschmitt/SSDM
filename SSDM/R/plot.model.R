@@ -1,7 +1,8 @@
 #' @include Algorithm.SDM.R Ensemble.SDM.R Stacked.SDM.R
 #' @import shiny shinydashboard raster
 #' @importFrom gplots heatmap.2
-#@importFrom raster stack reclassify extent
+#' @importFrom sp spplot SpatialPoints
+#' @importFrom raster stack crop extent aggregate reclassify
 NULL
 
 #' Plot all SDMs, ensemble SDMs, and SSDMs
@@ -11,11 +12,11 @@ NULL
 #' \linkS4class{Stacked.SDM} classes objects.
 #'
 #' @param x Object to pe plot (S4 Algorithm.SDM, Ensemble.SDM or
-#'   Stacked.SDM object)
-#' @param y,... Don't used plot base parameters
+#'   Stacked.SDM object).
+#' @param y,... Don't used plot base parameters.
 #'
 #' @return Open a window with a shiny app rendering all the results in an easy
-#'   way to see all results in one glance
+#'   way to see all results in one glance.
 #'
 #' @name plot.model
 #'
@@ -47,8 +48,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                          tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
                                    plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
                                    textOutput('diversity.info'),
-                                   title = 'Diversity'),
-                         tabPanel(plotOutput('Uncertainity'), title = 'Uncertainty'),
+                                   title = 'Local specie richness'),
+                         tabPanel(plotOutput('uncertainty'), title = 'Uncertainty'),
                          tabPanel(tableOutput('summary'), title = 'Summary')
                   ),
                   tabBox(title = 'Variable importance',
@@ -122,9 +123,9 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     observeEvent(input$plot1_dblclick, {
       brush <- input$plot1_brush
       if (!is.null(brush)) {
-        ranges$x <- c(brush$xmin, brush$xmax)
-        ranges$y <- c(brush$ymin, brush$ymax)
-
+        if(!is.null(ranges$x)){ref = crop(x@diversity.map, c(ranges$x, ranges$y))} else {ref = x@diversity.map}
+        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
+        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
       } else {
         ranges$x <- NULL
         ranges$y <- NULL
@@ -142,15 +143,20 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     }
     output$Diversity <- renderPlot({
       if (!is.null(ranges$x)) {diversity = crop(x@diversity.map, c(ranges$x, ranges$y))} else {diversity = x@diversity.map}
-      plot(diversity,
+      spplot(diversity,
            main = eval,
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
-           legend.args=list(text='Local \nspecies \nrichness', font = 3, line = 1))
+           col.regions = rev(terrain.colors(10000)))
     })
-    output$Uncertainity <- renderPlot({
+    output$uncertainty <- renderPlot({
       if (!is.null(ranges$x)) {uncert = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert = x@uncertainty}
-      plot(uncert, main = eval, legend.args=list(text='Models \nvariance', font = 3, line = 1))})
+      spplot(uncert,
+             main = eval,
+             xlab = 'Longitude (\u02DA)',
+             ylab = 'Latitude (\u02DA)',
+             col.regions = rev(terrain.colors(10000)))
+      })
     # Evaluation
     output$evaluation.barplot <- renderPlot({
       evaluation = x@algorithm.evaluation
@@ -173,7 +179,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
         m <- as.matrix(x@algorithm.correlation)
         heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
                   cellnote = round(m,2), notecol = "black", notecex = 2,
-                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = T)
+                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = T,
+                  col = rev(heat.colors(1000)))
       })
     }
     # Variable importance
@@ -256,9 +263,9 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     observeEvent(input$proba_dblclick, {
       brush <- input$proba_brush
       if (!is.null(brush)) {
-        ranges$x <- c(brush$xmin, brush$xmax)
-        ranges$y <- c(brush$ymin, brush$ymax)
-
+        if(!is.null(ranges$x)){ref = crop(x@diversity.map, c(ranges$x, ranges$y))} else {ref = x@diversity.map}
+        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
+        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
       } else {
         ranges$x <- NULL
         ranges$y <- NULL
@@ -270,22 +277,32 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     })
     output$probability <- renderPlot({
       if (!is.null(ranges$x)) {proba = crop(x@enms[[which(choices == input$enmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@enms[[which(choices == input$enmchoice)]]@projection}
-      plot(proba,
+      spplot(proba,
            main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
-           legend.args=list(text='Presence\nprobability', font = 3, line = 1))
-      points(x@enms[[which(choices == input$enmchoice)]]@data$X[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
-             x@enms[[which(choices == input$enmchoice)]]@data$Y[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
-             pch = 16, cex = 0.7)
+           col.regions = rev(terrain.colors(10000)),
+           sp.layout=list(SpatialPoints(data.frame(X = x@enms[[which(choices == input$enmchoice)]]@data$X[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
+                                                   Y = x@enms[[which(choices == input$enmchoice)]]@data$Y[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)])),
+                          pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
       niche.map = reclassify(x@enms[[which(choices == input$enmchoice)]]@projection, c(-Inf,x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,0, x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,Inf,1))
       if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
-      plot(niche.map, main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)))})
+      spplot(niche.map,
+           main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)',
+           col.regions = rev(terrain.colors(10000)))
+      })
     output$enm.uncertainty <- renderPlot({
       if (!is.null(ranges$x)) {uncert.map = crop(x@enms[[which(choices == input$enmchoice)]]@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@enms[[which(choices == input$enmchoice)]]@uncertainty}
-      plot(uncert.map, main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)), legend.args=list(text='Models \nvariance', font = 3, line = 1))})
+      spplot(uncert.map,
+           main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)), legend.args=list(text='Models \nvariance', font = 3, line = 1),
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)',
+           col.regions = rev(terrain.colors(10000)))
+      })
     # Evaluation
     output$enm.evaluation.barplot <- renderPlot({
       for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = T)[[1]][2]}
@@ -312,16 +329,17 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
         m <- as.matrix(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation)
         heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
                   cellnote = round(m,3), notecol = "black", notecex = 2,
-                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = T)
+                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = T,
+                  col = rev(heat.colors(1000)))
       }
     })
     # Variable importance
     output$enm.varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(x@enms[[which(choices == input$enmchoice)]]@variable.importance[-1]))
+      varimp = as.data.frame(t(x@enms[[which(choices == input$enmchoice)]]@variable.importance))
       names(varimp) = 'Axes.evaluation'
       barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2, ylab = 'Variable relative contribution (%)')
     })
-    output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variable.importance[-1]})
+    output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variable.importance})
     # Parameters
     output$enm.summary <- renderTable({
       summary = data.frame(matrix(nrow = 8, ncol = 1))
@@ -410,9 +428,10 @@ setMethod('plot', 'SDM', function(x, y, ...) {
       fluidRow(
         tabBox(title = 'Maps',
                tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                         plotOutput('probability', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)), title = 'Probability'),
-               if(full) {tabPanel(plotOutput('niche'), title = 'Niche')},
-               if(full) {tabPanel(plotOutput('uncertainty'), title = 'Uncertainity')},
+                         plotOutput('probability', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
+                         title = 'Habitat suitability'),
+               if(full) {tabPanel(plotOutput('niche'), title = 'Binary map')},
+               if(full) {tabPanel(plotOutput('uncertainty'), title = 'uncertainty')},
                tabPanel(tableOutput('summary'), title = 'Summary')
         ),
         tabBox(title = 'Variables importance',
@@ -444,7 +463,7 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     set.seed(122)
 
     if(full) {
-      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.Niche')[[1]][1]}
+      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.', fixed = T)[[1]][2]}
       if (length(x@algorithm.correlation) > 0) {
         for (i in 1:length(row.names(x@algorithm.correlation))) {row.names(x@algorithm.correlation)[i] = strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.', fixed = T)[[1]][2]}
         x@algorithm.correlation[upper.tri(x@algorithm.correlation, diag = T)] = NA
@@ -455,14 +474,12 @@ setMethod('plot', 'SDM', function(x, y, ...) {
 
     # Single zoomable plot
     ranges <- reactiveValues(x = NULL, y = NULL)
-    # When a double-click happens, check if there's a brush on the plot.
-    # If so, zoom to the brush bounds; if not, reset the zoom.
     observeEvent(input$plot1_dblclick, {
       brush <- input$plot1_brush
       if (!is.null(brush)) {
-        ranges$x <- c(brush$xmin, brush$xmax)
-        ranges$y <- c(brush$ymin, brush$ymax)
-
+        if(!is.null(ranges$x)){ref = crop(x@projection, c(ranges$x, ranges$y))} else {ref = x@projection}
+        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
+        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
       } else {
         ranges$x <- NULL
         ranges$y <- NULL
@@ -475,23 +492,33 @@ setMethod('plot', 'SDM', function(x, y, ...) {
 
     output$probability <- renderPlot({
       if (!is.null(ranges$x)) {proba.map = crop(x@projection, c(ranges$x, ranges$y))} else {proba.map = x@projection}
-      plot(proba.map,
+      spplot(proba.map,
            main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
            xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)')
-      points(x@data$X[which(x@data$Presence == 1)],
-             x@data$Y[which(x@data$Presence == 1)],
-             pch = 16, cex = 0.7)
+           ylab = 'Latitude (\u02DA)',
+           col.regions = rev(terrain.colors(10000)),
+           sp.layout=list(SpatialPoints(data.frame(X = x@data$X[which(x@data$Presence == 1)], Y = x@data$Y[which(x@data$Presence == 1)])),
+                          pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
       if (!is.null(ranges$x)) {
         niche.map = crop(reclassify(x@projection, c(-Inf,x@evaluation$threshold,0, x@evaluation$threshold,Inf,1)), c(ranges$x, ranges$y))
       } else {niche.map = reclassify(x@projection, c(-Inf,x@evaluation$threshold,0, x@evaluation$threshold,Inf,1))}
-      plot(niche.map, main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
+      spplot(niche.map,
+           main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
+           xlab = 'Longitude (\u02DA)',
+           ylab = 'Latitude (\u02DA)',
+           col.regions = rev(terrain.colors(10000)))
+    })
     if(full) {
       output$uncertainty <- renderPlot({
         if (!is.null(ranges$x)) {uncert.map = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@uncertainty}
-        plot(uncert.map, main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)))})
+        spplot(uncert.map,
+             main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
+             xlab = 'Longitude (\u02DA)',
+             ylab = 'Latitude (\u02DA)',
+             col.regions = rev(terrain.colors(10000)))
+        })
       output$evaluation.barplot <- renderPlot({
         evaluation = x@algorithm.evaluation
         evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
@@ -513,7 +540,8 @@ setMethod('plot', 'SDM', function(x, y, ...) {
           m <- as.matrix(x@algorithm.correlation)
           heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
                     cellnote = round(m,3), notecol = "black", notecex = 2,
-                    trace = "none", key = FALSE, margins = c(7, 11), na.rm = T)
+                    trace = "none", key = FALSE, margins = c(7, 11), na.rm = T,
+                    col = rev(heat.colors(1000)))
         })
       }
     }

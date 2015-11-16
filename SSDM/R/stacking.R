@@ -2,40 +2,39 @@
 #' @importFrom raster raster stack reclassify
 NULL
 
-#'Stack different ensemble models in one stack species model
+#'Stack different ensemble SDMs in one SSDM
 #'
-#'This is a function to stack several ensemble models in one stack species
-#'model. It takes in inputs several S4 \linkS4class{Ensemble.SDM} class
-#'objects obtained with \code{\link{ensemble_modelling}} or
-#'\code{\link{ensemble}} functions. It returns an S4
-#'\linkS4class{Stacked.SDM} class object containing the
+#'This is a function to stack several ensemble SDMs in one SSDM. The function
+#'takes in inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
+#'with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
+#'function returns an S4 \linkS4class{Stacked.SDM} class object containing the
 #'local species richness map, and the uncertainty map based on the habitat
-#'suitability map variance inter algorithms, all evaluation tables comming with
-#'(model evaluation, algorithms evaluation, algorithms correlation matrix and
-#'variable importance), and all associated ensemble models for each species
-#'(see \code{\link{ensemble_modelling}}).
+#'suitability map variance inter algorithm, all evaluation tables comming with
+#'(model evaluation, algorithm evaluation, algorithm correlation matrix and
+#'variable importance), and all associated ensemble SDMs for each species (see
+#'\code{\link{ensemble_modelling}}).
 #'
-#'@param enm,... character. Choice of the algorithm for the modelling (see
-#'  details below).
-#'@param name character. Optionnal name given to the final
-#'  Stacked.SDM producted.
-#'@param thresh numeric. binary map threshold computing precision parmeter, the
-#'  higher it is the more accurate is the threshold but the longer is the
-#'  modelling evaluation step !
-#'@param metric character. Method used to compute the binary map threshold (see
+#'@param enm,... character. Ensemble SDMs to be stacked.
+#'@param name character. Optinnal name given to the final SSDM producted (by
+#'  default 'Species.SDM').
+#'@param thresh numeric. A single integer value representing the number of equal
+#'  interval threshold values between 0 & 1. The higher it is the more accurate
+#'  is the threshold but the longer is the modelling evaluation step (see
+#'  \code{\link[SDMTools]{optim.thresh}}).
+#'@param metric character. Metric used to compute the binary map threshold (see
 #'  details below.)
 #'@param method character. Define the method used to create the local species
 #'  richness map (see details below).
 #'@param rep.B integer. If the method used to create the local species richness
-#'  is random bernoulli (\strong{B}), it defines the number of repetition used
-#'  to create random bernoulli binary maps for each species.
+#'  is random bernoulli (\strong{B}), rep.B parameter defines the number of
+#'  repetition used to create random bernoulli binary maps for each species.
 #'@param verbose logical. If true allow the function to print text in the
-#'  console
+#'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface) !
+#'  user interface).
 #'
-#'@return an S4 \linkS4class{Stacked.SDM} Class object
-#'  viewable with \code{\link{plot.model}} method
+#'@return an S4 \linkS4class{Stacked.SDM} class object viewable with
+#'  \code{\link{plot.model}} function.
 #'
 #'@details \strong{Metric :} choice of the metric used to compute binary map
 #'  threshold and confusion matrix (by default SES as recommanded by Liu et al.
@@ -45,12 +44,12 @@ NULL
 #'  predicted observations proportion} \item{"SES"}{using the sensitivty
 #'  specificity equality} \item{"LW"}{using the lowest occurence prediction
 #'  probability} \item{"ROC"}{minimizing the distance between the ROC plot
-#'  (receiving operative curve) and the upper left coin (1,1)} }
+#'  (receiving poerating characteristic curve) and the upper left coin (1,1)} }
 #'
 #'  \strong{Methos :} Choice of the method used to compute the local species
 #'  richness map (see Calabrez et al. 2014 for more informations, see references
-#'  below) : \describe{\item{P}{(Probablity) sum the habitat suitability maps
-#'  probabilities}\item{B}{(Random bernoulli) drawing repeatedly from a
+#'  below) : \describe{\item{P}{(Probablity) sum probabilities of the habitat
+#'  suitability maps }\item{B}{(Random bernoulli) drawing repeatedly from a
 #'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
 #'  the thresholding (depending of the metric, see metric parameter).}}
 #'
@@ -93,8 +92,8 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
 
   # Name
   cat('   naming...')
-  if (!is.null(name)) {name = paste0(name,'.')}
-  stack@name = paste0(name,'Species.SSDM')
+  if (is.null(name)) {name = 'Species'}
+  stack@name = paste0(name,'.SSDM')
   cat(' done. \n')
 
   # Diversity map

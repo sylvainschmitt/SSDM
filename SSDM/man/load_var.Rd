@@ -30,14 +30,14 @@ beware: if you close R, temporary files will be destructed and you'll need to
 reload your environmental datas directly from their original files.}
 
 \item{verbose}{logical. If true allow the function to print text in the
-console}
+console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
- user interface) !}
+ user interface).}
 }
 \value{
 A stack containing the environmental rasters (normalized or
- not)
+ not).
 }
 \description{
 Function to load environmental data from rasters to perform

@@ -23,12 +23,12 @@ NULL
 #'  beware: if you close R, temporary files will be destructed and you'll need to
 #'  reload your environmental datas directly from their original files.
 #'@param verbose logical. If true allow the function to print text in the
-#'  console
+#'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface) !
+#'  user interface).
 #'
 #'@return A stack containing the environmental rasters (normalized or
-#'  not)
+#'  not).
 #'
 #' @examples
 #'\dontrun{

@@ -124,6 +124,6 @@
   if(!inherits(Norm,'logical')){stop('Norm parameter should be a logical (True or False).')}
 
   # save
-  if(!inherits(enm,'Ensemble.Niche.Model')){stop('enm parameter should be an Ensemble.Niche.Model.')}
-  if(!inherits(stack,'Stack.Species.Ensemble.Niche.Model')){stop('stack parameter should be a Stack.Species.Ensemble.Niche.Model.')}
+  if(!inherits(enm,'Ensemble.SDM')){stop('enm parameter should be an Ensemble.SDM.')}
+  if(!inherits(stack,'Stacked.SDM')){stop('stack parameter should be a Stacked.SDM.')}
 }

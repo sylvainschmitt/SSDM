@@ -4,26 +4,28 @@ NULL
 
 #'Build an SDM using one algorithm
 #'
-#'This is a function for modelling one specie distribution with one algorithm.
-#'It takes in inputs an occurences data frame made with presence/absence or
-#'presence-only records and a raster objects for data extractions and
-#'projections. It returns an S4 \linkS4class{Algorithm.SDM} class object
-#'containing the habitat suitability map, and the binary map and the evaluation
-#'table.
+#'#'This is a function to build an SDM with one algorithm for a single species.
+#'The function takes as inputs an occurrence data frame made of presence/absence
+#'or presence-only records and a raster object for data extraction and
+#'projection. The function returns an S4 \linkS4class{Algorithm.SDM} class
+#'object containing the habitat suitability map, the binary map and the
+#'evaluation table.
 #'
-#'@param algorithm character. Choice of the algorithm (see details below).
-#'@param Occurrences data frame. Occurrences table (can be treated first by
+#'@param algorithm character. Choice of the algorithm to be run (see details
+#'  below).
+#'@param Occurrences data frame. Occurrence table (can be processed first by
 #'  \code{\link{load_occ}}).
 #'@param Env raster object. Raster object of environmental variable (can be
-#'  treated first by \code{\link{load_var}}).
-#'@param Xcol character. Name of the column  in the occurences table  containing
+#'  processed first by \code{\link{load_var}}).
+#'@param Xcol character. Name of the column  in the occurrence table  containing
 #'  Latitude or X coordinates.
-#'@param Ycol character. Name of the column in the occurences table  containing
+#'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
-#'@param Pcol character. Name of the column in the occurences table specifying
+#'@param Pcol character. Name of the column in the occurrence table specifying
 #'  wether a line is a presence or an absence. If NULL presence-only data set is
 #'  assumed.
-#'@param name character. Optional name given to the final SDM producted.
+#'@param name character. Optional name given to the final SDM produced (by
+#'  default 'Algorithm.SDM').
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
 #'  in case of presence-only data. If PA is NULL recommended PA is used
 #'  depending on the algorithms (see details below).
@@ -34,9 +36,9 @@ NULL
 #'@param select logical. If true models are evaluated before being projected on
 #'  a raster, and don't keep if they don't match selection criteria. (see
 #'  details below).
-#'@param select.metric character. Metric used to pre-select SDMs that reach a
-#'  sufficient quality.
-#'@param select.thresh numeric. Threshold associated with the metric used to
+#'@param select.metric character. Metric(s) used to pre-select SDMs that reach a
+#'  sufficient quality (see details below).
+#'@param select.thresh numeric. Threshold(s) associated with the metric used to
 #'  compute the selection.
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 & 1. The higher it is the more accurate
@@ -47,9 +49,9 @@ NULL
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param verbose logical. If true allow the function to print text in the
-#'  console
+#'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface) !
+#'  user interface).
 #'@param ... additionnal parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -78,26 +80,26 @@ NULL
 #'  (\emph{cv.param[2]}), \strong{LOO} (Leave One Out) each point are
 #'  successively take as evaluation data.} \item{metric}{Choice of the metric
 #'  used to compute the binary map threshold and the confusion matrix (by
-#'  default SES as recommended by Liu et al. (2005),see references below):
+#'  default SES as recommended by Liu et al. (2005), see references below):
 #'  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
 #'  correctly predicted observations, \strong{TSS} (True Skill Statistic)
 #'  maximizes the sum of sensitivity and specificity, \strong{SES} using the
-#'  sensitivty-specificity equality, \strong{LW} using the lowest occurence
+#'  sensitivty-specificity equality, \strong{LW} using the lowest occurrence
 #'  prediction probability, \strong{ROC} minimizing the distance between the ROC
-#'  plot (receiving operative curve) and the upper left corner
+#'  plot (receiving operating curve) and the upper left corner
 #'  (1,1).}\item{axes.metric}{Choice of the metric used to evaluate the variable
 #'  relative importance in percent (variation of the model evaluation without
 #'  this axis): \strong{Pearson} Pearson's correlation coefficient, \strong{AUC}
 #'  area under the receiving operating characteristic (ROC) curve,
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
-#'  \strong{prop.correct} proportion of correctly predicted occurences.}
+#'  \strong{prop.correct} proportion of correctly predicted occurrences.}
 #'  \item{select.metric}{Ensemble metric (metric used to compute the SDMs
 #'  selection): \strong{AUC} area under the receiving operating characteristic
 #'  (ROC) curve, \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} proportion of correctly predicted occurences.}
 #'  \item{"..."}{See algorithm in detail section} }
 #'
-#'@section Generalized linear models (\strong{GLM}) : Uses the glm function from
+#'@section Generalized linear model (\strong{GLM}) : Uses the glm function from
 #'  the package 'stats', you can set the following parameters (see
 #'  \code{\link[stats]{glm}} for more details): \describe{
 #'  \item{test}{character. Test used to evaluate the model, default 'AIC'.}
@@ -105,7 +107,7 @@ NULL
 #'  10e-08.} \item{maxit}{numeric. Maximum number of iterations allowed to fit
 #'  the SDM, default 500.} }
 #'
-#'@section Generalized additive models (\strong{GAM}) : Uses the gam function
+#'@section Generalized additive model (\strong{GAM}) : Uses the gam function
 #'  from the package 'mgcv', you can set the following parameters (see
 #'  \code{\link[mgcv]{gam}} for more details): \describe{ \item{test}{character.
 #'  Test used to evaluate the model, default 'AIC'.} \item{epsilon}{numeric.
@@ -115,15 +117,15 @@ NULL
 #'@section Multivaraite adaptative regression splines (\strong{MARS}) : Uses the
 #'  earth function from the package 'earth', you can set the following
 #'  parameters (see \code{\link[earth]{earth}} for more details): \describe{
-#'  \item{degree}{integer. Number of interactions degrees allowed in the SDM,
+#'  \item{degree}{integer. Number of interaction degrees allowed in the SDM,
 #'  default 2.} }
 #'
-#'@section Generalized boosted regressions models (\strong{GBM}) : Uses the gbm
+#'@section Generalized boosted regressions model (\strong{GBM}) : Uses the gbm
 #'  function from the package 'gbm,' you can set the following parameters (see
 #'  \code{\link[gbm]{gbm}} for more details): \describe{ \item{trees}{integer.
 #'  Number of trees used in the model, default 2500.}
 #'  \item{final.leave}{integer. Minimum of observations allowed in the final
-#'  leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+#'  leave of trees, default 1.} \item{cv}{integer. Number of cross-validations,
 #'  default 3.} \item{thresh.shrink}{integer. Tree shrinkage coefficient,
 #'  default 1e-03.} }
 #'
@@ -131,7 +133,7 @@ NULL
 #'  from the package 'rpart', you can set the following parameters (see
 #'  \code{\link[rpart]{rpart}} for more details): \describe{
 #'  \item{final.leave}{integer. Minimum of observations allowed in the final
-#'  leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+#'  leave of trees, default 1.} \item{cv}{integer. Number of cross-validations,
 #'  default 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the randomForest function from the
@@ -139,7 +141,7 @@ NULL
 #'  \code{\link[randomForest]{randomForest}} for more details): \describe{
 #'  \item{trees}{integer. Number of trees used in the model, default 2500.}
 #'  \item{final.leave}{integer. Minimum of observations allowed in the final
-#'  leaves of trees, default 1.} }
+#'  leave of trees, default 1.} }
 #'
 #'@section Maximum Entropy (\strong{MAXENT}) : It uses the maxent function from
 #'  the package 'dismo'. Take care to have correctly install the maxent.jar file
@@ -165,16 +167,17 @@ NULL
 #' modelling('GLM', Occurrences, Env)
 #'}
 #'
-#'@seealso \code{\link{ensemble_modelling}} for ensemble SDMs with multiple
-#'  algorithms, \code{\link{stack_modelling}} for SSDMs.
+#'@seealso \code{\link{ensemble_modelling}} to build ensemble SDMs,
+#'  \code{\link{stack_modelling}} to build SSDMs.
 #'
 #'@references M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 #'  "Selecting pseudo-absences for species distribution models: how, where and
 #'  how many?" \emph{Methods Ecology and Evolution} 3(2):327-338
 #'  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
 #'
-#'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting thresholds
-#'  of occurrence in the prediction of species distributions." \emph{Ecography} 28:85-393
+#'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
+#'  thresholds of occurrence in the prediction of species distributions."
+#'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 #'
 #'@export
@@ -212,7 +215,7 @@ modelling = function(algorithm,
   model@parameters$data = 'presence/absence data set'
   model@parameters$metric = metric
 
-  cat('Data check ... \n')
+  if(verbose){cat('Data check ... \n')}
   # Occurrences data input test | Data frame needed
   if (is.matrix(Occurrences)) {Occurrences = data.frame(Occurrences)}
   if (!is.data.frame(Occurrences)) {stop('Occurrences data set is not a data frame or a matrix')}
@@ -220,7 +223,7 @@ modelling = function(algorithm,
   if ((Ycol %in% names(Occurrences)) == F) {stop('Y column is not well defined')}
   if (is.null(Pcol)) {
     PO = T # Presence only
-    cat('No presence column, presence-only data set is supposed.\n')
+    if(verbose){cat('No presence column, presence-only data set is supposed.\n')}
     model@parameters$data = 'presence-only data set'
   } else if ((Pcol %in% names(Occurrences)) == F) {stop('Presence column is not well defined')}
   if (!is.null(PA)) {PO = T}
@@ -232,21 +235,24 @@ modelling = function(algorithm,
   # Environment data input test | RasterStack needed
   if (is.raster(Env)) {Env = stack(Env)}
   if (!inherits(Env, 'RasterStack')) {stop('Environment data set is not a raster or a raster stack')}
-  cat('   done. \n\n')
+  if(verbose){cat('   done. \n\n')}
+  if(GUI) {incProgress(1/5, detail = 'Data ckecked')}
 
   # Pseudo - absences selection
-  cat('Pseudo absence selection... \n')
+  if(verbose){cat('Pseudo absence selection... \n')}
   model@data = data
   if (PO) {
     model = PA.select(model, Env, PA)
     model@parameters['PA'] = T}
   model = data.values(model, Env)
-  cat('   done. \n\n')
+  if(verbose){cat('   done. \n\n')}
+  if(GUI) {incProgress(1/5, detail = 'Pseudo-absence selected')}
 
   # Evaluation
-  cat('Model evaluation...\n')
+  if(verbose){cat('Model evaluation...\n')}
   model = evaluate(model, cv, cv.param, thresh, metric, Env, ...)
-  cat('   done. \n\n')
+  if(verbose){cat('   done. \n\n')}
+  if(GUI) {incProgress(1/5, detail = 'SDM evaluated')}
 
   # Model selection
   test = T
@@ -259,18 +265,21 @@ modelling = function(algorithm,
   }
   if(test){
     # Projection
-    cat('Model projection...\n')
+    if(verbose){cat('Model projection...\n')}
     model = project(model, Env, ...)
-    cat('   done. \n\n')
+    if(verbose){cat('   done. \n\n')}
+    if(GUI) {incProgress(1/5, detail = 'SDM projected')}
 
     # Axes evaluation
-    cat('Model axes contribution evaluation...\n')
+    if(verbose){cat('Model axes contribution evaluation...\n')}
     model = evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric, Env, ...)
-    cat('   done. \n\n')
+    if(verbose){cat('   done. \n\n')}
+    if(GUI) {incProgress(1/5, detail = 'SDM axes contribution evaluated')}
 
     return(model)
   } else {
-    cat('Model have been rejected, NULL is returned ! \n')
+    if(verbose){cat('Model have been rejected, NULL is returned ! \n')}
+    if(GUI) {incProgress(2/5, detail = 'SDM rejected')}
     return(NULL)
   }
 }

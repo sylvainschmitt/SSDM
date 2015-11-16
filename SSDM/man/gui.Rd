@@ -2,27 +2,27 @@
 % Please edit documentation in R/gui.R
 \name{gui}
 \alias{gui}
-\title{Number one package Global User Interface}
+\title{SSDM package Global User Interface}
 \usage{
 gui(browser = F, maxmem = 1e+10)
 }
 \arguments{
 \item{browser}{logical. Option to plot or not the user global interface in
-your internet browser}
+your internet browser.}
 
 \item{maxmem}{numeric. Option to choose the maximum memory allocated to the
-  user interface}
+  user interface.}
 }
 \value{
-Open a window with a shiny app allowing to use the number one package
-  with an easy user interface
+Open a window with a shiny app allowing to use SSDM package
+  with an easy user-friendly interface.
 }
 \description{
-User interface to use the number one package
+User interface to use the SSDM package.
 }
 \details{
 Due to the relatively important size of environmental data you
-  should gave enough memory to the interface
+  should gave enough memory to the interface (\code{maxmem} parameter).
 }
 \examples{
 \dontrun{

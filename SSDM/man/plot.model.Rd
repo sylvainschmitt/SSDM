@@ -13,13 +13,13 @@
 }
 \arguments{
 \item{x}{Object to pe plot (S4 Algorithm.SDM, Ensemble.SDM or
-Stacked.SDM object)}
+Stacked.SDM object).}
 
-\item{y,...}{Don't used plot base parameters}
+\item{y,...}{Don't used plot base parameters.}
 }
 \value{
 Open a window with a shiny app rendering all the results in an easy
-  way to see all results in one glance
+  way to see all results in one glance.
 }
 \description{
 Allow to plot S4 \linkS4class{Algorithm.SDM},

@@ -4,13 +4,13 @@
 \name{SSDM}
 \alias{SSDM}
 \alias{SSDM-package}
-\title{SSDM: Stacked species ensemble distribution modelling}
+\title{SSDM: Stacked species distribution modelling}
 \description{
 SSDM is a package to build multi-species distribution models. You can create
-SDMs using a single or multiple algorithms (ensemble models) with or without
+SDMs using a single or multiple algorithms (ensemble SDMs) with or without
 repetition. For each species, an SDM can yield a habitat suitability map, a
-binary map, an uncertainty map, and can asses variables importance, algorithm
-accuracy, and between-algorithms correlation.
+binary map, an uncertainty map, and can asses variable importance, algorithm
+accuracy, and between-algorithm correlation.
 }
 \details{
 The SSDM package also provides a user-friendly interface (\code{\link{gui}}).
@@ -21,33 +21,30 @@ classes, and Miscellaneous.
 }
 \section{Data preparation}{
  \describe{\item{\code{\link{load_occ}}}{Load
-  occurrences data} \item{\code{\link{load_var}}}{Load environmental data}}
+  occurrence data} \item{\code{\link{load_var}}}{Load environmental data}}
 }
 
 \section{Modelling main  functions}{
  \describe{
-  \item{\code{\link{modelling}}}{Build an SDM using one algorithm}
-  \item{\code{\link{ensemble_modelling}}}{Build an SDM using multiple
-  algorithms} \item{\code{\link{stack_modelling}}}{Build stacked SDMs using
-  multiple algorithms}}
+  \item{\code{\link{modelling}}}{Build an SDM using one algorithm.}
+  \item{\code{\link{ensemble_modelling}}}{Build an SDM that assembles
+  multiple algorithms.} \item{\code{\link{stack_modelling}}}{Build an SSDMs
+  that assembles multiple algorithms and species.}}
 }
 
 \section{Model main methods}{
  \describe{
-  \item{\code{\link{ensemble,Algorithm.SDM-method}}}{Build an ensemble SDM
-  from multiple simple SDMs}
-  \item{\code{\link{stacking,Ensemble.SDM-method}}}{Build stacked SDMs from
-  multiple ensemble SDMs}
-  \item{\code{\link{update,Stacked.SDM-method}}}{Update a previous stack with
-  new occurrences data}}
+  \item{\code{\link{ensemble,Algorithm.SDM-method}}}{Build an ensemble SDM}
+  \item{\code{\link{stacking,Ensemble.SDM-method}}}{Build an SSDM}
+  \item{\code{\link{update,Stacked.SDM-method}}}{Update a previous SSDM with
+  new occurrence data}}
 }
 
 \section{Model classes}{
  \describe{
   \item{\code{\linkS4class{Algorithm.SDM}}}{S4 class to represent SDMs}
   \item{\code{\linkS4class{Ensemble.SDM}}}{S4 class to represent ensemble
-  SDMs} \item{\code{\linkS4class{Stacked.SDM}}}{S4 class to represent Stacked
-  SDMs}}
+  SDMs} \item{\code{\linkS4class{Stacked.SDM}}}{S4 class to represent SSDMs}}
 }
 
 \section{Miscellaneous}{

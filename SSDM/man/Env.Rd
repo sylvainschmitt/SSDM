@@ -11,7 +11,7 @@
 Env
 }
 \description{
-A stack of three 5 km-resolution rasters convering the main island of New
+A stack of three 5 km-resolution rasters covering the main island of New
 Caldeonia 'Grande Terre'. Climatic variables (RAINFALL and TEMPERATURE) are
 from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of
 New Caledonia (see references below).

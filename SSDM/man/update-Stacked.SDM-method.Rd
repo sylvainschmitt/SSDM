@@ -11,28 +11,28 @@
   GUI = F, ...)
 }
 \arguments{
-\item{object}{Stacked.SDM. The previously realized SSDM.}
+\item{object}{Stacked.SDM. The previously produced SSDM.}
 
-\item{Occurrences}{data frame. New or updated occurrences table (can be
-treated first by \code{\link{load_occ}}).}
+\item{Occurrences}{data frame. New or updated occurrence table (can be
+processed first by \code{\link{load_occ}}).}
 
-\item{Env}{raster object. Environnment raster object (can be treated first by
+\item{Env}{raster object. Environnment raster object (can be processed first by
 \code{\link{load_var}}).}
 
-\item{Xcol}{character. Name of the column  in the occurences table  containing
+\item{Xcol}{character. Name of the column  in the occurence table  containing
 Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the column in the occurences table  containing
+\item{Ycol}{character. Name of the column in the occurence table  containing
 Longitude or Y coordinates.}
 
-\item{Pcol}{character. Name of the column in the occurences table specifying
+\item{Pcol}{character. Name of the column in the occurence table specifying
 wether a line is a presence or an absence. If NULL presence-only data set is
 assumed.}
 
 \item{Spname}{character. Name of the new or updated specie.}
 
-\item{name}{character. Optionnal name given to the final SSDM produced, by
-default it's the name of the previous stack.}
+\item{name}{character. Optional name given to the final SSDM produced, by
+default it's the name of the previous SSDM.}
 
 \item{save}{logical. If true the model is automatically saved.}
 
@@ -43,7 +43,7 @@ interval threshold values between 0 & 1. The higher it is the more accurate
 is the threshold but the longer is the modelling evaluation step (see
 \code{\link[SDMTools]{optim.thresh}}).}
 
-\item{tmp}{logical. If true the habitat suitability map of each algorithms is
+\item{tmp}{logical. If true the habitat suitability map of each algorithm is
 saved in a temporary file to release memory. But beware: if you close R,
 temporary files will be destroyed. To avoid any loss you can save your model
 with \code{\link{save.model}}.}
@@ -52,20 +52,20 @@ with \code{\link{save.model}}.}
 console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
-user interface) !}
+user interface).}
 
 \item{...}{additionnal parameters for the algorithm modelling function (see
  details below).}
 }
 \value{
-an S4 \linkS4class{Stacked.SDM} Class object viewable with
- \code{\link{plot.model}} method
+an S4 \linkS4class{Stacked.SDM} class object viewable with
+ \code{\link{plot.model}} function.
 }
 \description{
-Update a previous SSDM with new occurrences datas. It takes in inputs updated
-or new occurrences data frame from one specie, previous envrionmental data,
+Update a previous SSDM with new occurrence data. The function takes in inputs updated
+or new occurrence data from one specie, previous envrionmental data,
 and an S4 \linkS4class{Stacked.SDM} class object containing a previously
-realized stacked SDM.
+produced SSDM.
 }
 \examples{
 \dontrun{
@@ -73,6 +73,6 @@ update(stack, Occurrences, Env, Spname = 'NewSpecie')
 }
 }
 \seealso{
-\code{\link{stack_modelling}} for SSDMs building.
+\code{\link{stack_modelling}} to build SSDMs.
 }
 

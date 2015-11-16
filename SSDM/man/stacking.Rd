@@ -4,7 +4,7 @@
 \name{stacking}
 \alias{stacking}
 \alias{stacking,Ensemble.SDM-method}
-\title{Stack different ensemble models in one stack species model}
+\title{Stack different ensemble SDMs in one SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", metric = "SES",
   thresh = 1001, rep.B = 1000, verbose = T, GUI = F)
@@ -13,47 +13,46 @@ stacking(enm, ..., name = NULL, method = "P", metric = "SES",
   metric = "SES", thresh = 1001, rep.B = 1000, verbose = T, GUI = F)
 }
 \arguments{
-\item{enm,...}{character. Choice of the algorithm for the modelling (see
-details below).}
+\item{enm,...}{character. Ensemble SDMs to be stacked.}
 
-\item{name}{character. Optionnal name given to the final
-Stacked.SDM producted.}
+\item{name}{character. Optinnal name given to the final SSDM producted (by
+default 'Species.SDM').}
 
 \item{method}{character. Define the method used to create the local species
 richness map (see details below).}
 
-\item{metric}{character. Method used to compute the binary map threshold (see
+\item{metric}{character. Metric used to compute the binary map threshold (see
 details below.)}
 
-\item{thresh}{numeric. binary map threshold computing precision parmeter, the
-higher it is the more accurate is the threshold but the longer is the
-modelling evaluation step !}
+\item{thresh}{numeric. A single integer value representing the number of equal
+interval threshold values between 0 & 1. The higher it is the more accurate
+is the threshold but the longer is the modelling evaluation step (see
+\code{\link[SDMTools]{optim.thresh}}).}
 
 \item{rep.B}{integer. If the method used to create the local species richness
-is random bernoulli (\strong{B}), it defines the number of repetition used
-to create random bernoulli binary maps for each species.}
+is random bernoulli (\strong{B}), rep.B parameter defines the number of
+repetition used to create random bernoulli binary maps for each species.}
 
 \item{verbose}{logical. If true allow the function to print text in the
-console}
+console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
- user interface) !}
+ user interface).}
 }
 \value{
-an S4 \linkS4class{Stacked.SDM} Class object
- viewable with \code{\link{plot.model}} method
+an S4 \linkS4class{Stacked.SDM} class object viewable with
+ \code{\link{plot.model}} function.
 }
 \description{
-This is a function to stack several ensemble models in one stack species
-model. It takes in inputs several S4 \linkS4class{Ensemble.SDM} class
-objects obtained with \code{\link{ensemble_modelling}} or
-\code{\link{ensemble}} functions. It returns an S4
-\linkS4class{Stacked.SDM} class object containing the
+This is a function to stack several ensemble SDMs in one SSDM. The function
+takes in inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
+with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
+function returns an S4 \linkS4class{Stacked.SDM} class object containing the
 local species richness map, and the uncertainty map based on the habitat
-suitability map variance inter algorithms, all evaluation tables comming with
-(model evaluation, algorithms evaluation, algorithms correlation matrix and
-variable importance), and all associated ensemble models for each species
-(see \code{\link{ensemble_modelling}}).
+suitability map variance inter algorithm, all evaluation tables comming with
+(model evaluation, algorithm evaluation, algorithm correlation matrix and
+variable importance), and all associated ensemble SDMs for each species (see
+\code{\link{ensemble_modelling}}).
 }
 \details{
 \strong{Metric :} choice of the metric used to compute binary map
@@ -64,12 +63,12 @@ variable importance), and all associated ensemble models for each species
  predicted observations proportion} \item{"SES"}{using the sensitivty
  specificity equality} \item{"LW"}{using the lowest occurence prediction
  probability} \item{"ROC"}{minimizing the distance between the ROC plot
- (receiving operative curve) and the upper left coin (1,1)} }
+ (receiving poerating characteristic curve) and the upper left coin (1,1)} }
 
  \strong{Methos :} Choice of the method used to compute the local species
  richness map (see Calabrez et al. 2014 for more informations, see references
- below) : \describe{\item{P}{(Probablity) sum the habitat suitability maps
- probabilities}\item{B}{(Random bernoulli) drawing repeatedly from a
+ below) : \describe{\item{P}{(Probablity) sum probabilities of the habitat
+ suitability maps }\item{B}{(Random bernoulli) drawing repeatedly from a
  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
  the thresholding (depending of the metric, see metric parameter).}}
 }

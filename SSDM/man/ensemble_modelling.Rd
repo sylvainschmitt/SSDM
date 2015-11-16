@@ -2,7 +2,7 @@
 % Please edit documentation in R/ensemble_modelling.R
 \name{ensemble_modelling}
 \alias{ensemble_modelling}
-\title{Build an SDM using multiple algorithms}
+\title{Build an an ensemble SDM that assembles multiple algorithms}
 \usage{
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, rep = 1, name = NULL, save = F,
@@ -12,28 +12,29 @@ ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   ensemble.thresh = c(0.75), weight = T, verbose = T, GUI = F, ...)
 }
 \arguments{
-\item{algorithms}{character. Choice of the algorithm(s) (see details below).}
+\item{algorithms}{character. Choice of the algorithm(s) to be run (see details
+below).}
 
-\item{Occurrences}{data frame. Occurrences table (can be treated first by
+\item{Occurrences}{data frame. Occurrence table (can be processed first by
 \code{\link{load_occ}}).}
 
 \item{Env}{raster object. Raster object of environmental variable (can be
-treated first by \code{\link{load_var}}).}
+processed first by \code{\link{load_var}}).}
 
 \item{Xcol}{character. Name of the column  in the occurences table  containing
 Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the column in the occurences table  containing
+\item{Ycol}{character. Name of the column in the occurrence table  containing
 Longitude or Y coordinates.}
 
-\item{Pcol}{character. Name of the column in the occurences table specifying
+\item{Pcol}{character. Name of the column in the occurrence table specifying
 wether a line is a presence or an absence. If NULL presence-only data set is
 assumed.}
 
 \item{rep}{integer. Number of repetitions for each algorithm.}
 
-\item{name}{character. Optional name given to the final Ensemble.SDM
-producted.}
+\item{name}{character. Optional name given to the final Ensemble.SDM producted
+(by default 'Ensemble.SDM').}
 
 \item{save}{logical. If true the ensemble SDM is automatically saved.}
 
@@ -42,7 +43,7 @@ which the ensemble SDM will be saved.}
 
 \item{PA}{list(nb, strat) defining the pseudo-absence selection strategy used
 in case of presence-only data. If PA is NULL recommended PA is used
-depending on the algorithms (see details below).}
+depending on the algorithm (see details below).}
 
 \item{cv}{character. Method of cross-validation used to evaluate the ensemble
 SDM (see details below).}
@@ -61,45 +62,46 @@ details below.)}
 \item{axes.metric}{Metric used to evaluate variable relative importance (see
 details below).}
 
-\item{uncertainty}{logical. If true uncertainty mapping and algorithms
+\item{uncertainty}{logical. If true generates an uncertainty map and algorithm
 correlation matrix are computed.}
 
-\item{tmp}{logical. If true the habitat suitability map of each algorithms is
+\item{tmp}{logical. If true the habitat suitability map of each algorithm is
 saved in a temporary file to release memory. But beware: if you close R,
-temporary files will be destroyed. To avoid any loss you can save your ensemble SDM
-with \code{\link{save.model}}.}
+temporary files will be destroyed. To avoid any loss you can save your
+ensemble SDM with \code{\link{save.model}}.}
 
-\item{ensemble.metric}{character. Metric used to select SDMs that will be
-included in the ensemble SDM (see details below).}
+\item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
+will be included in the ensemble SDM (see details below).}
 
-\item{ensemble.thresh}{numeric. Threshold associated with the metric used to
-compute the selection.}
+\item{ensemble.thresh}{numeric. Threshold(s) associated with the metric(s)
+used to compute the selection.}
 
 \item{weight}{logical. Choose wether or not you want the SDMs to be weighted
-using the mean of the selection metrics.}
+using the slection metric or, alternatively, the mean of the selection
+metrics.}
 
 \item{verbose}{logical. If true allow the function to print text in the
-console}
+console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
-user interface) !}
+user interface).}
 
 \item{...}{additionnal parameters for the algorithm modelling function (see
  details below).}
 }
 \value{
-an S4 \linkS4class{Ensemble.SDM} Class object viewable with
- \code{\link{plot.model}} method
+an S4 \linkS4class{Ensemble.SDM} class object viewable with
+ \code{\link{plot.model}} function.
 }
 \description{
-This is a function for modelling one specie distribution with several
-algorithms and make an ensemble model of theim. It takes in inputs an
-occurences data frame made with presence/absence or presence-only records and
-a raster objects for data extractions and projections. It returns an S4
+This is a function to build an ensemble SDM that assembles multiple algorithms
+for a single species. The function takes as inputs an occurrence data frame
+made of presence/absence or presence-only records and a raster object for data
+extraction and projection. The function returns an S4
 \linkS4class{Ensemble.SDM} class object containing the habitat suitability
 map, the binary map, and the uncertainty map (based on the between-algorithm
-variance of habitat suitability maps) and all evaluation tables coming with
-(model evaluation, algorithms evaluation, algorithms correlation matrix and
+variance of habitat suitability maps) and the associated evaluation tables
+(model evaluation, algorithm evaluation, algorithm correlation matrix and
 variable importance).
 }
 \details{
@@ -116,7 +118,7 @@ variable importance).
  pseudo-absence selected, and \strong{strat} strategy used for pseudo-absence
  selection: either random selection or disk selection. We set to default
  recommendation from Barbet-Massin et al. (2012) (see references).}
- \item{cv}{\strong{Cross validation} method used to split the occurences
+ \item{cv}{\strong{Cross validation} method used to split the occurence
  dataset for evaluation: \strong{holdout} data are partitioned in a training
  set and an evaluating set using a fraction (\emph{cv.param[1]}) and the
  operation can be repeated (\emph{cv.param[2]}), \strong{k-folds} data are
@@ -125,26 +127,26 @@ variable importance).
  (\emph{cv.param[2]}), \strong{LOO} (Leave One Out) each point are
  successively take as evaluation data.} \item{metric}{Choice of the metric
  used to compute the binary map threshold and the confusion matrix (by
- default SES as recommended by Liu et al. (2005),see references below):
+ default SES as recommended by Liu et al. (2005), see references below):
  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
  correctly predicted observations, \strong{TSS} (True Skill Statistic)
  maximizes the sum of sensitivity and specificity, \strong{SES} using the
- sensitivty-specificity equality, \strong{LW} using the lowest occurence
+ sensitivty-specificity equality, \strong{LW} using the lowest occurrence
  prediction probability, \strong{ROC} minimizing the distance between the ROC
- plot (receiving operative curve) and the upper left corner
+ plot (receiving operating curve) and the upper left corner
  (1,1).}\item{axes.metric}{Choice of the metric used to evaluate the variable
  relative importance in percent (variation of the model evaluation without
  this axis): \strong{Pearson} Pearson's correlation coefficient, \strong{AUC}
  area under the receiving operating characteristic (ROC) curve,
  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
- \strong{prop.correct} proportion of correctly predicted occurences.}
+ \strong{prop.correct} proportion of correctly predicted occurrences.}
  \item{ensemble.metric}{Ensemble metric (metric used to compute the SDMs
  selection): \strong{AUC} area under the receiving operating characteristic
  (ROC) curve, \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
- \strong{prop.correct} proportion of correctly predicted occurences.}
+ \strong{prop.correct} proportion of correctly predicted occurrences.}
  \item{"..."}{See algorithm in detail section} }
 }
-\section{Generalized linear models (\strong{GLM}) }{
+\section{Generalized linear model (\strong{GLM}) }{
  Uses the glm function from
  the package 'stats', you can set the following parameters (see
  \code{\link[stats]{glm}} for more details): \describe{
@@ -154,7 +156,7 @@ variable importance).
  the SDM, default 500.} }
 }
 
-\section{Generalized additive models (\strong{GAM}) }{
+\section{Generalized additive model (\strong{GAM}) }{
  Uses the gam function
  from the package 'mgcv', you can set the following parameters (see
  \code{\link[mgcv]{gam}} for more details): \describe{ \item{test}{character.
@@ -167,17 +169,17 @@ variable importance).
  Uses the
  earth function from the package 'earth', you can set the following
  parameters (see \code{\link[earth]{earth}} for more details): \describe{
- \item{degree}{integer. Number of interactions degrees allowed in the SDM,
+ \item{degree}{integer. Number of interaction degrees allowed in the SDM,
  default 2.} }
 }
 
-\section{Generalized boosted regressions models (\strong{GBM}) }{
+\section{Generalized boosted regressions model (\strong{GBM}) }{
  Uses the gbm
  function from the package 'gbm,' you can set the following parameters (see
  \code{\link[gbm]{gbm}} for more details): \describe{ \item{trees}{integer.
  Number of trees used in the model, default 2500.}
  \item{final.leave}{integer. Minimum of observations allowed in the final
- leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+ leave of trees, default 1.} \item{cv}{integer. Number of cross-validations,
  default 3.} \item{thresh.shrink}{integer. Tree shrinkage coefficient,
  default 1e-03.} }
 }
@@ -187,7 +189,7 @@ variable importance).
  from the package 'rpart', you can set the following parameters (see
  \code{\link[rpart]{rpart}} for more details): \describe{
  \item{final.leave}{integer. Minimum of observations allowed in the final
- leaves of trees, default 1.} \item{cv}{integer. Number of cross-validations,
+ leave of trees, default 1.} \item{cv}{integer. Number of cross-validations,
  default 3.} }
 }
 
@@ -197,7 +199,7 @@ variable importance).
  \code{\link[randomForest]{randomForest}} for more details): \describe{
  \item{trees}{integer. Number of trees used in the model, default 2500.}
  \item{final.leave}{integer. Minimum of observations allowed in the final
- leaves of trees, default 1.} }
+ leave of trees, default 1.} }
 }
 
 \section{Maximum Entropy (\strong{MAXENT}) }{
@@ -237,12 +239,13 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
  how many?" \emph{Methods Ecology and Evolution} 3(2):327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
 
- C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting thresholds
- of occurrence in the prediction of species distributions." \emph{Ecography} 28:85-393
+ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
+ thresholds of occurrence in the prediction of species distributions."
+ \emph{Ecography} 28:85-393
  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 }
 \seealso{
-\code{\link{modelling}} for SDMs with a single algorithm,
- \code{\link{stack_modelling}} for SSDMs.
+\code{\link{modelling}} to build SDMs with a single algorithm,
+ \code{\link{stack_modelling}} tu build SSDMs.
 }
 

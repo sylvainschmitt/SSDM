@@ -5,9 +5,9 @@
 \alias{Stacked.SDM-class}
 \title{An S4 class to represent SSDMs}
 \description{
-This is an S4 class to represent SSDMs of multiple algorithms
+This is an S4 class to represent SSDMs that assembles multiple algorithms
 (including generalized linear model, general additive model, multivariate
-adpatative splines, generalized boosted regression models, classification tree
+adpatative splines, generalized boosted regression model, classification tree
 analysis, random forest, maximum entropy, artificial neural network, and
 support vector machines). It can be obtain with \code{\link{stack_modelling}}
 or \code{\link{stacking}}.
@@ -15,29 +15,30 @@ or \code{\link{stacking}}.
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{character. Name of the SDM (by default Species.SSDMs).}
+\item{\code{name}}{character. Name of the SDM (by default 'Species.SSDM').}
 
-\item{\code{diversity.map}}{raster. Local species richness map of the Stacked SDMs}
+\item{\code{diversity.map}}{raster. Local species richness map of the SSDM.}
 
 \item{\code{uncertainty}}{raster. Between-algorithm variance map.}
 
-\item{\code{evaluation}}{data frame. Evaluation of the Stacked SDMs (threshold, AUC, omission
-rate, sensitivity, specificity, correct proportion and Kappa).}
+\item{\code{evaluation}}{data frame. Evaluation of the SSDM (AUC, omission rate,
+sensitivity, specificity, correct proportion and Kappa).}
 
-\item{\code{variable.importance}}{data frame. Relative percentage of importance for
-each variable used in the model.}
+\item{\code{variable.importance}}{data frame. Relative importance (in %) of each
+variable in the SSDM.}
 
 \item{\code{algorithm.correlation}}{data frame. Between-algorithm correlation matrix.}
 
-\item{\code{enms}}{list. List with each ensemble SDM used for the stacked SDMs.}
+\item{\code{enms}}{list. List with each ensemble SDM used for the SSDM.}
 
-\item{\code{parameters}}{data frame. Parameters used to realized the stacked SDMs.}
+\item{\code{parameters}}{data frame. Parameters used to realized the SSDM.}
 
-\item{\code{algorithm.evaluation}}{data frame. Calculated with Pearson's coefficient
- from habitat suitability map.}
+\item{\code{algorithm.evaluation}}{data frame. Evaluation of the algorithm by is mean
+ performance among all SDMS (AUC, omission rate, sensitivity, specificity,
+ correct proportion and Kappa).}
 }}
 \seealso{
-\linkS4class{Ensemble.SDM} an S4 class for ensemble SDMs, and
- \linkS4class{Algorithm.SDM} an S4 class for SDMs.
+\linkS4class{Ensemble.SDM} an S4 class to represent ensemble SDMs, and
+ \linkS4class{Algorithm.SDM} an S4 class to represent SDMs.
 }
 

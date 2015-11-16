@@ -9,7 +9,7 @@ load_occ(directory = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
   reso = max(res(Env@layers[[1]])), verbose = T, GUI = F)
 }
 \arguments{
-\item{directory}{character. Directory that contains the occurrences table.}
+\item{directory}{character. Directory that contains the occurrence table.}
 
 \item{Env}{raster stack. Environmental variables as a raster stack used to
 perform spatial thinning, it can be the result of the
@@ -33,17 +33,17 @@ by species to limit geographical biases in the SDMs.}
 default the resolution of the raster stack (Env).}
 
 \item{verbose}{logical. If true allows the function to print text in the
-console}
+console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
- user interface) !}
+ user interface).}
 }
 \value{
-A data frame containing the occurrences data set (spatially thinned or
- not)
+A data frame containing the occurrence data set (spatially thinned or
+ not).
 }
 \description{
-Function to load occurrences data from a table to perform \code{\link{modelling}},
+Function to load occurrence data from a table to perform \code{\link{modelling}},
 \code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 }
 \examples{
@@ -52,6 +52,6 @@ load.occ(directory)
 }
 }
 \seealso{
-\code{\link{load_var}} to load environmental variables
+\code{\link{load_var}} to load environmental variables.
 }
 

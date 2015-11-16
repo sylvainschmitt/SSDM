@@ -7,7 +7,7 @@
 \alias{save.model}
 \alias{save.stack}
 \alias{save.stack,Stacked.SDM-method}
-\title{Function to save models}
+\title{Function to save ensemble SDMs and SSDMs}
 \usage{
 save.enm(enm, name = strsplit(enm@name, ".", fixed = T)[[1]][1],
   directory = getwd(), verbose = T, GUI = F)
@@ -26,20 +26,20 @@ save.stack(stack, name = "Stack", directory = getwd(), verbose = T,
 
 \item{name}{character. Folder name of the model to save.}
 
-\item{directory}{character. Path to the directory chosen to save the model,
+\item{directory}{character. Path to the directory chosen to save the SDM,
 by default the current directory.}
 
 \item{verbose}{logical. If true allow the function to print text in the
-console}
+console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
-  user interface) !}
+  user interface).}
 
 \item{stack}{Stacked.SDM. SSDM to be saved.}
 }
 \value{
 Nothing in R environment. Create folders and tables and rasters
-  associated to the model. Tables are in .csv and rasters in .grd/.gri.
+  associated to the SDM. Tables are in .csv and rasters in .grd/.gri.
 }
 \description{
 Allow to save S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}

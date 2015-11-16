@@ -6,15 +6,16 @@ NULL
 #'
 #'This is an S4 class to represent an ensemble SDM from multiple algorithms
 #'(including generalized linear model, general additive model, multivariate
-#'adpatative splines, generalized boosted regression models, classification tree
+#'adpatative splines, generalized boosted regression model, classification tree
 #'analysis, random forest, maximum entropy, artificial neural network, and
-#'support vector machines). It can be obtain with
+#'support vector machines). This S4 class can be obtain with
 #'\code{\link{ensemble_modelling}} or \code{\link{ensemble}}.
 #'
 #'@slot uncertainty raster. Between-algorithm variance map.
 #'@slot algorithm.correlation data frame. Between-algorithm correlation matrix.
-#'@slot algorithm.evaluation data frame. Calculated with Pearson's coefficient
-#'  from habitat suitability map.
+#'@slot algorithm.evaluation data frame. Evaluation of the SDM (available
+#'  metrics include AUC, Kappa, ...) and identification of the optimal threshold
+#'  to convert the habitat suitability map into a binary presence/absence map.
 #'
 #'@seealso \linkS4class{Algorithm.SDM} an S4 class to represent an SDM based on
 #'  a single algorithm, and \linkS4class{Stacked.SDM} an S4 class for SSDMs.

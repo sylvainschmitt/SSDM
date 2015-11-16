@@ -17,14 +17,14 @@ load_stack(name = "Stack", directory = getwd(), GUI = F)
 folder, by default the current directory.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
-  user interface) !}
+  user interface).}
 }
 \value{
-The corresponding SDM object
+The corresponding SDM object.
 }
 \description{
 Allow to load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
-objects saved with their respective save functions
+objects saved with their respective save function.
 }
 \seealso{
 \code{\link{save.model}}

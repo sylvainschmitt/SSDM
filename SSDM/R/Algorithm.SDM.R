@@ -52,22 +52,24 @@ setMethod('print', 'SDM', function(x, ...) {
   }
 })
 
-##### Algorithm Niche Model Class ##### -----
+##### Algorithm SDM Class ##### -----
 #'An S4 class to represent an SDM based on a single algorithm
 #'
 #'This is an S4 class to represent an SDM based on a single algorithm (including
 #'generalized linear model, general additive model, multivariate adpatative
 #'splines, generalized boosted regression model, classification tree analysis,
 #'random forest, maximum entropy, artificial neural network, and support vector
-#'machines). It can be obtain with \code{\link{modelling}}.
+#'machines). This S4 class is obtained with \code{\link{modelling}}.
 #'
 #'@slot name character. Name of the SDM (by default Species.SDM).
-#'@slot projection raster. Habitat suitability map of the SDM.
-#'@slot evaluation data frame. Evaluation of the SDM (threshold, AUC, omission
-#'  rate, sensitivity, specificity, correct proportion and Kappa).
-#'@slot variable.importance data frame. Relative percentage of importance for each variable used in the SDM.
-#'@slot data data frame. Data used to realized the SDM
-#'@slot parameters data frame. Parameters used to realized the SDM
+#'@slot projection raster. Habitat suitability map produced by the SDM.
+#'@slot evaluation data frame. Evaluation of the SDM (available metrics include
+#'  AUC, Kappa, ...) and identification of the optimal threshold to convert the
+#'  habitat suitability map into a binary presence/absence map.
+#'@slot variable.importance data frame. Relative importance (in %) of
+#'  each variable in the SDM.
+#'@slot data data frame. Data used to build the SDM.
+#'@slot parameters data frame. Parameters used to build the SDM.
 #'
 #'@seealso \linkS4class{Ensemble.SDM} an S4 class for ensemble SDMs,
 #'  and \linkS4class{Stacked.SDM} an S4 class for SSDMs.

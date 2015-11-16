@@ -5,15 +5,15 @@ NULL
 #' Function to load ensemble SDMs and SSDMs
 #'
 #' Allow to load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
-#' objects saved with their respective save functions
+#' objects saved with their respective save function.
 #'
 #' @param name character. Name of the folder that contains the model to be loaded.
 #' @param directory character. Path to the directory containing the saved model
 #'   folder, by default the current directory.
 #' @param GUI logical. Don't take that argument into account (parameter for the
-#'   user interface) !
+#'   user interface).
 #'
-#' @return The corresponding SDM object
+#' @return The corresponding SDM object.
 #'
 #' @seealso \code{\link{save.model}}
 #'

@@ -3,47 +3,47 @@ NULL
 
 #'Update a previous SSDM
 #'
-#'Update a previous SSDM with new occurrences datas. It takes in inputs updated
-#'or new occurrences data frame from one specie, previous envrionmental data,
+#'Update a previous SSDM with new occurrence data. The function takes in inputs updated
+#'or new occurrence data from one specie, previous envrionmental data,
 #'and an S4 \linkS4class{Stacked.SDM} class object containing a previously
-#'realized stacked SDM.
+#'produced SSDM.
 #'
-#'@param object Stacked.SDM. The previously realized SSDM.
-#'@param Occurrences data frame. New or updated occurrences table (can be
-#'  treated first by \code{\link{load_occ}}).
-#'@param Env raster object. Environnment raster object (can be treated first by
+#'@param object Stacked.SDM. The previously produced SSDM.
+#'@param Occurrences data frame. New or updated occurrence table (can be
+#'  processed first by \code{\link{load_occ}}).
+#'@param Env raster object. Environnment raster object (can be processed first by
 #'  \code{\link{load_var}}).
-#'@param Xcol character. Name of the column  in the occurences table  containing
+#'@param Xcol character. Name of the column  in the occurence table  containing
 #'  Latitude or X coordinates.
-#'@param Ycol character. Name of the column in the occurences table  containing
+#'@param Ycol character. Name of the column in the occurence table  containing
 #'  Longitude or Y coordinates.
-#'@param Pcol character. Name of the column in the occurences table specifying
+#'@param Pcol character. Name of the column in the occurence table specifying
 #'  wether a line is a presence or an absence. If NULL presence-only data set is
 #'  assumed.
 #'@param Spname character. Name of the new or updated specie.
-#'@param name character. Optionnal name given to the final SSDM produced, by
-#'  default it's the name of the previous stack.
+#'@param name character. Optional name given to the final SSDM produced, by
+#'  default it's the name of the previous SSDM.
 #'@param save logical. If true the model is automatically saved.
 #'@param directory character. Name of the directory to contain the saved SSDM.
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 & 1. The higher it is the more accurate
 #'  is the threshold but the longer is the modelling evaluation step (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
-#'@param tmp logical. If true the habitat suitability map of each algorithms is
+#'@param tmp logical. If true the habitat suitability map of each algorithm is
 #'  saved in a temporary file to release memory. But beware: if you close R,
 #'  temporary files will be destroyed. To avoid any loss you can save your model
 #'  with \code{\link{save.model}}.
 #'@param verbose logical. If true allow the function to print text in the
 #'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface) !
+#'  user interface).
 #'@param ... additionnal parameters for the algorithm modelling function (see
 #'  details below).
 #'
-#'@return an S4 \linkS4class{Stacked.SDM} Class object viewable with
-#'  \code{\link{plot.model}} method
+#'@return an S4 \linkS4class{Stacked.SDM} class object viewable with
+#'  \code{\link{plot.model}} function.
 #'
-#'@seealso \code{\link{stack_modelling}} for SSDMs building.
+#'@seealso \code{\link{stack_modelling}} to build SSDMs.
 #'
 #' @examples
 #' \dontrun{

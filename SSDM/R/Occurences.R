@@ -1,7 +1,7 @@
-#' Plant occurrences data frame
+#' Plant occurrence data frame
 #'
 #' A dataset containing plant occurrences from 7 species of New Caledonia at a 5
-#' km-resolution. Occurences data come from Noumea Herbarium (NOU) and NC-PIPN
+#' km-resolution. Occurence data come from Noumea Herbarium (NOU) and NC-PIPN
 #' network (see Ibanez et al in references below).
 #'
 #' @format A data frame with 839 rows and 4 variables: \describe{

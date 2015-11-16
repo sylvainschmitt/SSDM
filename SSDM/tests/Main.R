@@ -1,5 +1,5 @@
 # data(Env)
 # data(Occurences)
-# # GLM = Modelling('GLM', subset(Occurences, Occurences$genus == 'Ilex'), Env)
-# # ENM = Ensemble.Modelling('all', subset(Occurences, Occurences$genus == 'Ilex'), Env, name = 'Ilex', ensemble.thresh = c(0.6))
-# stack = Stack.Modelling('all', Occurences, Env, Spcol = 'genus', cv = 'k-fold', cv.param = c(10,1), ensemble.thresh = c(0.6))
+# GLM = modelling('GLM', subset(Occurences, Occurences$genus == 'Ilex'), Env)
+# ENM = ensemble_modelling('all', subset(Occurences, Occurences$genus == 'Ilex'), Env, name = 'Ilex', ensemble.thresh = c(0.6))
+# stack = stack_modelling('all', Occurences, Env, Spcol = 'genus', cv = 'k-fold', cv.param = c(10,1), ensemble.thresh = c(0.6))

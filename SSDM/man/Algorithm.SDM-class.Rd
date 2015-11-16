@@ -9,23 +9,25 @@ This is an S4 class to represent an SDM based on a single algorithm (including
 generalized linear model, general additive model, multivariate adpatative
 splines, generalized boosted regression model, classification tree analysis,
 random forest, maximum entropy, artificial neural network, and support vector
-machines). It can be obtain with \code{\link{modelling}}.
+machines). This S4 class is obtained with \code{\link{modelling}}.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{name}}{character. Name of the SDM (by default Species.SDM).}
 
-\item{\code{projection}}{raster. Habitat suitability map of the SDM.}
+\item{\code{projection}}{raster. Habitat suitability map produced by the SDM.}
 
-\item{\code{evaluation}}{data frame. Evaluation of the SDM (threshold, AUC, omission
-rate, sensitivity, specificity, correct proportion and Kappa).}
+\item{\code{evaluation}}{data frame. Evaluation of the SDM (available metrics include
+AUC, Kappa, ...) and identification of the optimal threshold to convert the
+habitat suitability map into a binary presence/absence map.}
 
-\item{\code{variable.importance}}{data frame. Relative percentage of importance for each variable used in the SDM.}
+\item{\code{variable.importance}}{data frame. Relative importance (in %) of
+each variable in the SDM.}
 
-\item{\code{data}}{data frame. Data used to realized the SDM}
+\item{\code{data}}{data frame. Data used to build the SDM.}
 
-\item{\code{parameters}}{data frame. Parameters used to realized the SDM}
+\item{\code{parameters}}{data frame. Parameters used to build the SDM.}
 }}
 \seealso{
 \linkS4class{Ensemble.SDM} an S4 class for ensemble SDMs,
