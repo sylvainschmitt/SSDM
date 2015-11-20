@@ -7,14 +7,16 @@
 \title{SSDM: Stacked species distribution modelling}
 \description{
 SSDM is a package to build multi-species distribution models. You can create
-SDMs using a single or multiple algorithms (ensemble SDMs) with or without
-repetition. For each species, an SDM can yield a habitat suitability map, a
-binary map, an uncertainty map, and can asses variable importance, algorithm
-accuracy, and between-algorithm correlation.
+SDMs using a single or multiple algorithms (ensemble SDMs). For each species,
+an SDM can yield a habitat suitability map, a binary map, an uncertainty map,
+and can assess variable importance, algorithm accuracy, and between-algorithm
+correlation. Methods to stack individual SDMs include summing individual
+probabilities and thresholding then summing. Thresholding can be based on a
+specific evaluation metric or by drawing repeatedly from a Bernouilli
+distribution. The SSDM package also provides a user-friendly interface
+(\code{\link{gui}}).
 }
 \details{
-The SSDM package also provides a user-friendly interface (\code{\link{gui}}).
-
 SSDM provides four categories of functions (that you can find in details
 below): Data preparation, Modelling main functions, Model main methods, Model
 classes, and Miscellaneous.
@@ -26,10 +28,10 @@ classes, and Miscellaneous.
 
 \section{Modelling main  functions}{
  \describe{
-  \item{\code{\link{modelling}}}{Build an SDM using one algorithm.}
+  \item{\code{\link{modelling}}}{Build an SDM using one algorithm}
   \item{\code{\link{ensemble_modelling}}}{Build an SDM that assembles
-  multiple algorithms.} \item{\code{\link{stack_modelling}}}{Build an SSDMs
-  that assembles multiple algorithms and species.}}
+  multiple algorithms} \item{\code{\link{stack_modelling}}}{Build an SSDMs
+  that assembles multiple algorithms and species}}
 }
 
 \section{Model main methods}{

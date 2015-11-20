@@ -12,7 +12,7 @@
 \S4method{plot}{SDM,ANY}(x, y, ...)
 }
 \arguments{
-\item{x}{Object to pe plot (S4 Algorithm.SDM, Ensemble.SDM or
+\item{x}{Object to be plot (S4 Algorithm.SDM, Ensemble.SDM or
 Stacked.SDM object).}
 
 \item{y,...}{Don't used plot base parameters.}
@@ -22,7 +22,7 @@ Open a window with a shiny app rendering all the results in an easy
   way to see all results in one glance.
 }
 \description{
-Allow to plot S4 \linkS4class{Algorithm.SDM},
+Allows to plot S4 \linkS4class{Algorithm.SDM},
 \linkS4class{Ensemble.SDM} and
 \linkS4class{Stacked.SDM} classes objects.
 }

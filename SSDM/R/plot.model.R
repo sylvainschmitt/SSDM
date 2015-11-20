@@ -7,11 +7,11 @@ NULL
 
 #' Plot all SDMs, ensemble SDMs, and SSDMs
 #'
-#' Allow to plot S4 \linkS4class{Algorithm.SDM},
+#' Allows to plot S4 \linkS4class{Algorithm.SDM},
 #' \linkS4class{Ensemble.SDM} and
 #' \linkS4class{Stacked.SDM} classes objects.
 #'
-#' @param x Object to pe plot (S4 Algorithm.SDM, Ensemble.SDM or
+#' @param x Object to be plot (S4 Algorithm.SDM, Ensemble.SDM or
 #'   Stacked.SDM object).
 #' @param y,... Don't used plot base parameters.
 #'

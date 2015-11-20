@@ -9,17 +9,16 @@ NULL
 #'with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
 #'function returns an S4 \linkS4class{Stacked.SDM} class object containing the
 #'local species richness map, and the uncertainty map based on the habitat
-#'suitability map variance inter algorithm, all evaluation tables comming with
+#'suitability map variance inter algorithm, all evaluation tables coming with
 #'(model evaluation, algorithm evaluation, algorithm correlation matrix and
 #'variable importance), and all associated ensemble SDMs for each species (see
 #'\code{\link{ensemble_modelling}}).
 #'
 #'@param enm,... character. Ensemble SDMs to be stacked.
-#'@param name character. Optinnal name given to the final SSDM producted (by
-#'  default 'Species.SDM').
+#'@param name character. Optinnal name given to the final SSDM built (by default
+#'  'Species.SDM').
 #'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 & 1. The higher it is the more accurate
-#'  is the threshold but the longer is the modelling evaluation step (see
+#'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
 #'@param metric character. Metric used to compute the binary map threshold (see
 #'  details below.)
@@ -28,45 +27,59 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetition used to create random bernoulli binary maps for each species.
-#'@param verbose logical. If true allow the function to print text in the
-#'  console.
+#'@param verbose logical. If set to true, allows the function to print text in
+#'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
 #'
-#'@return an S4 \linkS4class{Stacked.SDM} class object viewable with
+#'@return an S4 \linkS4class{Stacked.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
 #'
-#'@details \strong{Metric :} choice of the metric used to compute binary map
-#'  threshold and confusion matrix (by default SES as recommanded by Liu et al.
+#'@details \strong{Metric:} choice of the metric used to compute binary map
+#'  threshold and confusion matrix (by default SES as recommended by Liu et al.
 #'  2005,see references below): \describe{ \item{"Kappa"}{maximizes the model
 #'  Kappa value} \item{"TSS"}{\strong{True Skill Statistic} maximizes the
 #'  sensitivity and specificity sum} \item{"CCR"}{maximizes the correct
-#'  predicted observations proportion} \item{"SES"}{using the sensitivty
-#'  specificity equality} \item{"LW"}{using the lowest occurence prediction
+#'  predicted observations proportion} \item{"SES"}{using the sensitivity
+#'  specificity equality} \item{"LW"}{using the lowest occurrence prediction
 #'  probability} \item{"ROC"}{minimizing the distance between the ROC plot
-#'  (receiving poerating characteristic curve) and the upper left coin (1,1)} }
+#'  (receiving operating characteristic curve) and the upper left corner (1,1)} }
 #'
-#'  \strong{Methos :} Choice of the method used to compute the local species
+#'  \strong{Methods:} Choice of the method used to compute the local species
 #'  richness map (see Calabrez et al. 2014 for more informations, see references
-#'  below) : \describe{\item{P}{(Probablity) sum probabilities of the habitat
+#'  below): \describe{\item{P}{(Probablity) sum probabilities of the habitat
 #'  suitability maps }\item{B}{(Random bernoulli) drawing repeatedly from a
 #'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
-#'  the thresholding (depending of the metric, see metric parameter).}}
+#'  the thresholding (depending on the metric, see metric parameter).}}
 #'
 #' @examples
 #'\dontrun{
 #' stacking(Specie1.enm, Specie2.enm)
 #'}
 #'
-#'@seealso \code{\link{stack_modelling}} for stack species ensemble modelling
-#'  with multiple algorithms and multiples species
+#'@seealso \code{\link{stack_modelling}} to build SSDMS.
 #'
-#'@references Liu,  C.  et  al.  2005.  Selecting  thresholds  of  occurrence in
-#'  the prediction  of  species  distributions./ Ecography  28:  385 / 393.
+#'@references C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
+#'  "Selecting thresholds of occurrence in the prediction of species
+#'  distributions." \emph{Ecography} 28:85-393
+#'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 #'
-#'  Calabrese, J.M., Certain, G., Kraan, C. & Dormann, C.F. (2014) Stacking
-#'  species  distribution  models  and  adjusting  bias  by linking them to
-#'  macroecological models. Global Ecology and Biogeography, 23, 99-112.
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
+#'  species distribution  models  and  adjusting  bias  by linking them to
+#'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
+#'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+#'
 #'
 #'@rdname stacking
 #'@export

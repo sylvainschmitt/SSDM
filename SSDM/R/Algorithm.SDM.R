@@ -56,7 +56,7 @@ setMethod('print', 'SDM', function(x, ...) {
 #'An S4 class to represent an SDM based on a single algorithm
 #'
 #'This is an S4 class to represent an SDM based on a single algorithm (including
-#'generalized linear model, general additive model, multivariate adpatative
+#'generalized linear model, general additive model, multivariate adaptative
 #'splines, generalized boosted regression model, classification tree analysis,
 #'random forest, maximum entropy, artificial neural network, and support vector
 #'machines). This S4 class is obtained with \code{\link{modelling}}.
@@ -64,9 +64,10 @@ setMethod('print', 'SDM', function(x, ...) {
 #'@slot name character. Name of the SDM (by default Species.SDM).
 #'@slot projection raster. Habitat suitability map produced by the SDM.
 #'@slot evaluation data frame. Evaluation of the SDM (available metrics include
-#'  AUC, Kappa, ...) and identification of the optimal threshold to convert the
+#'  AUC, Kappa, sensitivity, specificity and proportion of correctly predicted
+#'  occurrences) and identification of the optimal threshold to convert the
 #'  habitat suitability map into a binary presence/absence map.
-#'@slot variable.importance data frame. Relative importance (in %) of
+#'@slot variable.importance data frame. Relative importance of
 #'  each variable in the SDM.
 #'@slot data data frame. Data used to build the SDM.
 #'@slot parameters data frame. Parameters used to build the SDM.

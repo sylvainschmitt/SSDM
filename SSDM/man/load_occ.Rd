@@ -11,35 +11,37 @@ load_occ(directory = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
 \arguments{
 \item{directory}{character. Directory that contains the occurrence table.}
 
-\item{Env}{raster stack. Environmental variables as a raster stack used to
-perform spatial thinning, it can be the result of the
-\code{\link{load_var}} function.}
+\item{Env}{raster stack. Environmental variables in form of a raster stack used to
+perform spatial thinning (can be the result of the
+\code{\link{load_var}} function).}
 
-\item{file}{character. File containing the occurrences table, if NULL
+\item{file}{character. File containing the occurrence table, if NULL
 (default) the .csv file located in the directory will be loaded.}
 
 \item{...}{additional parameters given to \code{\link[utils]{read.csv}}.}
 
-\item{Xcol}{character. Name of the X coordinate column (Longitude).}
+\item{Xcol}{character. Name of the column  in the occurrence table  containing
+Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the Y coordinate column (Latitude).}
+\item{Ycol}{character. Name of the column in the occurrence table  containing
+Longitude or Y coordinates.}
 
 \item{Spcol}{character. Name of the column containing species names or IDs.}
 
 \item{GeoRes}{logical. Geographical thinning will be perform on occurrences
-by species to limit geographical biases in the SDMs.}
+to limit geographical biases in the SDMs.}
 
 \item{reso}{numeric. Resolution used to perform the geographical thinning, by
 default the resolution of the raster stack (Env).}
 
-\item{verbose}{logical. If true allows the function to print text in the
+\item{verbose}{logical. If set to true, allows the function to print text in the
 console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
  user interface).}
 }
 \value{
-A data frame containing the occurrence data set (spatially thinned or
+A data frame containing the occurrence dataset (spatially thinned or
  not).
 }
 \description{

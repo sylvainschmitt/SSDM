@@ -29,7 +29,7 @@ save.stack(stack, name = "Stack", directory = getwd(), verbose = T,
 \item{directory}{character. Path to the directory chosen to save the SDM,
 by default the current directory.}
 
-\item{verbose}{logical. If true allow the function to print text in the
+\item{verbose}{logical. If set to true, allows the function to print text in the
 console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
@@ -38,7 +38,7 @@ console.}
 \item{stack}{Stacked.SDM. SSDM to be saved.}
 }
 \value{
-Nothing in R environment. Create folders and tables and rasters
+Nothing in R environment. Creates folders, tables and rasters
   associated to the SDM. Tables are in .csv and rasters in .grd/.gri.
 }
 \description{

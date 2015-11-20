@@ -11,61 +11,60 @@
   GUI = F, ...)
 }
 \arguments{
-\item{object}{Stacked.SDM. The previously produced SSDM.}
+\item{object}{Stacked.SDM. The previously built SSDM.}
 
 \item{Occurrences}{data frame. New or updated occurrence table (can be
 processed first by \code{\link{load_occ}}).}
 
-\item{Env}{raster object. Environnment raster object (can be processed first by
+\item{Env}{raster object. Environment raster object (can be processed first by
 \code{\link{load_var}}).}
 
-\item{Xcol}{character. Name of the column  in the occurence table  containing
+\item{Xcol}{character. Name of the column  in the occurrence table  containing
 Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the column in the occurence table  containing
+\item{Ycol}{character. Name of the column in the occurrence table  containing
 Longitude or Y coordinates.}
 
-\item{Pcol}{character. Name of the column in the occurence table specifying
-wether a line is a presence or an absence. If NULL presence-only data set is
+\item{Pcol}{character. Name of the column in the occurrence table specifying
+whether a line is a presence or an absence. If NULL presence-only dataset is
 assumed.}
 
-\item{Spname}{character. Name of the new or updated specie.}
+\item{Spname}{character. Name of the new or updated species.}
 
 \item{name}{character. Optional name given to the final SSDM produced, by
 default it's the name of the previous SSDM.}
 
-\item{save}{logical. If true the model is automatically saved.}
+\item{save}{logical. If set to true, the model is automatically saved.}
 
 \item{directory}{character. Name of the directory to contain the saved SSDM.}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 & 1. The higher it is the more accurate
-is the threshold but the longer is the modelling evaluation step (see
+interval threshold values between 0 and 1 (see
 \code{\link[SDMTools]{optim.thresh}}).}
 
-\item{tmp}{logical. If true the habitat suitability map of each algorithm is
-saved in a temporary file to release memory. But beware: if you close R,
-temporary files will be destroyed. To avoid any loss you can save your model
-with \code{\link{save.model}}.}
+\item{tmp}{logical. If set to true, the habitat suitability map of each
+algorithm is saved in a temporary file to release memory. But beware: if you
+close R, temporary files will be destroyed. To avoid any loss you can save
+your model with \code{\link{save.model}}.}
 
-\item{verbose}{logical. If true allow the function to print text in the
-console.}
+\item{verbose}{logical. If set to true, allows the function to print text in
+the console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
 user interface).}
 
-\item{...}{additionnal parameters for the algorithm modelling function (see
+\item{...}{additional parameters for the algorithm modelling function (see
  details below).}
 }
 \value{
-an S4 \linkS4class{Stacked.SDM} class object viewable with
+an S4 \linkS4class{Stacked.SDM} class object viewable with the
  \code{\link{plot.model}} function.
 }
 \description{
-Update a previous SSDM with new occurrence data. The function takes in inputs updated
-or new occurrence data from one specie, previous envrionmental data,
-and an S4 \linkS4class{Stacked.SDM} class object containing a previously
-produced SSDM.
+Update a previous SSDM with new occurrence data. The function takes as inputs
+updated or new occurrence data from one species, previous environmental data,
+and an S4 \linkS4class{Stacked.SDM} class object containing a previously built
+SSDM.
 }
 \examples{
 \dontrun{

@@ -5,7 +5,7 @@
 \alias{ensemble}
 \alias{ensemble,Algorithm.SDM-method}
 \alias{sum,Algorithm.SDM-method}
-\title{Methods to assemble different algorithm SDMs in an ensemble SDM}
+\title{Methods to assemble multiple algorithms in an ensemble SDM}
 \usage{
 ensemble(x, ..., name = NULL, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = T, thresh = 1001, uncertainty = T,
@@ -31,40 +31,39 @@ will be included in the ensemble SDM (see details below).}
 \item{ensemble.thresh}{numeric. Threshold(s) associated with the metric(s)
 used to compute the selection.}
 
-\item{weight}{logical. Choose wether or not you want the SDMs to be weighted
-using the slection metric or, alternatively, the mean of the selection
+\item{weight}{logical. Choose whether or not you want the SDMs will be weighted
+using the selection metric or, alternatively, the mean of the selection
 metrics.}
 
-\item{thresh}{numeric. Threshold precision parmeter used to compute binary
-map, the higher it is the more accurate is the threshold but the longer is
-the modelling evaluation step (see \code{\link[SDMTools]{optim.thresh}}).}
+\item{thresh}{numeric. A single integer value representing the number of equal
+interval threshold values between 0 and 1 (see
+\code{\link[SDMTools]{optim.thresh}}).}
 
-\item{uncertainty}{logical. If true generates an uncertainty map and algorithm
-correlation matrix are computed.}
+\item{uncertainty}{logical. If set to true, generates an uncertainty map and an algorithm
+correlation matrix.}
 
-\item{verbose}{logical. If true allows the function to print text in the
+\item{verbose}{logical. If set to true, allows the function to print text in the
 console.}
 
 \item{GUI,format,na.rm}{logical. Don't take those arguments into account
  (parameters for the user interface and sum function).}
 }
 \value{
-an S4 \linkS4class{Ensemble.SDM} class object viewable with
+an S4 \linkS4class{Ensemble.SDM} class object viewable with the
  \code{\link{plot.model}} function.
 }
 \description{
-This is a method to assemble several algorithm SDMs in an ensemble SDM. The
+This is a method to assemble several algorithms in an ensemble SDM. The
 function takes as inputs several S4 \linkS4class{Algorithm.SDM} class objects
 obtained with the \code{\link{modelling}} function. The function returns an S4
 \linkS4class{Ensemble.SDM} class object containing the habitat suitability
 map, the binary map, and the uncertainty map (based on the between-algorithm
-variance of habitat suitability maps) and all evaluation tables coming with
-(model evaluation, algorithm evaluation, algorithm correlation matrix and
-variable importance).
+variance) and the associated evaluation tables (model evaluation,
+algorithm evaluation, algorithm correlation matrix and variable importance).
 }
 \details{
 ensemble.metric (metric(s) used to select the best SDMs that will be
- included in the ensemble SDM) can be chosen among : \describe{
+ included in the ensemble SDM) can be chosen from among: \describe{
  \item{AUC}{Area under the receiving operating characteristic (ROC) curve}
  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
  from the confusion matrix} \item{specificity}{Specificity from the confusion
@@ -77,7 +76,7 @@ ensemble(GLM1, GLM2, GAM1, GAM2)
 }
 }
 \seealso{
-\code{\link{ensemble_modelling}} to build an ensemble SDM from multiple
- algorithms.
+\code{\link{ensemble_modelling}} to build an ensemble SDM from
+ multiple algorithms.
 }
 

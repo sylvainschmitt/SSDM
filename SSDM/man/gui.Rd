@@ -7,18 +7,18 @@
 gui(browser = F, maxmem = 1e+10)
 }
 \arguments{
-\item{browser}{logical. Option to plot or not the user global interface in
+\item{browser}{logical. Option to plot the user global interface in
 your internet browser.}
 
 \item{maxmem}{numeric. Option to choose the maximum memory allocated to the
   user interface.}
 }
 \value{
-Open a window with a shiny app allowing to use SSDM package
-  with an easy user-friendly interface.
+Open a window with a shiny app to use the SSDM package
+  with an user-friendly interface.
 }
 \description{
-User interface to use the SSDM package.
+User interface of the SSDM package.
 }
 \details{
 Due to the relatively important size of environmental data you

@@ -32,7 +32,7 @@ load_enm = function (name, directory = getwd()) {
   }
   enm = Ensemble.SDM(name = as.character(read.csv(paste0(directory,'/Tables/Name'))[1,2]),
                              projection = raster(paste0(directory,'/Rasters/Probability.tif')),
-                             uncertainty = try(raster(paste0(directory,'/Rasters/Uncertainity.tif'))),
+                             uncertainty = try(raster(paste0(directory,'/Rasters/uncertainty.tif'))),
                              evaluation = read.csv(paste0(directory,'/Tables/ENMeval'), row.names = 1),
                              algorithm.evaluation  = read.csv(paste0(directory,'/Tables/AlgoEval'), row.names = 1),
                              algorithm.correlation = a,
@@ -48,7 +48,7 @@ load_stack = function (name = 'Stack', directory = getwd(), GUI = F) {
   directory = paste0(directory, '/', name)
   stack = Stacked.SDM(name = as.character(read.csv(paste0(directory,'/Results/Tables/Name'))[1,2]),
                                              diversity.map = raster(paste0(directory,'/Results/Rasters/Diversity.tif')),
-                                             uncertainty = raster(paste0(directory,'/Results/Rasters/Uncertainity.tif')),
+                                             uncertainty = raster(paste0(directory,'/Results/Rasters/uncertainty.tif')),
                                              evaluation = read.csv(paste0(directory,'/Results/Tables/StackEval'), row.names = 1),
                                              variable.importance = read.csv(paste0(directory,'/Results/Tables/VarImp'), row.names = 1),
                                              algorithm.correlation = read.csv(paste0(directory,'/Results/Tables/AlgoCorr'), row.names = 1),

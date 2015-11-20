@@ -6,7 +6,7 @@
 \title{An S4 class to represent an SDM based on a single algorithm}
 \description{
 This is an S4 class to represent an SDM based on a single algorithm (including
-generalized linear model, general additive model, multivariate adpatative
+generalized linear model, general additive model, multivariate adaptative
 splines, generalized boosted regression model, classification tree analysis,
 random forest, maximum entropy, artificial neural network, and support vector
 machines). This S4 class is obtained with \code{\link{modelling}}.
@@ -19,10 +19,11 @@ machines). This S4 class is obtained with \code{\link{modelling}}.
 \item{\code{projection}}{raster. Habitat suitability map produced by the SDM.}
 
 \item{\code{evaluation}}{data frame. Evaluation of the SDM (available metrics include
-AUC, Kappa, ...) and identification of the optimal threshold to convert the
+AUC, Kappa, sensitivity, specificity and proportion of correctly predicted
+occurrences) and identification of the optimal threshold to convert the
 habitat suitability map into a binary presence/absence map.}
 
-\item{\code{variable.importance}}{data frame. Relative importance (in %) of
+\item{\code{variable.importance}}{data frame. Relative importance of
 each variable in the SDM.}
 
 \item{\code{data}}{data frame. Data used to build the SDM.}

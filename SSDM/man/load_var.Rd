@@ -13,23 +13,22 @@ load_var(directory = getwd(), files = NULL, format = c(".grd", ".tif",
 files.}
 
 \item{files}{character. Files containing the environmental data. If NULL
-(default) all files with the precised format present in the directory will
+(default) all files present in the directory with the selected format will
 be loaded.}
 
-\item{format}{character. Format used to load environmental data variable files
-(including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img)}
+\item{format}{character. Format of environmental data files
+(including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).}
 
 \item{factors}{character. Environmental data which should be considered as
 factor variable.}
 
-\item{Norm}{logical. Normalize environmental data.}
+\item{Norm}{logical. If set to true, normalizes environmental data between 0 and 1.}
 
-\item{tmp}{logical. If true loaded environmental data variable rasters are
+\item{tmp}{logical. If set to true rasters are
 read in temporary file avoiding to overload the random access memory. But
-beware: if you close R, temporary files will be destructed and you'll need to
-reload your environmental datas directly from their original files.}
+beware: if you close R, temporary files will be destroyed.}
 
-\item{verbose}{logical. If true allow the function to print text in the
+\item{verbose}{logical. If set to true, allows the function to print text in the
 console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
@@ -50,6 +49,6 @@ load.var(directory)
 }
 }
 \seealso{
-\code{\link{load_occ}} to load occurences
+\code{\link{load_occ}} to load occurrences.
 }
 

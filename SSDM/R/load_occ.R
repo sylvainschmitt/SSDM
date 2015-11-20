@@ -1,5 +1,6 @@
 #' @include checkargs.R
 #' @importFrom spThin thin
+#' @importFrom raster res extract
 NULL
 
 #'Load occurrence data
@@ -8,25 +9,27 @@ NULL
 #'\code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 #'
 #'@param directory character. Directory that contains the occurrence table.
-#'@param Env raster stack. Environmental variables as a raster stack used to
-#'  perform spatial thinning, it can be the result of the
-#'  \code{\link{load_var}} function.
-#'@param file character. File containing the occurrences table, if NULL
+#'@param Env raster stack. Environmental variables in form of a raster stack used to
+#'  perform spatial thinning (can be the result of the
+#'  \code{\link{load_var}} function).
+#'@param file character. File containing the occurrence table, if NULL
 #'  (default) the .csv file located in the directory will be loaded.
 #'@param ... additional parameters given to \code{\link[utils]{read.csv}}.
-#'@param Xcol character. Name of the X coordinate column (Longitude).
-#'@param Ycol character. Name of the Y coordinate column (Latitude).
+#'@param Xcol character. Name of the column  in the occurrence table  containing
+#'  Latitude or X coordinates.
+#'@param Ycol character. Name of the column in the occurrence table  containing
+#'  Longitude or Y coordinates.
 #'@param Spcol character. Name of the column containing species names or IDs.
 #'@param GeoRes logical. Geographical thinning will be perform on occurrences
-#'  by species to limit geographical biases in the SDMs.
+#'  to limit geographical biases in the SDMs.
 #'@param reso numeric. Resolution used to perform the geographical thinning, by
 #'  default the resolution of the raster stack (Env).
-#'@param verbose logical. If true allows the function to print text in the
+#'@param verbose logical. If set to true, allows the function to print text in the
 #'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
 #'
-#'@return A data frame containing the occurrence data set (spatially thinned or
+#'@return A data frame containing the occurrence dataset (spatially thinned or
 #'  not).
 #'
 #' @examples
@@ -45,37 +48,62 @@ load_occ = function(directory = getwd(), Env, file = NULL, ...,
              GeoRes = GeoRes, reso = reso, verbose = verbose, GUI = GUI)
 
   #pdir = getwd()
-  if (verbose) {cat('Occurences loading \n')}
+  if (verbose) {cat('Occurrences loading \n')}
   #setwd(directory)
   if (is.null(file)) {
     file = as.character(list.files(path = directory, pattern = '.csv')[[1]])
   }
   file = paste0(directory,'/',file)
-  Occurences = read.csv2(file = file, ...)  # Occ = occurrences
+  Occurrences = read.csv2(file = file, ...)  # Occ = occurrences
+
+  # Checking columns format
+  if(!is.null(Spcol)){
+    if(!inherits(Occurrences[,which(names(Occurrences) == Spcol)], 'factor')){
+      Occurrences[,which(names(Occurrences) == Spcol)] = as.factor(Occurrences[,which(names(Occurrences) == Spcol)])
+    }
+  }
+  if(!inherits(Occurrences[,which(names(Occurrences) == Xcol)], 'numeric')){
+    if(inherits(Occurrences[,which(names(Occurrences) == Xcol)], 'factor')){
+    Occurrences[,which(names(Occurrences) == Xcol)] = as.numeric(as.character(Occurrences[,which(names(Occurrences) == Xcol)]))
+    Occurrences[,which(names(Occurrences) == Ycol)] = as.numeric(as.character(Occurrences[,which(names(Occurrences) == Ycol)]))
+    }
+  }
+
+  # Checking points validity
+  Occurrences$validity = raster::extract(Env[[1]], Occurrences[,c(which(names(Occurrences) == Xcol),which(names(Occurrences) == Ycol))])
+  if(length(which(is.na(Occurrences$validity))) > 0){
+    warning('You have occurrences that aren\'t in the extent of your environmental variables, they will be automatically removed !')
+    Occurrences = Occurrences[-which(is.na(Occurrences$validity)),]
+  }
+  Occurrences = Occurrences[-which(names(Occurrences) == 'validity')]
 
   # Geographical resampling
   if (is.null(Spcol)) {
-    Occurences$SpNULL = 1
+    Occurrences$SpNULL = 1
     Spcol = 'SpNULL'
   }
-  for (i in 1:length(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)])))) {
+  for (i in 1:length(levels(Occurrences[,which(names(Occurrences)==Spcol)]))) {
     if (GeoRes) {
-      if(verbose) {cat(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i],'geographical resampling \n')}
-      SpOccurences = subset(Occurences, Occurences[which(names(Occurences)==Spcol)] == levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i])
-      thin.result = thin(SpOccurences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol,
+      if(verbose) {cat(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i],'geographical resampling \n')}
+      SpOccurrences = subset(Occurrences, Occurrences[which(names(Occurrences)==Spcol)] == levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i])
+      thin.result = thin(SpOccurrences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol,
                          thin.par = reso, reps = 1, locs.thinned.list.return = T,
                          write.files = F, write.log.file = F, verbose = F)
-      if(GUI) {incProgress(1/length(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))),
-                           detail = paste(levels(as.factor(Occurences[,which(names(Occurences)==Spcol)]))[i],'thinned'))}
+      if(GUI) {incProgress(1/length(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))),
+                           detail = paste(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i],'thinned'))}
       deleted = {}
-      occ.indices = c(1:length(row.names(SpOccurences)))
+      occ.indices = c(1:length(row.names(SpOccurrences)))
       res.indices = as.numeric(row.names(thin.result[[1]]))
+      # Test species occurrences > 3
+      if(length(res.indices) < 4){
+        warning(paste(levels(Occurrences[,which(names(Occurrences)==Spcol)]), 'have 3 or less occurrences after spatial thinning, it\'s not enough for modelling, this species will be automatically removed !'))
+      }
       for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
-      if (length(deleted) > 0) {Occurences = Occurences[-deleted,]}
+      if (length(deleted) > 0) {Occurrences = Occurrences[-deleted,]}
     }
-    if (Spcol == 'SpNULL') {Occurences = Occurences[-which(names(Occurences)=='SpNULL')]}
+    if (Spcol == 'SpNULL') {Occurrences = Occurrences[-which(names(Occurrences)=='SpNULL')]}
   }
 
   #setwd(pdir)
-  return(Occurences)
+  return(Occurrences)
 }

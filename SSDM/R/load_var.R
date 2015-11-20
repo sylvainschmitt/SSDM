@@ -11,18 +11,17 @@ NULL
 #'@param directory character. Directory that contains the environmental data
 #'  files.
 #'@param files character. Files containing the environmental data. If NULL
-#'  (default) all files with the precised format present in the directory will
+#'  (default) all files present in the directory with the selected format will
 #'  be loaded.
-#'@param format character. Format used to load environmental data variable files
-#'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img)
+#'@param format character. Format of environmental data files
+#'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
 #'@param factors character. Environmental data which should be considered as
 #'  factor variable.
-#'@param Norm logical. Normalize environmental data.
-#'@param tmp logical. If true loaded environmental data variable rasters are
+#'@param Norm logical. If set to true, normalizes environmental data between 0 and 1.
+#'@param tmp logical. If set to true rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
-#'  beware: if you close R, temporary files will be destructed and you'll need to
-#'  reload your environmental datas directly from their original files.
-#'@param verbose logical. If true allow the function to print text in the
+#'  beware: if you close R, temporary files will be destroyed.
+#'@param verbose logical. If set to true, allows the function to print text in the
 #'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
@@ -35,7 +34,7 @@ NULL
 #' load.var(directory)
 #'}
 #'
-#'@seealso \code{\link{load_occ}} to load occurences
+#'@seealso \code{\link{load_occ}} to load occurrences.
 #'
 #'@export
 load_var <- function (directory = getwd(), files = NULL,
@@ -93,7 +92,7 @@ load_var <- function (directory = getwd(), files = NULL,
         Raster = raster(paste0(directory, '/', files[[i]]))
         Raster = reclassify(Raster, c(-Inf,-900,NA))
         Raster = crop(Raster, extentstack)
-        names(Raster) = as.character(strsplit(files[i],paste0('.',format[j]))[1])
+        names(Raster) = as.character(strsplit(files[i],format[j]))
         if (names(Raster) %in% factors) {
           Raster = raster::as.factor(Raster)
           row.names(Raster@data@attributes[[1]]) = Raster@data@attributes[[1]]$ID

@@ -6,9 +6,9 @@ NULL
 #'
 #'This is an S4 class to represent SSDMs that assembles multiple algorithms
 #'(including generalized linear model, general additive model, multivariate
-#'adpatative splines, generalized boosted regression model, classification tree
+#'adaptative splines, generalized boosted regression model, classification tree
 #'analysis, random forest, maximum entropy, artificial neural network, and
-#'support vector machines). It can be obtain with \code{\link{stack_modelling}}
+#'support vector machines). It is obtained with \code{\link{stack_modelling}}
 #'or \code{\link{stacking}}.
 #'
 #'@slot name character. Name of the SDM (by default 'Species.SSDM').
@@ -16,16 +16,16 @@ NULL
 #'@slot uncertainty raster. Between-algorithm variance map.
 #'@slot evaluation data frame. Evaluation of the SSDM (AUC, omission rate,
 #'  sensitivity, specificity, correct proportion and Kappa).
-#'@slot variable.importance data frame. Relative importance (in %) of each
+#'@slot variable.importance data frame. Relative importance of each
 #'  variable in the SSDM.
 #'@slot algorithm.correlation data frame. Between-algorithm correlation matrix.
 #'@slot enms list. List with each ensemble SDM used for the SSDM.
 #'@slot parameters data frame. Parameters used to realized the SSDM.
 #'@slot algorithm.evaluation data frame. Evaluation of the algorithm by is mean
-#'  performance among all SDMS (AUC, omission rate, sensitivity, specificity,
+#'  performance among all SDMs (AUC, omission rate, sensitivity, specificity,
 #'  correct proportion and Kappa).
 #'
-#'@seealso \linkS4class{Ensemble.SDM} an S4 class to represent ensemble SDMs, and
+#'@seealso \linkS4class{Ensemble.SDM} an S4 class to represent ensemble SDMs, and an
 #'  \linkS4class{Algorithm.SDM} an S4 class to represent SDMs.
 #'
 #'@export

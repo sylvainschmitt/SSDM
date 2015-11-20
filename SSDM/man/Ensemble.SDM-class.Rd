@@ -7,9 +7,9 @@
 \description{
 This is an S4 class to represent an ensemble SDM from multiple algorithms
 (including generalized linear model, general additive model, multivariate
-adpatative splines, generalized boosted regression model, classification tree
+adaptative splines, generalized boosted regression model, classification tree
 analysis, random forest, maximum entropy, artificial neural network, and
-support vector machines). This S4 class can be obtain with
+support vector machines). This S4 class is obtained with
 \code{\link{ensemble_modelling}} or \code{\link{ensemble}}.
 }
 \section{Slots}{
@@ -20,7 +20,8 @@ support vector machines). This S4 class can be obtain with
 \item{\code{algorithm.correlation}}{data frame. Between-algorithm correlation matrix.}
 
 \item{\code{algorithm.evaluation}}{data frame. Evaluation of the SDM (available
- metrics include AUC, Kappa, ...) and identification of the optimal threshold
+ metrics include AUC, Kappa, sensitivity, specificity and proportion of
+ correctly predicted occurrences) and identification of the optimal threshold
  to convert the habitat suitability map into a binary presence/absence map.}
 }}
 \seealso{

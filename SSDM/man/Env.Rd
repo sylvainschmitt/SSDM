@@ -5,25 +5,26 @@
 \alias{Env}
 \title{A stack of three environmental variables}
 \format{A stack of three rasters: \describe{ \item{RAINFALL}{Annual mean
-  rainfall} \item{TEMPERATURE}{Annual mean temperature}
-  \item{SUBSTRATE}{Substratete (type categorical variable)} }}
+  rainfall (mm)} \item{TEMPERATURE}{Annual mean temperature (x10 degree Celsius)}
+  \item{SUBSTRATE}{Substrate type (categorical variable)} }}
 \usage{
 Env
 }
 \description{
 A stack of three 5 km-resolution rasters covering the main island of New
-Caldeonia 'Grande Terre'. Climatic variables (RAINFALL and TEMPERATURE) are
+Caledonia 'Grande Terre'. Climatic variables (RAINFALL and TEMPERATURE) are
 from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of
 New Caledonia (see references below).
 }
 \references{
-Hijmans,  R.J.  &  Graham,  C.H. The  ability  of
+R.J. Hijmans, C.H. &  Graham (2006) "The  ability  of
   climate envelope  models  to  predict  the  effect  of  climate  change  on
-  species distributions. Glob. Chang. Biol. (2006)
+  species distributions." \emph{Global Change Biology} 12:2272-2281
+  \url{http://se-server.ethz.ch/staff/af/Fi159/H/Hi082_S.pdf}
 
-  Fritsch, E. Les sols. Atlas de la Nouvelle-Caledonie (ed. by J.
-  Bonvallot, J.-C. Gay and E. Habert), pp. 73-76. IRD-Congres de la
-  Nouvelle-Caledonie, Marseille. (2012)
+  E. Fritsch (2012) "Les sols. Atlas de la Nouvelle-Caledonie (ed. by J.
+  Bonvallot, J.-C. Gay and E. Habert)" \emph{IRD-Congres de la
+  Nouvelle-Caledonie, Marseille.} 73-76
 }
 \keyword{datasets}
 
