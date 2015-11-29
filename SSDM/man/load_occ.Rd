@@ -4,19 +4,19 @@
 \alias{load_occ}
 \title{Load occurrence data}
 \usage{
-load_occ(directory = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
+load_occ(path = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
   Ycol = "Latitude", Spcol = NULL, GeoRes = T,
   reso = max(res(Env@layers[[1]])), verbose = T, GUI = F)
 }
 \arguments{
-\item{directory}{character. Directory that contains the occurrence table.}
+\item{path}{character. Path to the directory that contains the occurrence table.}
 
-\item{Env}{raster stack. Environmental variables in form of a raster stack used to
+\item{Env}{raster stack. Environmental variables in the form of a raster stack used to
 perform spatial thinning (can be the result of the
 \code{\link{load_var}} function).}
 
 \item{file}{character. File containing the occurrence table, if NULL
-(default) the .csv file located in the directory will be loaded.}
+(default) the .csv file located in the path will be loaded.}
 
 \item{...}{additional parameters given to \code{\link[utils]{read.csv}}.}
 
@@ -50,7 +50,7 @@ Function to load occurrence data from a table to perform \code{\link{modelling}}
 }
 \examples{
 \dontrun{
-load.occ(directory)
+load.occ(path)
 }
 }
 \seealso{

@@ -6,7 +6,7 @@
 \title{An S4 class to represent an SDM based on a single algorithm}
 \description{
 This is an S4 class to represent an SDM based on a single algorithm (including
-generalized linear model, general additive model, multivariate adaptative
+generalized linear model, general additive model, multivariate adpative
 splines, generalized boosted regression model, classification tree analysis,
 random forest, maximum entropy, artificial neural network, and support vector
 machines). This S4 class is obtained with \code{\link{modelling}}.

@@ -7,7 +7,6 @@
 #' @importFrom raster stack crop extent aggregate reclassify
 #' @import shiny
 #' @import shinydashboard
-#' @import shinyBS
 #' @importFrom gplots heatmap.2
 NULL
 
@@ -15,16 +14,16 @@ NULL
 #'
 #' User interface of the SSDM package.
 #'
-#' @param browser logical. Option to plot the user global interface in
-#'   your internet browser.
+#' @param browser logical. Option to plot the user global interface in your
+#'   internet browser.
 #' @param maxmem numeric. Option to choose the maximum memory allocated to the
 #'   user interface.
 #'
-#' @return Open a window with a shiny app to use the SSDM package
-#'   with an user-friendly interface.
+#' @return Open a window with a shiny app to use the SSDM package with an
+#'   user-friendly interface.
 #'
-#' @details Due to the relatively important size of environmental data you
-#'   should gave enough memory to the interface (\code{maxmem} parameter).
+#' @details If your environmental variables have an important size, you should
+#'   gave enough memory to the interface with the (\code{maxmem} parameter).
 #'
 #' @examples
 #' \dontrun{
@@ -51,7 +50,16 @@ gui = function (browser = F, maxmem = 10e9) {
       tabItems(
         ### Welcome page ###
         tabItem('welcomepage',
-                h2('Welcome in SSDM package')),
+                h1('SSDM: Stacked species distribution modelling', align = 'center'),
+                h1(' '),
+                h2('Welcome in SSDM package user-friendly interface.', align = 'center'),
+                h2(' '),
+                p('SSDM is a package to build multi-species distribution models. Individual SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species, an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map, and can assess variable importance, algorithm accuracy, and between-algorithm correlation. Methods to stack individual SDMs include summing individual probabilities and thresholding then summing. Thresholding can be based on a specific evaluation metric or by drawing repeatedly from a Bernouilli distribution.'),
+                h3(' '),
+                p('This interface allows you to load new data or previously built SDMs, ensemble SDMs or SSDMs. Then you can make new models with loaded data, and visualize all your results before saving theim.'),
+                h3(' '),
+                p('If you don\'t understand a parameter explanation, please have a look at the package help (?SSDM).')
+                ),
 
         ### Loading page ###
 
@@ -60,14 +68,12 @@ gui = function (browser = F, maxmem = 10e9) {
                 fluidPage(
                   fluidRow(
                     box(title = 'Environment variable', height = 600,
-                        popify(
                           selectInput('format', 'Format',
                                     list('.grd','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                                     multiple = T, selectize = T),
-                        title = "Raster formats", content = "Choose your fucking format !"),
                         uiOutput('file'),
-                        popify(uiOutput('factors'), title = "Factor variables",
-                               content = "Which environmental variable should be considered as a factor ? !"),
+                        uiOutput('factors'),
+                        p('Specify whether an environmental variable is a categorical variable'),
                         checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = T),
                         actionButton('load', 'Load')
                     ),
@@ -99,6 +105,7 @@ gui = function (browser = F, maxmem = 10e9) {
                         uiOutput('Spcol'),
                         checkboxInput('GeoRes', 'Geographic resampling', value = T),
                         uiOutput('reso'),
+                        p('Geographical thinning can be performed on occurrences to limit geographical biases in the SDMs.'),
                         actionButton('load2', 'Load')),
                     box(title = 'Preview',
                         dataTableOutput('occ')
@@ -113,7 +120,7 @@ gui = function (browser = F, maxmem = 10e9) {
                   fluidRow(
                     box(title = 'Load SDM',
                         textOutput('getwd'),
-                        uiOutput('directory'),
+                        uiOutput('path'),
                         selectInput('model.type','Choose model type', c(' ', 'Ensemble SDM', 'SSDM')),
                         actionButton('home', 'home', icon = icon('home')),
                         actionButton('back', 'back', icon = icon('long-arrow-left')),
@@ -137,28 +144,35 @@ gui = function (browser = F, maxmem = 10e9) {
                              uiOutput('repUI'),
                              uiOutput('nameUI'),
                              uiOutput('uncertUI'),
+                             uiOutput('uncertinfoUI'),
                              uiOutput('metricUI'),
+                             uiOutput('metricinfoUI'),
                              uiOutput('methodUI'),
+                             uiOutput('methodinfoUI'),
                              uiOutput('repBslide')
                     ),
                     tabPanel('Intermediate',
                              checkboxInput('PA', 'Automatic Pseudo-Absences', value = T),
                              uiOutput('PAnbUI'),
                              uiOutput('PAstratUI'),
-                             selectInput('cval', 'Cross validation', c('holdout','k-fold','LOO'), selected = 'holdout'),
+                             selectInput('cval', 'Model evaluation method', c('holdout','k-fold','LOO'), selected = 'holdout'),
+                             uiOutput('cvalinfoUI'),
                              uiOutput('cvalparam1UI'),
                              uiOutput('cvalparam2UI'),
-                             selectInput('axesmetric', 'Axes evaluation metric', c('Pearson','AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'Pearson'),
+                             selectInput('axesmetric', 'Variable importance evaluation metric', c('Pearson','AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'Pearson'),
+                             uiOutput('axesmetricinfoUI'),
                              uiOutput('weightUI'),
                              uiOutput('ensemblemetricUI'),
                              uiOutput('AUCUI'),
                              uiOutput('KappaUI'),
                              uiOutput('sensitivityUI'),
                              uiOutput('specificityUI'),
-                             uiOutput('propcorrectUI')
+                             uiOutput('propcorrectUI'),
+                             uiOutput('ensembleinfoUI')
                     ),
                     tabPanel('Advanced',
                              sliderInput('thresh','Threshold precision',11,10001,101, step = 10),
+                             p('Value representing the number of equal interval threshold values between 0 and 1'),
                              uiOutput('tmpUI'),
                              checkboxGroupInput('algoparam', 'Algortims parameters', c('GLM','GAM','MARS','GBM','CTA','RF','ANN','SVM'), inline = T),
                              uiOutput('testUI'),
@@ -198,7 +212,8 @@ gui = function (browser = F, maxmem = 10e9) {
                          tabPanel(plotOutput('varimp.barplot'),
                                   textOutput('varimp.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('varimp.table'), title = 'Table')
+                         tabPanel(tableOutput('varimp.table'), title = 'Table'),
+                         tabPanel(tableOutput('varimplegend'), title = 'Legend')
                   )
                 ),
                 fluidRow(
@@ -230,7 +245,8 @@ gui = function (browser = F, maxmem = 10e9) {
                          tabPanel(plotOutput('enm.varimp.barplot'),
                                   textOutput('enm.varimp.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table')
+                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table'),
+                         tabPanel(tableOutput('enmvarimplegend'), title = 'Legend')
                   )
                 ),
                 uiOutput('algoevalcorr')
@@ -243,7 +259,7 @@ gui = function (browser = F, maxmem = 10e9) {
                     box(title = 'Save SDM',
                         textInput('savename','Name','SDM'),
                         textOutput('savegetwd'),
-                        uiOutput('savedirectory'),
+                        uiOutput('savepath'),
                         actionButton('savehome', 'home', icon = icon('home')),
                         actionButton('saveback', 'back', icon = icon('long-arrow-left')),
                         actionButton('saveopen', 'open', icon = icon('folder-open-o')),
@@ -259,7 +275,8 @@ gui = function (browser = F, maxmem = 10e9) {
   #### Server ####
   server <- function(input, output) {
     ### Server data ###
-    data <- reactiveValues(Env = stack(), Occ = data.frame(), dir = getwd(), ENM = NULL, Stack = NULL)
+    data <- reactiveValues(Env = stack(), Occ = data.frame(), dir = getwd(), ENM = NULL, enms = list(), Stack = NULL)
+    result <- reactiveValues(ENM = NULL)
 
     ### Load Menu ###
 
@@ -300,7 +317,7 @@ gui = function (browser = F, maxmem = 10e9) {
         load.var$norm = F
       }
       data$Env = withProgress(message = 'Variables loading',
-                              load_var(directory = {},
+                              load_var(path = {},
                                        files = as.character(input$Env$datapath),
                                        format = load.var$formats,
                                        Norm = load.var$norm,
@@ -345,7 +362,7 @@ gui = function (browser = F, maxmem = 10e9) {
     output$Xcol <- renderUI({selectInput('Xcol', 'X column', load.occ$columns, multiple = F)})
     output$Ycol <- renderUI({selectInput('Ycol', 'Y column', load.occ$columns, multiple = F)})
     output$Pcol <- renderUI({selectInput('Pcol', 'Presence column', c('None', load.occ$columns), multiple = F)})
-    output$Spcol <- renderUI({selectInput('Spcol', 'Specie column', c('None', load.occ$columns), multiple = F)})
+    output$Spcol <- renderUI({selectInput('Spcol', 'Species column', c('None', load.occ$columns), multiple = F)})
     output$reso <- renderUI({if(input$GeoRes){sliderInput('reso', 'Resmpling gird coefficient', 1,10,1)}})
     observeEvent(input$load2, {
       validate(
@@ -356,7 +373,8 @@ gui = function (browser = F, maxmem = 10e9) {
       if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
       if(is.null(input$sep)) {sep = ""} else {sep = input$sep}
       data$Occ = withProgress(message = 'Occurrences loading',
-                              load_occ(directory = {},
+                              load_occ(path = {},
+                                       data$Env,
                                        file = as.character(input$Occ$datapath),
                                        Xcol = input$Xcol,
                                        Ycol = input$Ycol,
@@ -379,10 +397,11 @@ gui = function (browser = F, maxmem = 10e9) {
       validate(
         need(input$model.type != ' ', 'You need to choose the model type first !')
       )
-      if (input$model.type == 'Ensemble SDM') {data$ENM = load_enm(input$dir, directory = data$dir)}
+      if (input$model.type == 'Ensemble SDM') {data$ENM = load_enm(input$dir, path = data$dir)}
       if (input$model.type == 'SSDM') {
         data$Stack = withProgress(message = 'Model loading',
-                                  load_stack(name = input$dir, directory = data$dir, GUI = T))
+                                  load_stack(name = input$dir, path = data$dir, GUI = T))
+        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
         }
       output$model.preview <- renderPlot({
         if (input$model.type == 'Ensemble SDM') {
@@ -401,7 +420,7 @@ gui = function (browser = F, maxmem = 10e9) {
         }
       })
     })
-    output$directory <- renderUI(selectInput('dir','Choose model directory', list.dirs(data$dir, full.names = F, recursive = F)))
+    output$path <- renderUI(selectInput('dir','Choose model path', list.dirs(data$dir, full.names = F, recursive = F)))
 
     ### Modelling Menu ###
     output$modelling.menu <- renderUI({
@@ -438,13 +457,37 @@ gui = function (browser = F, maxmem = 10e9) {
     output$repUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){sliderInput('rep','Repetitions',1,50,10, step = 1)}})
     output$nameUI <- renderUI({textInput('name','Name')})
     output$uncertUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('uncert', 'Uncertainty mapping', value = T)}})
+    output$uncertinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Between-algorithm variance map')}})
     output$metricUI <- renderUI({selectInput('metric', 'Evaluation metric', c('Kappa','CCR','TSS','SES','LW','ROC'), selected = 'SES')})
+    output$metricinfoUI <- renderUI({
+      p(switch(input$metric,
+               'Kappa' = 'maximizes the Kappa',
+               'CCR' = 'maximizes the sum of sensitivity and specificity',
+               'TSS' = '(True Skill Statistic) maximizes the sum of sensitivity and specificity',
+               'SES' = 'uses the sensitivity-specificity equality',
+               'LW' = 'uses the lowest occurrence prediction probability',
+               'ROC' = 'minimizes the distance between the ROC plot (receiving operating curve) and the upper left corner (1,1).'))
+    })
     output$methodUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('method', 'Diversity mapping method', c('Probability','Random Bernoulli','Threshold'), selected = 'Probability')}})
+    output$methodinfoUI <- renderUI({
+      if(input$modellingchoice == 'Stack modelling'){
+      p(switch(input$method,
+               'Probability' = 'sum probabilities of habitat suitability maps',
+               'Random Bernoulli' = 'drawing repeatedly from a Bernoulli distribution',
+               'Threshold' = 'sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)'))
+      }
+    })
     output$repBslide <- renderUI({if(input$modellingchoice == 'Stack modelling'){if(!is.null(input$method)){if(input$method=='Random Bernoulli'){sliderInput('repB','Bernoulli repetitions',1,10000,1000, step = 1)}}}})
 
     ## Intermediate modelling parameters ##
     output$PAnbUI <- renderUI(if(!input$PA){sliderInput('PAnb','PA number',1,10000,1000, step = 100)})
     output$PAstratUI <- renderUI(if(!input$PA){selectInput('PAstrat', 'PA strategy', c('random','disk'), selected = 'random')})
+    output$cvalinfoUI <- renderUI({
+        p(switch(input$cval,
+                 'holdout' = 'data are partitioned into a training set and an evaluation set using a fraction and the operation can be repeated',
+                 'k-fold' = 'data are partitioned into k folds being k-1 times in the training set and once the evaluation set and the operation can be repeated',
+                 'LOO' = '(Leave One Out) each point is successively taken as evaluation data'))
+    })
     output$cvalparam1UI <- renderUI({
       if(input$cval == 'holdout'){
         title = 'Holdout fraction'
@@ -463,29 +506,24 @@ gui = function (browser = F, maxmem = 10e9) {
       if(input$cval != 'LOO'){sliderInput('cvalparam1', title, min, max, val, step)}
     })
     output$cvalparam2UI <- renderUI({if(input$cval != 'LOO'){sliderInput('cvalrep', 'Cross validation repetitions', 1,20,1, step = 1)}})
-    output$ensemblemetricUI <- renderUI({
-      if(input$modellingchoice == 'Algorithm modelling'){
-        title = 'Selection metric'
-      } else {
-        title = 'Ensemble selection metric'
-      }
-      selectInput('ensemblemetric', title, c('AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'AUC', multiple = T, selectize = T)
-      })
-    output$AUCUI <- renderUI({if('AUC' %in% input$ensemblemetric){sliderInput('AUC','AUC threshold',0.5,1,0.75, step = 0.05)}})
-    output$KappaUI <- renderUI({if('Kappa' %in% input$ensemblemetric){sliderInput('Kappa','Kappa threshold',0,1,0.5, step = 0.05)}})
-    output$sensitivityUI <- renderUI({if('sensitivity' %in% input$ensemblemetric){sliderInput('sensitivity','Sensitivity threshold',0.5,1,0.75, step = 0.05)}})
-    output$specificityUI <- renderUI({if('specificity' %in% input$ensemblemetric){sliderInput('specificity','Specificity threshold',0.5,1,0.75, step = 0.05)}})
-    output$propcorrectUI <- renderUI({if('prop.correct' %in% input$ensemblemetric){sliderInput('propcorrect','Correct proportion threshold',0.5,1,0.75, step = 0.05)}})
-    output$weightUI <- renderUI({
-      if(input$modellingchoice == 'Algorithm modelling'){
-        title = 'Modelling selection'
-        value = F
-      } else {
-        title = 'Ensemble weighted'
-        value = T
-      }
-      checkboxInput('weight', title, value = value)
-      })
+    output$axesmetricinfoUI <- renderUI({
+      p(paste('Metric used to evaluate the variable relative importance (difference between a full model and one with each variable successively omitted):',
+              switch(input$axesmetric,
+               'Pearson' = 'computes a simple Pearson\'s correlation r between predictions of the full model and the one without a variable, and returns the score 1-r: the highest the value, the more influence the variable has on the model',
+               'AUC' = 'Area under the receiving operating characteristic curve',
+               'Kappa' = 'Kappa',
+               'sensitivity' = 'sensitivity',
+               'specificity' = 'specificity',
+               'prop.correct' = 'proportion of correctly predicted occurrences')))
+    })
+    output$ensemblemetricUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){selectInput('ensemblemetric', 'Ensemble selection metric', c('AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'AUC', multiple = T, selectize = T)}})
+    output$ensembleinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Metric(s) and threshold(s) used to select the best SDMs that will be kept in the ensemble SDM, see metric for description.')}})
+    output$AUCUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('AUC' %in% input$ensemblemetric){sliderInput('AUC','AUC threshold',0.5,1,0.75, step = 0.05)}}})
+    output$KappaUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('Kappa' %in% input$ensemblemetric){sliderInput('Kappa','Kappa threshold',0,1,0.5, step = 0.05)}}})
+    output$sensitivityUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('sensitivity' %in% input$ensemblemetric){sliderInput('sensitivity','Sensitivity threshold',0.5,1,0.75, step = 0.05)}}})
+    output$specificityUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('specificity' %in% input$ensemblemetric){sliderInput('specificity','Specificity threshold',0.5,1,0.75, step = 0.05)}}})
+    output$propcorrectUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('prop.correct' %in% input$ensemblemetric){sliderInput('propcorrect','Correct proportion threshold',0.5,1,0.75, step = 0.05)}}})
+    output$weightUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('weight', 'Ensemble weighted', value = T)}})
 
     ## Advanced modelling parameters ##
     output$tmpUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('tmp', 'Temporary files', value = F)}})
@@ -505,6 +543,8 @@ gui = function (browser = F, maxmem = 10e9) {
       )
       data$ENM = NULL
       data$Stack = NULL
+      data$enms = list()
+      result$ENM = NULL
       output$modelprev = renderPlot({plot.new()})
       output$modelfailed = renderText({''})
       if (input$Pcol == 'None') {Pcol = NULL} else {Pcol = input$Pcol}
@@ -551,6 +591,7 @@ gui = function (browser = F, maxmem = 10e9) {
         } else {
           Occ = data$Occ
         }
+        if(length(algoparam) > 0) {
         data$ENM = withProgress(message = 'SDM',
                                 modelling(algo,
                                           Occ, data$Env,
@@ -559,24 +600,47 @@ gui = function (browser = F, maxmem = 10e9) {
                                           Pcol = Pcol,
                                           name = name,
                                           save = F,
-                                          directory = 'nowhere',
+                                          path = 'nowhere',
                                           PA = PA,
                                           cv = cval,
                                           cv.param = cv.param,
                                           thresh = as.numeric(input$thresh),
                                           axes.metric = input$axesmetric,
-                                          select.metric = ensemble.metric,
-                                          select.thresh = ensemble.thresh,
-                                          select = select,
+                                          select.metric = c('AUC'),
+                                          select.thresh = c(0),
+                                          select = F,
                                           metric = input$metric,
                                           verbose = F,
                                           GUI = T,
                                           algoparam))
+        } else {
+          data$ENM = withProgress(message = 'SDM',
+                                  modelling(algo,
+                                            Occ, data$Env,
+                                            Xcol = input$Xcol,
+                                            Ycol = input$Ycol,
+                                            Pcol = Pcol,
+                                            name = name,
+                                            save = F,
+                                            path = 'nowhere',
+                                            PA = PA,
+                                            cv = cval,
+                                            cv.param = cv.param,
+                                            thresh = as.numeric(input$thresh),
+                                            axes.metric = input$axesmetric,
+                                            select.metric = ensemble.metric,
+                                            select.thresh = ensemble.thresh,
+                                            select = select,
+                                            metric = input$metric,
+                                            verbose = F,
+                                            GUI = T))
+        }
         output$modelprev = renderPlot(spplot(data$ENM@projection,
                                              main = 'Habitat suitability map',
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
+        result$ENM = data$ENM
       }
       if(!inherits(input$uncert,'logical')) {uncert = T} else {uncert = input$uncert}
       if(input$modellingchoice == 'Ensemble modelling'){
@@ -585,6 +649,7 @@ gui = function (browser = F, maxmem = 10e9) {
         } else {
           Occ = data$Occ
         }
+        if(length(algoparam) > 0) {
         data$ENM = withProgress(message = 'Ensemble SDM',
                                   ensemble_modelling(algo,
                                                   Occ, data$Env,
@@ -594,7 +659,7 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   rep = as.numeric(input$rep),
                                                   name = name,
                                                   save = F,
-                                                  directory = 'nowhere',
+                                                  path = 'nowhere',
                                                   PA = PA,
                                                   cv = cval,
                                                   cv.param = cv.param,
@@ -609,17 +674,44 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   verbose = F,
                                                   GUI = T,
                                                   algoparam))
+        } else {
+          data$ENM = withProgress(message = 'Ensemble SDM',
+                                  ensemble_modelling(algo,
+                                                     Occ, data$Env,
+                                                     Xcol = input$Xcol,
+                                                     Ycol = input$Ycol,
+                                                     Pcol = Pcol,
+                                                     rep = as.numeric(input$rep),
+                                                     name = name,
+                                                     save = F,
+                                                     path = 'nowhere',
+                                                     PA = PA,
+                                                     cv = cval,
+                                                     cv.param = cv.param,
+                                                     thresh = as.numeric(input$thresh),
+                                                     axes.metric = input$axesmetric,
+                                                     uncertainty =  uncert,
+                                                     tmp =  tmp,
+                                                     ensemble.metric = ensemble.metric,
+                                                     ensemble.thresh = ensemble.thresh,
+                                                     weight = weight,
+                                                     metric = input$metric,
+                                                     verbose = F,
+                                                     GUI = T))
+        }
         if(!is.null(data$ENM)){
         output$modelprev = renderPlot(spplot(data$ENM@projection,
                                              main = 'Habitat suitability map',
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
+        result$ENM = data$ENM
         } else {
           output$modelfailed = renderText('No ensemble SDM were kept, maybe you should try with easier ensemble threshold(s) ?')
         }
       }
       if(input$modellingchoice == 'Stack modelling'){
+        if(length(algoparam) > 0) {
         data$Stack = withProgress(message = 'SSDM',
                                   stack_modelling(algo,
                                                   data$Occ, data$Env,
@@ -630,7 +722,7 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   rep = as.numeric(input$rep),
                                                   name = name,
                                                   save = F,
-                                                  directory = 'nowhere',
+                                                  path = 'nowhere',
                                                   PA = PA,
                                                   cv = cval,
                                                   cv.param = cv.param,
@@ -647,12 +739,41 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   verbose = F,
                                                   GUI = T,
                                                   algoparam))
+        } else {
+          data$Stack = withProgress(message = 'SSDM',
+                                    stack_modelling(algo,
+                                                    data$Occ, data$Env,
+                                                    Xcol = input$Xcol,
+                                                    Ycol = input$Ycol,
+                                                    Pcol = Pcol,
+                                                    Spcol = Spcol,
+                                                    rep = as.numeric(input$rep),
+                                                    name = name,
+                                                    save = F,
+                                                    path = 'nowhere',
+                                                    PA = PA,
+                                                    cv = cval,
+                                                    cv.param = cv.param,
+                                                    thresh = as.numeric(input$thresh),
+                                                    axes.metric = input$axesmetric,
+                                                    uncertainty =  uncert,
+                                                    tmp =  tmp,
+                                                    ensemble.metric = ensemble.metric,
+                                                    ensemble.thresh = ensemble.thresh,
+                                                    weight = weight,
+                                                    method = method,
+                                                    metric = input$metric,
+                                                    rep.B =  rep.B,
+                                                    verbose = F,
+                                                    GUI = T))
+        }
         if(!is.null(data$Stack)){
         output$modelprev = renderPlot(spplot(data$Stack@diversity.map,
                                              main = 'Local species richness',
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
+        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
         } else {
           output$modelfailed = renderText('You have less than two remaining ensemble SDMs, maybe you should try with easier ensemble threshold(s) ?')
         }
@@ -662,20 +783,16 @@ gui = function (browser = F, maxmem = 10e9) {
      ### Results Menu ###
     output$plotting.menu <- renderUI({
       if(!is.null(data$Stack) || !is.null(data$ENM)) {
-          if(!is.null(data$Stack)) {
-            enms = list()
-            for (i in 1:length(data$Stack@enms)) {enms[[i]] = strsplit(data$Stack@enms[[i]]@name, '.', fixed = T)[[1]][1]}
-          }
           if(inherits(data$ENM,'Algorithm.SDM')) {tabname = 'Algorithm SDM'} else {tabname = 'Ensemble SDM'}
           sidebarMenu(
             menuItem('Results',
                      if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
                      menuItem(tabname, tabName = "stackenm", icon = icon("pagelines")),
-                     if(!is.null(data$Stack)){selectInput('enmchoice', 'Ensemble model specie :', enms, selected = NULL, multiple = FALSE,selectize = TRUE, width = NULL, size = NULL)},
+                     if(!is.null(data$Stack)){selectInput('enmchoice', 'Ensemble model specie :', data$enms, selectize = TRUE)},
                      if(!inherits(data$ENM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
             )
           )
-      }
+    }
     })
 
     ## Stack results ##
@@ -752,12 +869,13 @@ gui = function (browser = F, maxmem = 10e9) {
     output$varimp.barplot <- renderPlot({
       varimp = as.data.frame(t(data$Stack@variable.importance))
       names(varimp) = 'Axes.evaluation'
-      bar = barplot(varimp$Axes.evaluation, names.arg = strwrap(row.names(varimp)),
+      bar = barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)),
                     ylim = c(0,(max(varimp$Axes.evaluation)+max((varimp[2])))),
                     las = 2, ylab = 'Variable relative contribution (%)')
       arrows(bar,varimp$Axes.evaluation+varimp[,2], bar, varimp$Axes.evaluation-varimp[,2], angle=90, code=3, length=0.1)
     })
     output$varimp.table <- renderTable({data$Stack@variable.importance})
+    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(data$Stack@variable.importance)), 'Variable' = names(data$Stack@variable.importance))})
     # Parameters
     output$summary <- renderTable({
       summary = data.frame(matrix(nrow = 7, ncol = 1))
@@ -824,15 +942,13 @@ gui = function (browser = F, maxmem = 10e9) {
     ## ENM Stack Result ##
     observeEvent(input$enmchoice, {
       if(!is.null(data$Stack)){
-        enms = list()
-        for (i in 1:length(data$Stack@enms)) {enms[[i]] = strsplit(data$Stack@enms[[i]]@name, '.', fixed = T)[[1]][1]}
-        data$ENM = data$Stack@enms[[which(enms == input$enmchoice)]]
+        if(length(data$enms) > 0){result$ENM = data$Stack@enms[[which(data$enms == input$enmchoice)]]}
       }
     })
     observeEvent(input$proba_dblclick, {
       brush <- input$proba_brush
       if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(data$ENM@projection, c(ranges$x, ranges$y))} else {ref = data$ENM@projection}
+        if(!is.null(ranges$x)){ref = crop(result$ENM@projection, c(ranges$x, ranges$y))} else {ref = result$ENM@projection}
         ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
         ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
       } else {
@@ -845,49 +961,51 @@ gui = function (browser = F, maxmem = 10e9) {
       ranges$y <- NULL
     })
     output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(data$ENM@projection, c(ranges$x, ranges$y))} else {proba = data$ENM@projection}
+      if (!is.null(ranges$x)) {proba = crop(result$ENM@projection, c(ranges$x, ranges$y))} else {proba = result$ENM@projection}
       spplot(proba,
-           main = paste('AUC :',round(data$ENM@evaluation$AUC,3),'  Kappa',round(data$ENM@evaluation$Kappa,3)),
+           main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)),
-           sp.layout=list(SpatialPoints(data.frame(X = data$ENM@data$X[which(data$ENM@data$Presence == 1)],
-                                                   Y = data$ENM@data$Y[which(data$ENM@data$Presence == 1)])),
+           sp.layout=list(SpatialPoints(data.frame(X = result$ENM@data$X[which(result$ENM@data$Presence == 1)],
+                                                   Y = result$ENM@data$Y[which(result$ENM@data$Presence == 1)])),
                           pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
-      niche.map = reclassify(data$ENM@projection, c(-Inf,data$ENM@evaluation$threshold,0, data$ENM@evaluation$threshold,Inf,1))
+      niche.map = reclassify(result$ENM@projection, c(-Inf,result$ENM@evaluation$threshold,0, result$ENM@evaluation$threshold,Inf,1))
       if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
       spplot(niche.map,
-             main = paste('AUC :',round(data$ENM@evaluation$AUC,3),'  Kappa',round(data$ENM@evaluation$Kappa,3)),
+             main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
              col.regions = rev(terrain.colors(10000)))
       })
     output$enm.uncertainty <- renderPlot({
-      if(!inherits(data$ENM,'Algorithm.SDM')) {
-        if (!is.null(ranges$x)) {uncert.map = crop(data$ENM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = data$ENM@uncertainty}
+      if(!inherits(result$ENM,'Algorithm.SDM')) {
+        if (!is.null(ranges$x)) {uncert.map = crop(result$ENM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = result$ENM@uncertainty}
         spplot(uncert.map,
-               main = paste('AUC :',round(data$ENM@evaluation$AUC,3),'  Kappa',round(data$ENM@evaluation$Kappa,3)),
+               main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
                col.regions = rev(terrain.colors(10000)))
       }
     })
     # Evaluation
     output$enm.evaluation.barplot <- renderPlot({
-      evaluation = data$ENM@algorithm.evaluation
-      for (i in 1:length(row.names(data$ENM@algorithm.evaluation))) {row.names(evaluation)[i] = strsplit(as.character(row.names(data$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      evaluation = result$ENM@algorithm.evaluation
+      for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(evaluation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in 1:length(row.names(evaluation))) {row.names(evaluation)[i] = tail(strsplit(as.character(row.names(evaluation)[i]), '.', fixed = T)[[1]], n = 1)}
       evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
       table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
       barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
       legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
     })
     output$enm.evaluation.table <- renderTable({
-      algo.eval = data$ENM@algorithm.evaluation
-      for (i in 1:length(row.names(data$ENM@algorithm.evaluation))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(data$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      algo.eval = result$ENM@algorithm.evaluation
+      for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(algo.eval)[i] = tail(strsplit(as.character(row.names(algo.eval)[i]), '.', fixed = T)[[1]], n = 1)}
       algo.eval[c(2,4:8)]
     })
     # Algorithms correlation
     output$enm.algo.corr.table <- renderTable({
-      correlation = data$ENM@algorithm.correlation
-      for (i in 1:length(row.names(data$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(data$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+      correlation = result$ENM@algorithm.correlation
+      for (i in 1:length(row.names(result$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
       names(correlation) = row.names(correlation)
       if (length(correlation) > 0) {
         correlation[upper.tri(correlation, diag = T)] = NA
@@ -895,8 +1013,8 @@ gui = function (browser = F, maxmem = 10e9) {
       }
     })
     output$enm.algo.corr.heatmap <- renderPlot({
-      correlation = data$ENM@algorithm.correlation
-      for (i in 1:length(row.names(data$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(data$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+      correlation = result$ENM@algorithm.correlation
+      for (i in 1:length(row.names(result$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
       names(correlation) = row.names(correlation)
       if (length(correlation) > 0) {
         correlation[upper.tri(correlation, diag = T)] = NA
@@ -909,7 +1027,7 @@ gui = function (browser = F, maxmem = 10e9) {
     })
     # Algo Eval Corr UI
     output$algoevalcorr <- renderUI({
-      if(!inherits(data$ENM,'Algorithm.SDM')) {
+      if(!inherits(result$ENM,'Algorithm.SDM')) {
         fluidRow(
           tabBox(title = 'Model evaluation',
                  tabPanel(plotOutput('enm.evaluation.barplot'),
@@ -927,41 +1045,42 @@ gui = function (browser = F, maxmem = 10e9) {
     })
     # Variable importance
     output$enm.varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(data$ENM@variable.importance))
+      varimp = as.data.frame(t(result$ENM@variable.importance))
       names(varimp) = 'Axes.evaluation'
-      barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2, ylab = 'Variable relative contribution (%)')
+      barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2, ylab = 'Variable relative contribution (%)')
     })
-    output$enm.varimp.table <- renderTable({data$ENM@variable.importance})
+    output$enm.varimp.table <- renderTable({result$ENM@variable.importance})
+    output$enmvarimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(result$ENM@variable.importance)), 'Variable' = names(result$ENM@variable.importance))})
     # Parameters
     output$enm.summary <- renderTable({
-      if(!inherits(data$ENM,'Algorithm.SDM')) {
+      if(!inherits(result$ENM,'Algorithm.SDM')) {
       summary = data.frame(matrix(nrow = 7, ncol = 1))
       names(summary) = 'Summary'
       row.names(summary) = c('Occurrences type', 'Occurrences number', 'Original algorithms', 'Number of repetitions',
                              'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
       algo.info = character()
-        for (i in 1:length(strsplit(data$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
-          algo.info = paste(algo.info, strsplit(data$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+        for (i in 1:length(strsplit(result$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
+          algo.info = paste(algo.info, strsplit(result$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
         }
-      if (data$ENM@parameters$PA) {PA = 'default'}
-      if (data$ENM@parameters$data == "presence-only data set") {
-        nb.occ =  length(as.factor(data$ENM@data$Presence[which(data$ENM@data$Presence==1)])) / sum(data$ENM@algorithm.evaluation$kept.model)
+      if (result$ENM@parameters$PA) {PA = 'default'}
+      if (result$ENM@parameters$data == "presence-only data set") {
+        nb.occ =  length(as.factor(result$ENM@data$Presence[which(result$ENM@data$Presence==1)])) / sum(result$ENM@algorithm.evaluation$kept.model)
       } else {
-        nb.occ =  length(as.factor(data$ENM@data$Presence)) / sum(data$ENM@algorithm.evaluation$kept.model)
+        nb.occ =  length(as.factor(result$ENM@data$Presence)) / sum(result$ENM@algorithm.evaluation$kept.model)
       }
-      if(data$ENM@parameters$cv == 'LOO') {cv.param = 'None'}
-      if(data$ENM@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                                  strsplit(data$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
+      if(result$ENM@parameters$cv == 'LOO') {cv.param = 'None'}
+      if(result$ENM@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
                                                                   'rep =',
-                                                                  strsplit(data$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
-      if(data$ENM@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                                 strsplit(data$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      if(result$ENM@parameters$cv == 'k-fold') {cv.param = paste('k =',
+                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
                                                                  'rep =',
-                                                                 strsplit(data$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
-      summary$Summary = c(data$ENM@parameters$data, nb.occ, algo.info, data$ENM@parameters$rep, PA, data$ENM@parameters$cv, cv.param)
-      if(!is.null(data$ENM@parameters$sp.nb.origin)) {
+                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
+      summary$Summary = c(result$ENM@parameters$data, nb.occ, algo.info, result$ENM@parameters$rep, PA, result$ENM@parameters$cv, cv.param)
+      if(!is.null(result$ENM@parameters$sp.nb.origin)) {
         summary = rbind(summary,
-                        data.frame(Summary = data$ENM@parameters$sp.nb.origin, row.names = 'Original number of species'))
+                        data.frame(Summary = result$ENM@parameters$sp.nb.origin, row.names = 'Original number of species'))
       }
       summary
       }
@@ -970,7 +1089,7 @@ gui = function (browser = F, maxmem = 10e9) {
       }
     })
     output$enm.binary.info <- renderText({
-      metric = switch(data$ENM@parameters$metric,
+      metric = switch(result$ENM@parameters$metric,
                                           'Kappa' = 'maximizing Kappa',
                                           'CCR' = 'maximizing correct proportion (CCR)',
                                           'TSS' = 'maximizing sensitivity and specificity sum (TSS)',
@@ -978,34 +1097,34 @@ gui = function (browser = F, maxmem = 10e9) {
                                           'LW' = 'taking the minimum occurence prediction',
                                           'ROC' = 'calculating the minimum ROC plot distance')
       text = paste('Binary map realized by', metric,
-                   'with a final threshold of',  round(data$ENM@evaluation$threshold, digits = 3))
+                   'with a final threshold of',  round(result$ENM@evaluation$threshold, digits = 3))
       text
     })
     output$enm.varimp.info <- renderText({
       varimp.info = 'Axes evaluated with the variation of '
-      for (i in 1:length(data$ENM@parameters$axes.metric)) {
+      for (i in 1:length(result$ENM@parameters$axes.metric)) {
         if (i == 1) {
-          varimp.info = paste(varimp.info, data$ENM@parameters$axes.metric[i])
-        } else if (i == length(data$ENM@parameters$axes.metric) && i != 1) {
-          varimp.info = paste(varimp.info, 'and', data$ENM@parameters$axes.metric[i], '.')
+          varimp.info = paste(varimp.info, result$ENM@parameters$axes.metric[i])
+        } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', result$ENM@parameters$axes.metric[i], '.')
         } else {
-          varimp.info = paste(varimp.info, ',', data$ENM@parameters$axes.metric[i])
+          varimp.info = paste(varimp.info, ',', result$ENM@parameters$axes.metric[i])
         }
       }
       varimp.info
     })
     output$enm.evaluation.info <- renderText({
       evaluation.info = 'Models evaluated with'
-      for (i in 1:length(strsplit(data$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+      for (i in 1:length(strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
         if (i == 1) {
-          evaluation.info = paste(evaluation.info, strsplit(data$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
-        } else if (i == length(data$ENM@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste(evaluation.info, 'and', strsplit(data$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+          evaluation.info = paste(evaluation.info, strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste(evaluation.info, 'and', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
         } else {
-          evaluation.info = paste(evaluation.info, ',', strsplit(data$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+          evaluation.info = paste(evaluation.info, ',', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
         }
       }
-      if (data$ENM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      if (result$ENM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
       evaluation.info
     })
 
@@ -1017,10 +1136,10 @@ gui = function (browser = F, maxmem = 10e9) {
     observeEvent(input$saveback, {data$dir = paste0(strsplit(data$dir, '/')[[1]][-length(strsplit(data$dir, '/')[[1]])], collapse = '/')})
     observeEvent(input$savehome, {data$dir = getwd()})
     observeEvent(input$savemodel, {
-      if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = input$savename, directory = data$dir, verbose = F, GUI = T)}
-        if(!is.null(data$Stack)) {save.stack(data$Stack, name = input$savename, directory = data$dir, verbose = F, GUI = T)}
+      if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = input$savename, path = data$dir, verbose = F, GUI = T)}
+        if(!is.null(data$Stack)) {save.stack(data$Stack, name = input$savename, path = data$dir, verbose = F, GUI = T)}
     })
-    output$savedirectory <- renderUI(selectInput('savedir','Choose directory', list.dirs(data$dir, full.names = F, recursive = F)))
+    output$savepath <- renderUI(selectInput('savedir','Choose path', list.dirs(data$dir, full.names = F, recursive = F)))
   }
 
   #### Launching server ####

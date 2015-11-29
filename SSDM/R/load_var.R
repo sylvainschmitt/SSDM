@@ -2,23 +2,22 @@
 #' @importFrom raster raster stack res extent crop reclassify as.factor
 NULL
 
-#'Load environmental data
+#'Load environmental variables
 #'
-#'Function to load environmental data from rasters to perform
+#'Function to load environmental variables in the form of rasters to perform
 #'\code{\link{modelling}}, \code{\link{ensemble_modelling}} or
 #'\code{\link{stack_modelling}}.
 #'
-#'@param directory character. Directory that contains the environmental data
+#'@param path character. Path to the directory that contains the environmental variables
 #'  files.
-#'@param files character. Files containing the environmental data. If NULL
-#'  (default) all files present in the directory with the selected format will
+#'@param files character. Files containing the environmental variables If NULL
+#'  (default) all files present in the path in the selected format will
 #'  be loaded.
-#'@param format character. Format of environmental data files
+#'@param format character. Format of environmental variables files
 #'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
-#'@param factors character. Environmental data which should be considered as
-#'  factor variable.
-#'@param Norm logical. If set to true, normalizes environmental data between 0 and 1.
-#'@param tmp logical. If set to true rasters are
+#'@param factors character. Specify whether an environmental variable is a categorical variable.
+#'@param Norm logical. If set to true, normalizes environmental variables between 0 and 1.
+#'@param tmp logical. If set to true, rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
 #'  beware: if you close R, temporary files will be destroyed.
 #'@param verbose logical. If set to true, allows the function to print text in the
@@ -31,23 +30,23 @@ NULL
 #'
 #' @examples
 #'\dontrun{
-#' load.var(directory)
+#' load.var(path)
 #'}
 #'
 #'@seealso \code{\link{load_occ}} to load occurrences.
 #'
 #'@export
-load_var <- function (directory = getwd(), files = NULL,
+load_var <- function (path = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
 
   # Check arguments
-  .checkargs(directory = directory, files = files, format = format, factors = factors,
+  .checkargs(path = path, files = files, format = format, factors = factors,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
 
   # pdir = getwd()
   if(verbose) {cat('Variables loading \n')}
-  # setwd(directory)
+  # setwd(path)
   Env = stack()
 
   # Rasters loading
@@ -55,11 +54,11 @@ load_var <- function (directory = getwd(), files = NULL,
   if (is.null(files)) {files.null = T} else {files.null = F}
   for (j in 1:length(format)) {
     if(files.null) {
-      files = list.files(path = directory, pattern = paste0('.',format[j],'$'))
+      files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
-        Raster = raster(paste0(directory,'/',files[[i]]))
+        Raster = raster(paste0(path,'/',files[[i]]))
         # Extent and resolution check
         reso = res(Raster)
         extent = extent(Raster)
@@ -85,11 +84,11 @@ load_var <- function (directory = getwd(), files = NULL,
   if(verbose) {cat('   resolution and extent adaptation...')}
   for (j in 1:length(format)) {
     if(files.null) {
-      files = list.files(path = directory, pattern = paste0('.',format[j],'$'))
+      files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
-        Raster = raster(paste0(directory, '/', files[[i]]))
+        Raster = raster(paste0(path, '/', files[[i]]))
         Raster = reclassify(Raster, c(-Inf,-900,NA))
         Raster = crop(Raster, extentstack)
         names(Raster) = as.character(strsplit(files[i],format[j]))

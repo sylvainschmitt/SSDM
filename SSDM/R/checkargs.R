@@ -5,7 +5,7 @@
                       name = NULL,
                       Spname = NULL,
                       save = F,
-                      directory = getwd(),
+                      path = getwd(),
                       PA = NULL,
                       rep = 1,
                       cv = 'holdout',
@@ -94,7 +94,7 @@
   if(!inherits(uncertainty,'logical')){stop('uncertainty parameter should be a logical (True or False).')}
   if(!inherits(tmp,'logical')){stop('tmp parameter should be a logical (True or False).')}
   if(!inherits(save,'logical')){stop('save parameter should be a logical (True or False).')}
-  if(!inherits(directory, 'character')  && !is.null(directory)){stop('directory parameter should be a character.')}
+  if(!inherits(path, 'character')  && !is.null(path)){stop('path parameter should be a character.')}
 
   # Ensemble
   if(!inherits(weight,'logical')){stop('weight parameter should be a logical (True or False).')}

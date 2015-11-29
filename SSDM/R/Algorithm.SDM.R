@@ -56,7 +56,7 @@ setMethod('print', 'SDM', function(x, ...) {
 #'An S4 class to represent an SDM based on a single algorithm
 #'
 #'This is an S4 class to represent an SDM based on a single algorithm (including
-#'generalized linear model, general additive model, multivariate adaptative
+#'generalized linear model, general additive model, multivariate adpative
 #'splines, generalized boosted regression model, classification tree analysis,
 #'random forest, maximum entropy, artificial neural network, and support vector
 #'machines). This S4 class is obtained with \code{\link{modelling}}.
@@ -421,132 +421,9 @@ setMethod('get_PA', "CTA.SDM",
 setMethod('get_model', "CTA.SDM",
           function(obj, final.leave = 1, cv = 3, ...) {
             data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
-            model = rpart(Presence ~ ., data = data, method = 'class',
+            model = rpart(Presence ~ ., data = data,
                           control = rpart.control(minbucket = final.leave, xval = cv))
             return(model)})
-
-setMethod("evaluate", "CTA.SDM", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', ...) {
-  # Need to redefine method because CTA predict method doesn't return the same thing as other algorithms predict method !
-  metric = switch(metric,
-                  'Kappa' = 'maxKappa',
-                  'CCR' = 'max.prop.correct',
-                  'TSS' = 'max.sensitivity+specificity',
-                  'SES' = 'sensitivity=specificity',
-                  'LW' = 'min.occurence.prediction',
-                  'ROC' = 'min.ROC.plot.distance')
-  if(cv == 'holdout') {
-    for (i in 1:cv.param[2]) {
-      data = obj@data
-      data$train = F
-      for (p in 0:1) {
-        datap = data[which(data$Presence == p),]
-        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
-        data[which(data$Presence == p),] = datap
-      }
-      evaldata = data[-which(data$train),]
-      evaldata = evaldata[-which(names(data) == 'train')]
-      traindata = data[which(data$train),]
-      traindata = traindata[-which(names(data) == 'train')]
-      trainobj = obj
-      trainobj@data = traindata
-      model = get_model(trainobj, ...)
-      predicted.values = predict(model, evaldata)[,1]
-      threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
-      threshold = mean(threshold[[which(names(threshold) == metric)]])
-      roweval = accuracy(evaldata$Presence, predicted.values, threshold)
-      if(i==1) {
-        evaluation = roweval
-      } else {
-        evaluation = rbind(evaluation, roweval)
-      }
-    }
-  } else {
-    if(cv == 'LOO') {
-      k = length(obj@data$Presence)
-      rep = cv.param[1]
-    }
-    if(cv == 'k-fold') {
-      k = cv.param[1]
-      rep = cv.param[2]
-    }
-    for (i in 1:length(rep)) {
-      data = obj@data
-      data$fold = 0
-      for (p in 0:1) {
-        datap = data[which(data$Presence == p),]
-        indices = c(1:length(datap$fold))
-        fold = 1
-        while(length(indices) > 0){
-          j = sample(indices, 1)
-          datap$fold[j] = fold
-          indices = indices[-which(indices == j)]
-          if(fold != k) {fold = fold + 1} else {fold = 1}
-        }
-        data[which(data$Presence == p),] = datap
-      }
-      for(j in 1:k) {
-        evaldata = data[which(data$fold == j),]
-        evaldata = evaldata[-which(names(data) == 'fold')]
-        traindata = data[which(data$fold != j),]
-        traindata = traindata[-which(names(data) == 'fold')]
-        trainobj = obj
-        trainobj@data = traindata
-        model = get_model(trainobj, ...)
-        predicted.values = predict(model, evaldata)[,1]
-        threshold = optim.thresh(evaldata$Presence, predicted.values, thresh)
-        threshold = mean(threshold[[which(names(threshold) == metric)]])
-        roweval = accuracy(evaldata$Presence, predicted.values, threshold)
-        if(i==1 && j==1) {
-          evaluation = roweval
-        } else {
-          evaluation = rbind(evaluation, roweval)
-        }
-      }
-    }
-  }
-  obj@evaluation = evaluation[1,]
-  for(i in 1:length(evaluation)){
-    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
-  }
-  return(obj)})
-
-setMethod('evaluate.axes', "CTA.SDM", function(obj, cv, cv.param, thresh = 1001,
-                                                             metric = 'SES', axes.metric = 'Pearson', ...) {
-  # Need to redefine method because CTA predict method doesn't return the same thing as other algorithms predict method !
-  obj@parameters$axes.metric = axes.metric
-  obj@variable.importance = data.frame(matrix(nrow = 1, ncol = (length(obj@data)-3)))
-  names(obj@variable.importance) = names(obj@data)[4:length(obj@data)]
-  if (axes.metric == 'Pearson') {
-    o.predicted.values = predict(get_model(obj, ...), obj@data)[1,] # original model predicted values
-  }
-
-  for (i in 4:length(obj@data)) {
-    # Get model predictions without one axis reeated for all axis
-    obj.axes = obj
-    obj.axes@data = obj.axes@data[-i]
-    if (axes.metric != 'Pearson') {
-      obj.axes = evaluate(obj.axes, cv, cv.param, thresh, metric)
-      obj@variable.importance[1,(i-3)] = obj@evaluation[1,which(names(obj@evaluation) == axes.metric)]  - obj.axes@evaluation[1,which(names(obj.axes@evaluation) == axes.metric)]
-    } else {
-      predicted.values = predict(get_model(obj.axes, ...), obj.axes@data)[1,]
-      obj@variable.importance[(i-3)] = cor(predicted.values, o.predicted.values)
-    }
-  }
-
-  # Variable importance normalization (%)
-  if(sum(obj@variable.importance) == 0) {
-    all.null = T
-    for (i in 1:length(obj@variable.importance[1,])) {if(obj@variable.importance[1,i] != 0) {all.null = F}}
-    if (all.null) {
-      obj@variable.importance[1,] = 100 / length(obj@variable.importance)
-    } else {
-      obj@variable.importance = obj@variable.importance * 100
-    }
-  } else {
-    obj@variable.importance = obj@variable.importance / sum(obj@variable.importance) * 100
-  }
-  row.names(obj@variable.importance) = "Axes.evaluation"
-  return(obj)})
 
 ##### GBM Niche Model Class ##### -----
 

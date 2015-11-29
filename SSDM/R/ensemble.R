@@ -19,7 +19,7 @@ NULL
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
 #'  used to compute the selection.
-#'@param weight logical. Choose whether or not you want the SDMs will be weighted
+#'@param weight logical. Choose whether or not you want the SDMs to be weighted
 #'  using the selection metric or, alternatively, the mean of the selection
 #'  metrics.
 #'@param thresh numeric. A single integer value representing the number of equal
@@ -44,9 +44,20 @@ NULL
 #'  \code{\link{plot.model}} function.
 #'
 #' @examples
-#'\dontrun{
-#' ensemble(GLM1, GLM2, GAM1, GAM2)
-#'}
+#' # Loading data
+#' data(Env)
+#' data(Occurrences)
+#' Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#'
+#' # ensemble SDM building
+#' CTA = modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' SVM = modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
+#'
+#' # Results plotting
+#' \dontrun{
+#' plot(ESDM)
+#' }
 #'
 #'@seealso \code{\link{ensemble_modelling}} to build an ensemble SDM from
 #'  multiple algorithms.

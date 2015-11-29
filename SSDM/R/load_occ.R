@@ -8,12 +8,12 @@ NULL
 #'Function to load occurrence data from a table to perform \code{\link{modelling}},
 #'\code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 #'
-#'@param directory character. Directory that contains the occurrence table.
-#'@param Env raster stack. Environmental variables in form of a raster stack used to
+#'@param path character. Path to the directory that contains the occurrence table.
+#'@param Env raster stack. Environmental variables in the form of a raster stack used to
 #'  perform spatial thinning (can be the result of the
 #'  \code{\link{load_var}} function).
 #'@param file character. File containing the occurrence table, if NULL
-#'  (default) the .csv file located in the directory will be loaded.
+#'  (default) the .csv file located in the path will be loaded.
 #'@param ... additional parameters given to \code{\link[utils]{read.csv}}.
 #'@param Xcol character. Name of the column  in the occurrence table  containing
 #'  Latitude or X coordinates.
@@ -34,26 +34,26 @@ NULL
 #'
 #' @examples
 #'\dontrun{
-#' load.occ(directory)
+#' load.occ(path)
 #'}
 #'
 #'@seealso \code{\link{load_var}} to load environmental variables.
 #'
 #'@export
-load_occ = function(directory = getwd(), Env, file = NULL, ...,
+load_occ = function(path = getwd(), Env, file = NULL, ...,
                      Xcol = 'Longitude', Ycol = 'Latitude', Spcol = NULL,
                      GeoRes = T, reso = max(res(Env@layers[[1]])), verbose = T, GUI = F) {
   # Check arguments
-  .checkargs(directory = directory, file = file, Xcol = Xcol, Ycol = Ycol, Spcol = Spcol,
+  .checkargs(path = path, file = file, Xcol = Xcol, Ycol = Ycol, Spcol = Spcol,
              GeoRes = GeoRes, reso = reso, verbose = verbose, GUI = GUI)
 
   #pdir = getwd()
   if (verbose) {cat('Occurrences loading \n')}
-  #setwd(directory)
+  #setwd(path)
   if (is.null(file)) {
-    file = as.character(list.files(path = directory, pattern = '.csv')[[1]])
+    file = as.character(list.files(path = path, pattern = '.csv')[[1]])
   }
-  file = paste0(directory,'/',file)
+  file = paste0(path,'/',file)
   Occurrences = read.csv2(file = file, ...)  # Occ = occurrences
 
   # Checking columns format

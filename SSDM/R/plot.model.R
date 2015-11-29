@@ -1,24 +1,27 @@
 #' @include Algorithm.SDM.R Ensemble.SDM.R Stacked.SDM.R
-#' @import shiny shinydashboard raster
+#' @import shiny
+#' @import shinydashboard raster
 #' @importFrom gplots heatmap.2
 #' @importFrom sp spplot SpatialPoints
 #' @importFrom raster stack crop extent aggregate reclassify
 NULL
 
-#' Plot all SDMs, ensemble SDMs, and SSDMs
+#'Plot SDMs, ensemble SDMs, and SSDMs
 #'
-#' Allows to plot S4 \linkS4class{Algorithm.SDM},
-#' \linkS4class{Ensemble.SDM} and
-#' \linkS4class{Stacked.SDM} classes objects.
+#'Allows to plot S4 \linkS4class{Algorithm.SDM}, \linkS4class{Ensemble.SDM} and
+#'\linkS4class{Stacked.SDM} class objects.
 #'
-#' @param x Object to be plot (S4 Algorithm.SDM, Ensemble.SDM or
-#'   Stacked.SDM object).
-#' @param y,... Don't used plot base parameters.
+#'@param x Object to be plotted (S4 Algorithm.SDM, Ensemble.SDM or Stacked.SDM
+#'  object).
+#'@param y,... Plot-based parameter not used.
 #'
-#' @return Open a window with a shiny app rendering all the results in an easy
-#'   way to see all results in one glance.
+#'@return Open a window with a shiny app rendering all the results (habitat
+#'  suitability map, binary map, evaluation table, variable importance and/or
+#'  between-algorithm variance map, and/or algorithm evaluation,  and/or
+#'  algorithm correlation matrix and/or local species richness map) in a
+#'  user-friendly interface.
 #'
-#' @name plot.model
+#'@name plot.model
 #'
 NULL
 
@@ -56,7 +59,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                          tabPanel(plotOutput('varimp.barplot'),
                                   textOutput('varimp.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('varimp.table'), title = 'Table')
+                         tabPanel(tableOutput('varimp.table'), title = 'Table'),
+                         tabPanel(tableOutput('varimplegend'), title = 'Legend')
                   )
                 ),
                 fluidRow(
@@ -92,7 +96,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                          tabPanel(plotOutput('enm.varimp.barplot'),
                                   textOutput('enm.varimp.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table')
+                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table'),
+                         tabPanel(tableOutput('enmvarimplegend'), title = 'Legend')
                   )
                 ),
                 fluidRow(
@@ -187,12 +192,13 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     output$varimp.barplot <- renderPlot({
       varimp = as.data.frame(t(x@variable.importance))
       names(varimp) = 'Axes.evaluation'
-      bar = barplot(varimp$Axes.evaluation, names.arg = strwrap(row.names(varimp)),
+      bar = barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)),
                     ylim = c(0,(max(varimp$Axes.evaluation)+max((varimp[2])))),
                     las = 2, ylab = 'Variable relative contribution (%)')
       arrows(bar,varimp$Axes.evaluation+varimp[,2], bar, varimp$Axes.evaluation-varimp[,2], angle=90, code=3, length=0.1)
     })
     output$varimp.table <- renderTable({x@variable.importance})
+    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@variable.importance)), 'Variable' = names(x@variable.importance))})
     # Parameters
     output$summary <- renderTable({
       summary = data.frame(matrix(nrow = 7, ncol = 1))
@@ -305,7 +311,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       })
     # Evaluation
     output$enm.evaluation.barplot <- renderPlot({
-      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = T)[[1]][2]}
+      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.SDM', fixed = T)[[1]][1]}
+      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = T)[[1]], n = 1)}
       evaluation = x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation
       evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
       table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
@@ -313,7 +320,8 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
     })
     output$enm.evaluation.table <- renderTable({
-      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.Niche')[[1]][1]}
+      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in 1:length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = T)[[1]], n = 1)}
       x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation[c(2,4:8)]
     })
     # Algorithms correlation
@@ -337,9 +345,10 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     output$enm.varimp.barplot <- renderPlot({
       varimp = as.data.frame(t(x@enms[[which(choices == input$enmchoice)]]@variable.importance))
       names(varimp) = 'Axes.evaluation'
-      barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2, ylab = 'Variable relative contribution (%)')
+      barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2, ylab = 'Variable relative contribution (%)')
     })
     output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variable.importance})
+    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@enms[[which(choices == input$enmchoice)]]@variable.importance)), 'Variable' = names(x@enms[[which(choices == input$enmchoice)]]@variable.importance))})
     # Parameters
     output$enm.summary <- renderTable({
       summary = data.frame(matrix(nrow = 8, ncol = 1))
@@ -438,7 +447,8 @@ setMethod('plot', 'SDM', function(x, y, ...) {
                tabPanel(plotOutput('varimp.barplot'),
                         textOutput('varimp.info'),
                         title = 'Barplot'),
-               tabPanel(tableOutput('varimp.table'), title = 'Table')
+               tabPanel(tableOutput('varimp.table'), title = 'Table'),
+               tabPanel(tableOutput('varimplegend'), title = 'Legend')
         )
       ),
       if(full) {
@@ -463,9 +473,11 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     set.seed(122)
 
     if(full) {
-      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.', fixed = T)[[1]][2]}
+      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.SDM', fixed = T)[[1]][1]}
+      for (i in 1:length(row.names(x@algorithm.evaluation))) {row.names(x@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.', fixed = T), n = 1)}
       if (length(x@algorithm.correlation) > 0) {
-        for (i in 1:length(row.names(x@algorithm.correlation))) {row.names(x@algorithm.correlation)[i] = strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.', fixed = T)[[1]][2]}
+        for (i in 1:length(row.names(x@algorithm.correlation))) {row.names(x@algorithm.correlation)[i] = strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.SDM', fixed = T)[[1]][1]}
+        for (i in 1:length(row.names(x@algorithm.correlation))) {row.names(x@algorithm.correlation)[i] = tail(strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.', fixed = T), n = 1)}
         x@algorithm.correlation[upper.tri(x@algorithm.correlation, diag = T)] = NA
         names(x@algorithm.correlation) = row.names(x@algorithm.correlation)
       }
@@ -489,7 +501,6 @@ setMethod('plot', 'SDM', function(x, y, ...) {
       ranges$x <- NULL
       ranges$y <- NULL
     })
-
     output$probability <- renderPlot({
       if (!is.null(ranges$x)) {proba.map = crop(x@projection, c(ranges$x, ranges$y))} else {proba.map = x@projection}
       spplot(proba.map,
@@ -521,7 +532,11 @@ setMethod('plot', 'SDM', function(x, y, ...) {
         })
       output$evaluation.barplot <- renderPlot({
         evaluation = x@algorithm.evaluation
-        evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
+        if(!is.null(x@parameters$rep)) {
+          evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
+        } else {
+          evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
+        }
         metrics = '% kept.model'
         metrics.nb = c(which(names(evaluation) == 'kept.model'))
         for (i in 1:length(strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
@@ -549,9 +564,10 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     output$varimp.barplot <- renderPlot({
       varimp = as.data.frame(t(x@variable.importance))
       names(varimp) = 'Axes.evaluation'
-      barplot(varimp$Axes.evaluation, names.arg = row.names(varimp), las = 2)
+      barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2)
     })
     output$varimp.table <- renderTable({x@variable.importance})
+    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@variable.importance)), 'Variable' = names(x@variable.importance))})
     # Parameters
     output$summary <- renderTable({
       summary = data.frame(matrix(nrow = 4, ncol = 1))

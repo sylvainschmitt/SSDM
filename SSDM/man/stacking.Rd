@@ -4,7 +4,7 @@
 \name{stacking}
 \alias{stacking}
 \alias{stacking,Ensemble.SDM-method}
-\title{Stack different ensemble SDMs in one SSDM}
+\title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", metric = "SES",
   thresh = 1001, rep.B = 1000, verbose = T, GUI = F)
@@ -15,8 +15,8 @@ stacking(enm, ..., name = NULL, method = "P", metric = "SES",
 \arguments{
 \item{enm,...}{character. Ensemble SDMs to be stacked.}
 
-\item{name}{character. Optinnal name given to the final SSDM built (by default
-'Species.SDM').}
+\item{name}{character. Optional name given to the final SSDM produced (by
+default 'Species.SDM').}
 
 \item{method}{character. Define the method used to create the local species
 richness map (see details below).}
@@ -29,8 +29,8 @@ interval threshold values between 0 and 1 (see
 \code{\link[SDMTools]{optim.thresh}}).}
 
 \item{rep.B}{integer. If the method used to create the local species richness
-is random bernoulli (\strong{B}), rep.B parameter defines the number of
-repetition used to create random bernoulli binary maps for each species.}
+is the random bernoulli (\strong{B}), rep.B parameter defines the number of
+repetitions used to create binary maps for each species.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
 the console.}
@@ -43,37 +43,52 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
  \code{\link{plot.model}} function.
 }
 \description{
-This is a function to stack several ensemble SDMs in one SSDM. The function
-takes in inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
+This is a function to stack several ensemble SDMs in an SSDM. The function
+takes as inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
 with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
 function returns an S4 \linkS4class{Stacked.SDM} class object containing the
-local species richness map, and the uncertainty map based on the habitat
-suitability map variance inter algorithm, all evaluation tables coming with
-(model evaluation, algorithm evaluation, algorithm correlation matrix and
-variable importance), and all associated ensemble SDMs for each species (see
-\code{\link{ensemble_modelling}}).
+local species richness map, the between-algorithm variance map, and all
+evaluation tables coming with (model evaluation, algorithm evaluation,
+algorithm correlation matrix and variable importance), and a list of ensemble
+SDMs for each species (see \code{\link{ensemble_modelling}}).
 }
 \details{
-\strong{Metric:} choice of the metric used to compute binary map
- threshold and confusion matrix (by default SES as recommended by Liu et al.
- 2005,see references below): \describe{ \item{"Kappa"}{maximizes the model
- Kappa value} \item{"TSS"}{\strong{True Skill Statistic} maximizes the
- sensitivity and specificity sum} \item{"CCR"}{maximizes the correct
- predicted observations proportion} \item{"SES"}{using the sensitivity
- specificity equality} \item{"LW"}{using the lowest occurrence prediction
- probability} \item{"ROC"}{minimizing the distance between the ROC plot
- (receiving operating characteristic curve) and the upper left corner (1,1)} }
+\strong{Metric:} choice of the metric used to compute the binary map
+ threshold and the confusion matrix (by default SES as recommended by Liu et
+ al. (2005) see reference below): \describe{ \item{"Kappa"}{maximizes the
+ Kappa} \item{"TSS"}{\strong{True Skill Statistic} maximizes the sum of
+ sensitivity and specificity} \item{"CCR"}{maximizes the proportion of
+ correctly predicted observations} \item{"SES"}{uses the
+ sensitivity-specificity equality} \item{"LW"}{uses the lowest occurrence
+ prediction probability} \item{"ROC"}{minimizes the distance between the ROC
+ plot (receiving operating curve) and the upper left corner (1,1)} }
 
  \strong{Methods:} Choice of the method used to compute the local species
- richness map (see Calabrez et al. 2014 for more informations, see references
- below): \describe{\item{P}{(Probablity) sum probabilities of the habitat
- suitability maps }\item{B}{(Random bernoulli) drawing repeatedly from a
+ richness map (see Calabrez et al. (2014) for more informations, see
+ reference below): \describe{\item{P}{(Probablity) sum probabilities of
+ habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
  the thresholding (depending on the metric, see metric parameter).}}
 }
 \examples{
+# Loading data
+data(Env)
+data(Occurrences)
+Occ1 = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+Occ2 = subset(Occurrences, Occurrences$SPECIES == 'gracilis')
+
+# SSDM building
+ESDM1 = ensemble_modelling(c('CTA', 'SVM'), Occ1, Env, rep = 1,
+                           Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+                           name = 'elliptica', ensemble.thresh = c(0.6))
+ESDM2 = ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
+                           Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+                           name = 'gracilis', ensemble.thresh = c(0.6))
+SSDM = stacking(ESDM1, ESDM2)
+
+# Results plotting
 \dontrun{
-stacking(Specie1.enm, Specie2.enm)
+plot(SSDM)
 }
 }
 \references{
@@ -93,12 +108,16 @@ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
 
 
 
+
+
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
 }
 \seealso{
-\code{\link{stack_modelling}} to build SSDMS.
+\code{\link{stack_modelling}} to build SSDMs.
 }
 

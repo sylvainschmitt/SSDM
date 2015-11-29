@@ -7,22 +7,22 @@
 gui(browser = F, maxmem = 1e+10)
 }
 \arguments{
-\item{browser}{logical. Option to plot the user global interface in
-your internet browser.}
+\item{browser}{logical. Option to plot the user global interface in your
+internet browser.}
 
 \item{maxmem}{numeric. Option to choose the maximum memory allocated to the
   user interface.}
 }
 \value{
-Open a window with a shiny app to use the SSDM package
-  with an user-friendly interface.
+Open a window with a shiny app to use the SSDM package with an
+  user-friendly interface.
 }
 \description{
 User interface of the SSDM package.
 }
 \details{
-Due to the relatively important size of environmental data you
-  should gave enough memory to the interface (\code{maxmem} parameter).
+If your environmental variables have an important size, you should
+  gave enough memory to the interface with the (\code{maxmem} parameter).
 }
 \examples{
 \dontrun{

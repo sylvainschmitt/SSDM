@@ -2,29 +2,28 @@
 % Please edit documentation in R/load_var.R
 \name{load_var}
 \alias{load_var}
-\title{Load environmental data}
+\title{Load environmental variables}
 \usage{
-load_var(directory = getwd(), files = NULL, format = c(".grd", ".tif",
-  ".asc", ".sdat", ".rst", ".nc", ".tif", ".envi", ".bil", ".img"),
-  factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F)
+load_var(path = getwd(), files = NULL, format = c(".grd", ".tif", ".asc",
+  ".sdat", ".rst", ".nc", ".tif", ".envi", ".bil", ".img"), factors = NULL,
+  Norm = T, tmp = T, verbose = T, GUI = F)
 }
 \arguments{
-\item{directory}{character. Directory that contains the environmental data
+\item{path}{character. Path to the directory that contains the environmental variables
 files.}
 
-\item{files}{character. Files containing the environmental data. If NULL
-(default) all files present in the directory with the selected format will
+\item{files}{character. Files containing the environmental variables If NULL
+(default) all files present in the path in the selected format will
 be loaded.}
 
-\item{format}{character. Format of environmental data files
+\item{format}{character. Format of environmental variables files
 (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).}
 
-\item{factors}{character. Environmental data which should be considered as
-factor variable.}
+\item{factors}{character. Specify whether an environmental variable is a categorical variable.}
 
-\item{Norm}{logical. If set to true, normalizes environmental data between 0 and 1.}
+\item{Norm}{logical. If set to true, normalizes environmental variables between 0 and 1.}
 
-\item{tmp}{logical. If set to true rasters are
+\item{tmp}{logical. If set to true, rasters are
 read in temporary file avoiding to overload the random access memory. But
 beware: if you close R, temporary files will be destroyed.}
 
@@ -39,13 +38,13 @@ A stack containing the environmental rasters (normalized or
  not).
 }
 \description{
-Function to load environmental data from rasters to perform
+Function to load environmental variables in the form of rasters to perform
 \code{\link{modelling}}, \code{\link{ensemble_modelling}} or
 \code{\link{stack_modelling}}.
 }
 \examples{
 \dontrun{
-load.var(directory)
+load.var(path)
 }
 }
 \seealso{

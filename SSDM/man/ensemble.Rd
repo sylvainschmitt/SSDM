@@ -31,7 +31,7 @@ will be included in the ensemble SDM (see details below).}
 \item{ensemble.thresh}{numeric. Threshold(s) associated with the metric(s)
 used to compute the selection.}
 
-\item{weight}{logical. Choose whether or not you want the SDMs will be weighted
+\item{weight}{logical. Choose whether or not you want the SDMs to be weighted
 using the selection metric or, alternatively, the mean of the selection
 metrics.}
 
@@ -71,8 +71,19 @@ ensemble.metric (metric(s) used to select the best SDMs that will be
  from the confusion matrix} }
 }
 \examples{
+# Loading data
+data(Env)
+data(Occurrences)
+Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+
+# ensemble SDM building
+CTA = modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+SVM = modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
+
+# Results plotting
 \dontrun{
-ensemble(GLM1, GLM2, GAM1, GAM2)
+plot(ESDM)
 }
 }
 \seealso{

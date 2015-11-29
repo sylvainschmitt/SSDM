@@ -5,25 +5,27 @@
 \alias{plot,SDM,ANY-method}
 \alias{plot,Stacked.SDM,ANY-method}
 \alias{plot.model}
-\title{Plot all SDMs, ensemble SDMs, and SSDMs}
+\title{Plot SDMs, ensemble SDMs, and SSDMs}
 \usage{
 \S4method{plot}{Stacked.SDM,ANY}(x, y, ...)
 
 \S4method{plot}{SDM,ANY}(x, y, ...)
 }
 \arguments{
-\item{x}{Object to be plot (S4 Algorithm.SDM, Ensemble.SDM or
-Stacked.SDM object).}
+\item{x}{Object to be plotted (S4 Algorithm.SDM, Ensemble.SDM or Stacked.SDM
+object).}
 
-\item{y,...}{Don't used plot base parameters.}
+\item{y,...}{Plot-based parameter not used.}
 }
 \value{
-Open a window with a shiny app rendering all the results in an easy
-  way to see all results in one glance.
+Open a window with a shiny app rendering all the results (habitat
+ suitability map, binary map, evaluation table, variable importance and/or
+ between-algorithm variance map, and/or algorithm evaluation,  and/or
+ algorithm correlation matrix and/or local species richness map) in a
+ user-friendly interface.
 }
 \description{
-Allows to plot S4 \linkS4class{Algorithm.SDM},
-\linkS4class{Ensemble.SDM} and
-\linkS4class{Stacked.SDM} classes objects.
+Allows to plot S4 \linkS4class{Algorithm.SDM}, \linkS4class{Ensemble.SDM} and
+\linkS4class{Stacked.SDM} class objects.
 }
 

@@ -7,7 +7,7 @@
 \usage{
 \S4method{update}{Stacked.SDM}(object, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spname = NULL, name = stack@name,
-  save = F, directory = getwd(), thresh = 1001, tmp = F, verbose = T,
+  save = F, path = getwd(), thresh = 1001, tmp = F, verbose = T,
   GUI = F, ...)
 }
 \arguments{
@@ -36,7 +36,7 @@ default it's the name of the previous SSDM.}
 
 \item{save}{logical. If set to true, the model is automatically saved.}
 
-\item{directory}{character. Name of the directory to contain the saved SSDM.}
+\item{path}{character. Name of the path to the directory to contain the saved SSDM.}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
 interval threshold values between 0 and 1 (see
@@ -62,7 +62,7 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
 }
 \description{
 Update a previous SSDM with new occurrence data. The function takes as inputs
-updated or new occurrence data from one species, previous environmental data,
+updated or new occurrence data from one species, previous environmental variables,
 and an S4 \linkS4class{Stacked.SDM} class object containing a previously built
 SSDM.
 }

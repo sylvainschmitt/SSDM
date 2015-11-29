@@ -4,7 +4,7 @@ NULL
 #'Update a previous SSDM
 #'
 #'Update a previous SSDM with new occurrence data. The function takes as inputs
-#'updated or new occurrence data from one species, previous environmental data,
+#'updated or new occurrence data from one species, previous environmental variables,
 #'and an S4 \linkS4class{Stacked.SDM} class object containing a previously built
 #'SSDM.
 #'
@@ -24,7 +24,7 @@ NULL
 #'@param name character. Optional name given to the final SSDM produced, by
 #'  default it's the name of the previous SSDM.
 #'@param save logical. If set to true, the model is automatically saved.
-#'@param directory character. Name of the directory to contain the saved SSDM.
+#'@param path character. Name of the path to the directory to contain the saved SSDM.
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
@@ -57,14 +57,14 @@ setMethod(update, 'Stacked.SDM',
                    # Occurrences reading
                    Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL, Spname = NULL,
                    # Model creation
-                   name = stack@name, save = F, directory = getwd(), thresh = 1001, tmp = F,
+                   name = stack@name, save = F, path = getwd(), thresh = 1001, tmp = F,
                    # Verbose
                    verbose = T, GUI = F,
                    # Modelling parameters
                    ...) {
             # Check arguments
             .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spname = Spname, name = name, save = save,
-                         directory = directory, thresh = thresh, tmp = tmp, verbose = verbose, GUI = GUI)
+                         path = path, thresh = thresh, tmp = tmp, verbose = verbose, GUI = GUI)
 
             stack = object
             # New ENM creation
@@ -79,7 +79,7 @@ setMethod(update, 'Stacked.SDM',
             ENM = ensemble_modelling(strsplit(stack@parameters$algorithms, '.', fixed = T)[[1]][-1],
                                      Occurrences, Env, Xcol, Ycol, Pcol,
                                      rep = as.numeric(stack@parameters$rep), enm.name,
-                                     save = F, directory = getwd(), PA, cv = stack@parameters$cv,
+                                     save = F, path = getwd(), PA, cv = stack@parameters$cv,
                                      cv.param = as.numeric(strsplit(stack@parameters$cv.param, '|', fixed = T)[[1]][-1]),
                                      thresh = thresh, metric = stack@parameters$metric,
                                      axes.metric = stack@parameters$axes.metric,
@@ -122,8 +122,8 @@ setMethod(update, 'Stacked.SDM',
               # Saving
               if(save) {
                 if(verbose){cat('Saving...\n')}
-                if (!is.null(name)) {save.stack(newstack, name = name, directory = directory)}
-                else {save.stack(newstack, directory = directory)}
+                if (!is.null(name)) {save.stack(newstack, name = name, path = path)}
+                else {save.stack(newstack, path = path)}
                 if(verbose) {cat('   done.\n')}
               }
             }

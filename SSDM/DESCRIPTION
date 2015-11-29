@@ -1,37 +1,37 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.1
+Version: 0.1.0
 Date: 2015-11-02
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
 Description: SSDM is a package to build multi-species distribution models.
-    You can create SDMs using a single or multiple algorithms (ensemble SDMs).
-    For each species, an SDM can yield a habitat suitability map, a binary map, an
-    uncertainty map, and can assess variable importance, algorithm accuracy, and
-    between-algorithm correlation. Methods to stack individual SDMs include summing
-    individual probabilities and thresholding then summing. Thresholding can be
-    based on a specific evaluation metric or by drawing repeatedly from a Bernouilli
-    distribution. The SSDM package also provides a user-friendly interface.
+    Individuals SDMs can be created using a single or multiple algorithms (ensemble
+    SDMs). For each species, an SDM can yield a habitat suitability map, a binary
+    map, a between-algorithm variance map, and can assess variable importance,
+    algorithm accuracy, and between-algorithm correlation. Methods to stack
+    individual SDMs include summing individual probabilities and thresholding then
+    summing. Thresholding can be based on a specific evaluation metric or by drawing
+    repeatedly from a Bernouilli distribution. The SSDM package also provides a
+    user-friendly interface.
 License: GPL
 LazyData: TRUE
 Imports:
-    sp,
-    raster,
-    methods,
-    SDMTools,
-    mgcv,
-    earth,
-    rpart,
-    gbm,
-    randomForest,
-    dismo,
-    nnet,
-    e1071,
-    shiny,
-    shinydashboard,
-    shinyBS,
-    gplots,
+    sp (>= 1.2.0),
+    raster (>= 2.4.20),
+    methods (>= 3.2.2),
+    SDMTools (>= 1.1.221),
+    mgcv (>= 1.8.7),
+    earth (>= 4.4.3),
+    rpart (>= 4.1.10),
+    gbm (>= 2.1.1),
+    randomForest (>= 4.6.10),
+    dismo (>= 1.0.12),
+    nnet (>= 7.3.10),
+    e1071 (>= 1.6.7),
+    shiny (>= 0.12.2),
+    shinydashboard (>= 0.5.1),
+    gplots (>= 0.1.0),
     spThin
 Depends:
     R (>= 3.2.2)
