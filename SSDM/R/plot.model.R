@@ -52,6 +52,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                                    plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
                                    textOutput('diversity.info'),
                                    title = 'Local specie richness'),
+                         tabPanel(plotOutput('endemism'), title = 'Endemism map', textOutput('endemism.info')),
                          tabPanel(plotOutput('uncertainty'), title = 'Uncertainty'),
                          tabPanel(tableOutput('summary'), title = 'Summary')
                   ),
@@ -154,6 +155,14 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)))
     })
+    output$endemism <- renderPlot({
+      if (!is.null(ranges$x)) {endemism = crop(x@endemism.map, c(ranges$x, ranges$y))} else {endemism = x@endemism.map}
+      spplot(endemism,
+             main = eval,
+             xlab = 'Longitude (\u02DA)',
+             ylab = 'Latitude (\u02DA)',
+             col.regions = rev(terrain.colors(10000)))
+    })
     output$uncertainty <- renderPlot({
       if (!is.null(ranges$x)) {uncert = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert = x@uncertainty}
       spplot(uncert,
@@ -233,6 +242,13 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                                    'B' = paste('drawing repeatdly bernoulli repetitions with',x@parameters$rep.B))
       text = paste('Local species richness map realized by', x@parameters$method)
       text
+    })
+    output$endemism.info <- renderText({
+      x@parameters$endemism = switch(x@parameters$endemism,
+                                   'Any' = 'Endemism map not built (unactivated)',
+                                   'WEI' = 'Endemism map built with the Weighted Endemism Index (WEI)',
+                                   'B' = 'Endemism map built with the Corrected Weighted Endemism Index (CWEI)')
+      x@parameters$endemism
     })
     output$varimp.info <- renderText({
       varimp.info = 'Axes evaluated with the variation of '

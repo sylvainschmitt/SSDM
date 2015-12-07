@@ -10,7 +10,8 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   cv.param = c(0.7, 1), thresh = 1001, axes.metric = "Pearson",
   uncertainty = T, tmp = F, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = T, method = "P", metric = "SES",
-  rep.B = 1000, verbose = T, GUI = F, ...)
+  rep.B = 1000, range = NULL, endemism = "WEI", verbose = T, GUI = F,
+  ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -29,8 +30,8 @@ Latitude or X coordinates.}
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence. If NULL presence-only dataset is
-assumed.}
+whether a line is a presence or an absence, by setting presence to 1 and
+absence to 0. If NULL presence-only dataset is assumed.}
 
 \item{Spcol}{character. Name of the column containing species names or IDs.}
 
@@ -40,8 +41,8 @@ assumed.}
 
 \item{save}{logical. If set to true, the SSDM is automatically saved.}
 
-\item{path}{character. If save is true, the path to the directory in
-which the ensemble SDM will be saved.}
+\item{path}{character. If save is true, the path to the directory in which the
+ensemble SDM will be saved.}
 
 \item{PA}{list(nb, strat) defining the pseudo-absence selection strategy used
 in case of presence-only dataset. If PA is NULL, recommended PA selection
@@ -87,6 +88,14 @@ details below.)}
 \item{rep.B}{integer. If the method used to create the local species richness
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
+
+\item{range}{integer. Set a value of range restriction around presence
+occurrences on SDM habitat suitability map (All points furtherer will have a
+null porbability, see Crisp et al (2011) in references). If NULL, no range
+restriction will be applied on the SDM.}
+
+\item{endemism}{character. Define the method used to create the endemism map
+(see details below).}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
 the console.}
@@ -159,7 +168,14 @@ variable importance), and a list of ensemble SDMs for each species (see
  suitability maps, \strong{B} (Random Bernoulli) drawing repeatedly from a
  Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
  with the thresholding (depending on the metric, see metric parameter).}
- \item{...}{See algorithm in detail section} }
+ \item{endemism}{Choice of the method used to compute the endemism map (see
+ Crisp et al. (2001) for more informations, see reference below):
+ \strong{Any} No endemism map is built, \strong{WEI} (Weighted Endemism
+ Index) Endemism map built by counting all species in each cell and weighting
+ each by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
+ Index) Endemism map built by dividing the weighted endemism index by the
+ total count of species in the cell.} \item{...}{See algorithm in detail
+ section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -200,7 +216,7 @@ variable importance), and a list of ensemble SDMs for each species (see
  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
  minimum number of observations in the trees terminal nodes. Note that this
  is the actual number of observations not the total weight. By default, set
- to 1.} \item{cv}{integer. Number of cross-validations, default 3.}
+ to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
  cross-validation. By default, set to 1e-03.} }
@@ -211,8 +227,8 @@ variable importance), and a list of ensemble SDMs for each species (see
  function from the package 'rpart', you can set the following parameters (see
  \code{\link[rpart]{rpart}} for more details): \describe{
  \item{final.leave}{integer. The minimum number of observations in any
- terminal node, default 1.} \item{cv}{integer. Number of cross-validations,
- default 3.} }
+ terminal node, default 1.} \item{algocv}{integer. Number of
+ cross-validations, default 3.} }
 }
 
 \section{Random Forest (\strong{RF}) }{
@@ -246,7 +262,7 @@ variable importance), and a list of ensemble SDMs for each species (see
  from the package 'e1071', you can set the following parameters (see
  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
  Epsilon parameter in the insensitive loss function, default 1e-08.}
- \item{cv}{integer. If an integer value k>0 is specified, a k-fold
+ \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
  cross-validation on the training data is performed to assess the quality of
  the model: the accuracy rate for classification and the Mean Squared Error
  for regression. By default, set to 3.} }
@@ -289,6 +305,9 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
+
+
  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
  thresholds of occurrence in the prediction of species distributions."
  \emph{Ecography} 28:85-393
@@ -306,10 +325,23 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
+
+
+
+
+
+
+ M. D. Crisp, S. Laffan, H. P. Linder and A. Monro (2001) "Endemism in the
+ Australian flora"  \emph{Journal of biogeography} 28:183-198
+ \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 }
 \seealso{
 \code{\link{modelling}} to build simple SDMs.

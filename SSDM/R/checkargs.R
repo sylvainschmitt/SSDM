@@ -33,7 +33,9 @@
                       factors = NULL,
                       Norm = T,
                       enm = Ensemble.SDM(),
-                      stack = Stacked.SDM()){
+                      stack = Stacked.SDM(),
+                      range = NULL,
+                      endemism = 'WEI'){
   ## Argument checking function ##
   # Occurrences, Environment, and part of X, Y, Pcol are directly defined in functions
 
@@ -126,4 +128,12 @@
   # save
   if(!inherits(enm,'Ensemble.SDM')){stop('enm parameter should be an Ensemble.SDM.')}
   if(!inherits(stack,'Stacked.SDM')){stop('stack parameter should be a Stacked.SDM.')}
+
+  # Range and Endemism parameters
+  if(!is.null(endemism)){if(!inherits(endemism,'character') || !(endemism %in% c('Any','WEI','CWEI'))){stop('endemism parameter should be Any, WEI, or CWEI (see help).')}}
+  if(!is.null(range)){
+    if(!inherits(range,'numeric') && range < 0){
+      stop('range parameter should be numeric and > 0 (see help).')
+    }
+  }
 }

@@ -4,9 +4,9 @@ NULL
 #'Update a previous SSDM
 #'
 #'Update a previous SSDM with new occurrence data. The function takes as inputs
-#'updated or new occurrence data from one species, previous environmental variables,
-#'and an S4 \linkS4class{Stacked.SDM} class object containing a previously built
-#'SSDM.
+#'updated or new occurrence data from one species, previous environmental
+#'variables, and an S4 \linkS4class{Stacked.SDM} class object containing a
+#'previously built SSDM.
 #'
 #'@param object Stacked.SDM. The previously built SSDM.
 #'@param Occurrences data frame. New or updated occurrence table (can be
@@ -18,13 +18,14 @@ NULL
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence. If NULL presence-only dataset is
-#'  assumed.
+#'  whether a line is a presence or an absence, by setting presence to 1 and
+#'  absence to 0. If NULL presence-only dataset is assumed.
 #'@param Spname character. Name of the new or updated species.
 #'@param name character. Optional name given to the final SSDM produced, by
 #'  default it's the name of the previous SSDM.
 #'@param save logical. If set to true, the model is automatically saved.
-#'@param path character. Name of the path to the directory to contain the saved SSDM.
+#'@param path character. Name of the path to the directory to contain the saved
+#'  SSDM.
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).

@@ -1,5 +1,6 @@
 #' @include Ensemble.SDM.R checkargs.R
-#' @importFrom raster raster stack reclassify
+#' @importFrom sp Polygon Polygons SpatialPolygons bbox
+#' @importFrom raster raster stack reclassify mask
 NULL
 
 #'Stack different ensemble SDMs in an SSDM
@@ -26,6 +27,12 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
+#'@param range integer. Set a value of range restriction (in pixels) around
+#'  presences occurrences on habitat suitability maps (all further points
+#'  will have a null probability, see Crisp et al (2011) in references). If
+#'  NULL, no range restriction will be applied.
+#'@param endemism character. Define the method used to create an endemism map
+#'  (see details below).
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -50,6 +57,14 @@ NULL
 #'  habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
 #'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
 #'  the thresholding (depending on the metric, see metric parameter).}}
+#'
+#'  \strong{Endemism:} Choice of the method used to compute the endemism map
+#'  (see Crisp et al. (2001) for more information, see reference below):
+#'  \describe{\item{NULL}{No endemism map}\item{WEI}{(Weighted Endemism
+#'  Index) Endemism map built by counting all species in each cell and weighting
+#'  each by the inverse of its number of occurrences} \item{CWEI}{(Corrected Weighted Endemism
+#'  Index) Endemism map built by dividing the weighted endemism index by the
+#'  total count of species in the cell}}
 #'
 #' @examples
 #' # Loading data
@@ -94,6 +109,14 @@ NULL
 #'
 #'
 #'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
 #'  species distribution  models  and  adjusting  bias  by linking them to
 #'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
@@ -104,32 +127,77 @@ NULL
 #'
 #'
 #'
+#'
+#'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
+#'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
+#'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', metric = 'SES', thresh = 1001, rep.B = 1000, verbose = T, GUI = F) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', metric = 'SES', thresh = 1001, rep.B = 1000, range = NULL, endemism = 'WEI', verbose = T, GUI = F) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P',
-                                                       metric = 'SES', thresh = 1001, rep.B = 1000,
-                                                       verbose = T, GUI = F) {
+                                               metric = 'SES', thresh = 1001, rep.B = 1000,
+                                               range = NULL, endemism = 'WEI',
+                                               verbose = T, GUI = F) {
+
   # Check arguments
   .checkargs(enm = enm, name = name, method = method, metric = metric, thresh = thresh,
-             rep.B = rep.B, verbose = verbose, GUI = GUI)
+             rep.B = rep.B, range = range, endemism= endemism, verbose = verbose, GUI = GUI)
 
   enms = list(enm, ...)
-  if (length(enms) < 2) {stop('You neeed more than one enm to do stackings')}
+  if (length(enms) < 2) {stop('You neeed more than one ensemble SDM to do stackings')}
   names = c()
   for (i in 1:length(enms)) {if(enms[[i]]@name %in% names) {stop('Ensemble models can\'t have the same name, you need to rename one of ',enms[[i]]@name)} else {names = c(names, enms[[i]]@name)}}
   cat('Stack creation... \n')
   stack = Stacked.SDM(diversity.map = reclassify(enm@projection[[1]], c(-Inf,Inf,0)),
-                                             uncertainty = reclassify(enm@uncertainty, c(-Inf,Inf,NA)),
-                                             parameters = enm@parameters)
+                      endemism.map = reclassify(enm@projection[[1]], c(-Inf,Inf,0)),
+                      uncertainty = reclassify(enm@uncertainty, c(-Inf,Inf,NA)),
+                      parameters = enm@parameters)
 
   # Name
   cat('   naming...')
   if (is.null(name)) {name = 'Species'}
   stack@name = paste0(name,'.SSDM')
+  cat(' done. \n')
+
+  # Range restriction
+  cat('   range restriction...')
+  if(!is.null(range)) {
+    for(j in 1:length(enms)) {
+      nbocc = length(as.factor(enms[[j]]@data$Presence[enms[[j]]@data$Presence==1])) / sum(enms[[j]]@algorithm.evaluation$kept.model)
+      occ = enms[[j]]@data[1:nbocc,]
+      occ = occ[which(occ$Presence == 1),1:2]
+      circles = list()
+      for (i in 1:length(occ[,1])) {
+        x = occ$X[i]
+        y = occ$Y[i]
+        pts = seq(0, 2 * pi, length.out = 100)
+        # xy = cbind(x + range/60 * sin(pts), y + range/60 * cos(pts))
+        res = res(stack@endemism.map)[1]
+        xy = cbind(x + range * res * sin(pts), y + range * res * cos(pts))
+        circle = Polygon(xy)
+        circles[i] = circle
+      }
+      sc= SpatialPolygons(list(Polygons(circles, 'Circles')))
+      enms[[j]]@projection = mask(enms[[j]]@projection, sc, updatevalue = 0)
+#       thresh = enms[[j]]@evaluation$threshold
+#       enms[[j]]@projection = reclassify(enms[[j]]@projection, c(-Inf,thresh,0, thresh,Inf,1))
+    }
+  }
   cat(' done. \n')
 
   # Diversity map
@@ -182,6 +250,26 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     names(stack@uncertainty) = 'uncertainty'
   }
 
+  cat(' done. \n')
+
+  # endemism map
+  cat('   endemism mapping...')
+  if(is.null(endemism)) {
+    'unactivated'
+  } else {
+      for (i in 1:length(enms)) {
+        nbocc = length(as.factor(enms[[i]]@data$Presence[enms[[i]]@data$Presence==1])) / sum(enms[[i]]@algorithm.evaluation$kept.model)
+        if(endemism == 'WEI') {
+          stack@endemism.map = stack@endemism.map + enms[[i]]@projection / nbocc
+        } else if (endemism == 'CWEI') {
+          stack@endemism.map = stack@endemism.map + overlay(enms[[i]]@projection, stack@diversity.map, fun =
+                                                              function(x,y){
+                                                                y = round(y)
+                                                                x[which(y > 0)] =  x[which(y > 0)] / nbocc / y[which(y > 0)]
+                                                                return(x)})
+      }
+      }
+  }
   cat(' done. \n')
 
   # Evaluation
@@ -263,5 +351,7 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   # Parameters
   stack@parameters$method = method
   if (method == 'B') {stack@parameters$rep.B = rep.B}
+  stack@parameters$range = range
+  stack@parameters$endemism = endemism
 
   return(stack)})

@@ -26,8 +26,8 @@ Latitude or X coordinates.}
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence. If NULL presence-only dataset is
-assumed.}
+whether a line is a presence or an absence, by setting presence to 1 and
+absence to 0. If NULL presence-only dataset is assumed.}
 
 \item{Spname}{character. Name of the new or updated species.}
 
@@ -36,7 +36,8 @@ default it's the name of the previous SSDM.}
 
 \item{save}{logical. If set to true, the model is automatically saved.}
 
-\item{path}{character. Name of the path to the directory to contain the saved SSDM.}
+\item{path}{character. Name of the path to the directory to contain the saved
+SSDM.}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
 interval threshold values between 0 and 1 (see
@@ -62,9 +63,9 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
 }
 \description{
 Update a previous SSDM with new occurrence data. The function takes as inputs
-updated or new occurrence data from one species, previous environmental variables,
-and an S4 \linkS4class{Stacked.SDM} class object containing a previously built
-SSDM.
+updated or new occurrence data from one species, previous environmental
+variables, and an S4 \linkS4class{Stacked.SDM} class object containing a
+previously built SSDM.
 }
 \examples{
 \dontrun{

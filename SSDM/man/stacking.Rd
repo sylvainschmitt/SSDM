@@ -7,10 +7,12 @@
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", metric = "SES",
-  thresh = 1001, rep.B = 1000, verbose = T, GUI = F)
+  thresh = 1001, rep.B = 1000, range = NULL, endemism = "WEI",
+  verbose = T, GUI = F)
 
 \S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "P",
-  metric = "SES", thresh = 1001, rep.B = 1000, verbose = T, GUI = F)
+  metric = "SES", thresh = 1001, rep.B = 1000, range = NULL,
+  endemism = "WEI", verbose = T, GUI = F)
 }
 \arguments{
 \item{enm,...}{character. Ensemble SDMs to be stacked.}
@@ -31,6 +33,14 @@ interval threshold values between 0 and 1 (see
 \item{rep.B}{integer. If the method used to create the local species richness
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
+
+\item{range}{integer. Set a value of range restriction around presence
+occurrences on SDM habitat suitability map (All points furtherer will have a
+null porbability, see Crisp et al (2011) in references). If NULL, no range
+restriction will be applied on the SDM.}
+
+\item{endemism}{character. Define the method used to create the endemism map
+(see details below).}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
 the console.}
@@ -69,6 +79,14 @@ SDMs for each species (see \code{\link{ensemble_modelling}}).
  habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
  the thresholding (depending on the metric, see metric parameter).}}
+
+ \strong{Endemism:} Choice of the method used to compute the endemism map
+ (see Crisp et al. (2001) for more informations, see reference below):
+ \describe{\item{Any}{No endemism map is built}\item{WEI}{(Weighted Endemism
+ Index) Endemism map built by counting all species in each cell and weighting
+ each by the inverse of its range} \item{CWEI}{(Corrected Weighted Endemism
+ Index) Endemism map built by dividing the weighted endemism index by the
+ total count of species in the cell}}
 }
 \examples{
 # Loading data
@@ -112,10 +130,26 @@ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
 
 
 
+
+
+
+
+
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
+
+
+
+
+
+ M. D. Crisp, S. Laffan, H. P. Linder and A. Monro (2001) "Endemism in the
+ Australian flora"  \emph{Journal of biogeography} 28:183-198
+ \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 }
 \seealso{
 \code{\link{stack_modelling}} to build SSDMs.

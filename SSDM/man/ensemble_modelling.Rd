@@ -28,8 +28,8 @@ Latitude or X coordinates.}
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence. If NULL presence-only dataset is
-assumed.}
+whether a line is a presence or an absence, by setting presence to 1 and
+absence to 0. If NULL presence-only dataset is assumed.}
 
 \item{rep}{integer. Number of repetitions for each algorithm.}
 
@@ -38,8 +38,8 @@ assumed.}
 
 \item{save}{logical. If set to true, the ensemble SDM is automatically saved.}
 
-\item{path}{character. If save is true, the path to the directory in
-which the ensemble SDM will be saved.}
+\item{path}{character. If save is true, the path to the directory in which the
+ensemble SDM will be saved.}
 
 \item{PA}{list(nb, strat) defining the pseudo-absence selection strategy used
 in case of presence-only dataset. If PA is NULL, recommended PA selection
@@ -184,7 +184,7 @@ correlation matrix and variable importance).
  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
  minimum number of observations in the trees terminal nodes. Note that this
  is the actual number of observations not the total weight. By default, set
- to 1.} \item{cv}{integer. Number of cross-validations, default 3.}
+ to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
  cross-validation. By default, set to 1e-03.} }
@@ -195,8 +195,8 @@ correlation matrix and variable importance).
  function from the package 'rpart', you can set the following parameters (see
  \code{\link[rpart]{rpart}} for more details): \describe{
  \item{final.leave}{integer. The minimum number of observations in any
- terminal node, default 1.} \item{cv}{integer. Number of cross-validations,
- default 3.} }
+ terminal node, default 1.} \item{algocv}{integer. Number of
+ cross-validations, default 3.} }
 }
 
 \section{Random Forest (\strong{RF}) }{
@@ -230,7 +230,7 @@ correlation matrix and variable importance).
  from the package 'e1071', you can set the following parameters (see
  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
  Epsilon parameter in the insensitive loss function, default 1e-08.}
- \item{cv}{integer. If an integer value k>0 is specified, a k-fold
+ \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
  cross-validation on the training data is performed to assess the quality of
  the model: the accuracy rate for classification and the Mean Squared Error
  for regression. By default, set to 3.} }
@@ -261,6 +261,7 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
  "Selecting pseudo-absences for species distribution models: how, where and
  how many?" \emph{Methods Ecology and Evolution} 3:327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
+
 
 
 

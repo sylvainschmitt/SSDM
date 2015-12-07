@@ -53,7 +53,7 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
   if (is.null(file)) {
     file = as.character(list.files(path = path, pattern = '.csv')[[1]])
   }
-  file = paste0(path,'/',file)
+  if(!is.null(path)){file = paste0(path,'/',file)}
   Occurrences = read.csv2(file = file, ...)  # Occ = occurrences
 
   # Checking columns format

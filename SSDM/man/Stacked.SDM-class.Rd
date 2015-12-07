@@ -19,6 +19,9 @@ support vector machines) built for multiple species. It is obtained with
 
 \item{\code{diversity.map}}{raster. Local species richness map produced by the SSDM.}
 
+\item{\code{endemism.map}}{raster. Endemism map produced by the SSDM (see Crisp et al
+(2011) in references).}
+
 \item{\code{uncertainty}}{raster. Between-algorithm variance map.}
 
 \item{\code{evaluation}}{data frame. Evaluation of the SSDM (AUC, Kappa, omission
@@ -38,6 +41,12 @@ the SSDM.}
  the metrics of all SDMs (AUC, Kappa, omission rate, sensitivity,
  specificity, proportion of correctly predicted occurrences).}
 }}
+\references{
+M. D. Crisp, S. Laffan, H. P. Linder and A. Monro (2001)
+ "Endemism in the Australian flora"  \emph{Journal of biogeography}
+ 28:183-198
+ \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+}
 \seealso{
 \linkS4class{Ensemble.SDM} an S4 class to represent ensemble SDMs,
  and \linkS4class{Algorithm.SDM} an S4 class to represent SDMs.

@@ -22,8 +22,8 @@ NULL
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence. If NULL presence-only dataset is
-#'  assumed.
+#'  whether a line is a presence or an absence, by setting presence to 1 and
+#'  absence to 0. If NULL presence-only dataset is assumed.
 #'@param name character. Optional name given to the final SDM produced (by
 #'  default 'Algorithm.SDM').
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
@@ -34,12 +34,12 @@ NULL
 #'@param cv.param numeric. Parameters associated to the method of
 #'  cross-validation used to evaluate the SDM (see details below).
 #'@param select logical. If set to true, models are evaluated before being
-#'  projected, and not kept if they don't meet selection
-#'  criteria (see details below).
+#'  projected, and not kept if they don't meet selection criteria (see details
+#'  below).
 #'@param select.metric character. Metric(s) used to pre-select SDMs that reach a
 #'  sufficient quality (see details below).
-#'@param select.thresh numeric. Threshold(s) associated with the metric(s) used to
-#'  compute the selection.
+#'@param select.thresh numeric. Threshold(s) associated with the metric(s) used
+#'  to compute the selection.
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
@@ -74,11 +74,11 @@ NULL
 #'  dataset used for evaluation: \strong{holdout} data are partitioned into a
 #'  training set and an evaluation set using a fraction (\emph{cv.param[1]}) and
 #'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-folds}
-#'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in the
-#'  training set and once the evaluation set and the operation can be repeated
-#'  (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point is
-#'  successively taken as evaluation data.} \item{metric}{Choice of the metric
-#'  used to compute the binary map threshold and the confusion matrix (by
+#'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in
+#'  the training set and once the evaluation set and the operation can be
+#'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
+#'  is successively taken as evaluation data.} \item{metric}{Choice of the
+#'  metric used to compute the binary map threshold and the confusion matrix (by
 #'  default SES as recommended by Liu et al. (2005), see reference below):
 #'  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
 #'  correctly predicted observations, \strong{TSS} (True Skill Statistic)
@@ -87,16 +87,16 @@ NULL
 #'  prediction probability, \strong{ROC} minimizes the distance between the ROC
 #'  plot (receiving operating curve) and the upper left corner
 #'  (1,1).}\item{axes.metric}{Choice of the metric used to evaluate the variable
-#'  relative importance (difference between a full model and one with
-#'  each variable successively omitted): \strong{Pearson} (computes a simple
-#'  Pearson's correlation \emph{r} between predictions of the full model and the one
-#'  without a variable, and returns the score \emph{1-r}: the highest the value, the
-#'  more influence the variable has on the model), \strong{AUC}, \strong{Kappa},
-#'  \strong{sensitivity}, \strong{specificity}, and \strong{prop.correct}
-#'  (proportion of correctly predicted occurrences).}
-#'  \item{select.metric}{Selection metric(s) used to select SDMs:
-#'  \strong{AUC}, \strong{Kappa}, \strong{sensitivity}, \strong{specificity},
-#'  and \strong{prop.correct} (proportion of correctly predicted occurrences).}
+#'  relative importance (difference between a full model and one with each
+#'  variable successively omitted): \strong{Pearson} (computes a simple
+#'  Pearson's correlation \emph{r} between predictions of the full model and the
+#'  one without a variable, and returns the score \emph{1-r}: the highest the
+#'  value, the more influence the variable has on the model), \strong{AUC},
+#'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
+#'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
+#'  \item{select.metric}{Selection metric(s) used to select SDMs: \strong{AUC},
+#'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
+#'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
 #'  \item{"..."}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
@@ -131,7 +131,7 @@ NULL
 #'  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
 #'  minimum number of observations in the trees terminal nodes. Note that this
 #'  is the actual number of observations not the total weight. By default, set
-#'  to 1.} \item{cv}{integer. Number of cross-validations, default 3.}
+#'  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
 #'  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
 #'  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
 #'  cross-validation. By default, set to 1e-03.} }
@@ -140,8 +140,8 @@ NULL
 #'  function from the package 'rpart', you can set the following parameters (see
 #'  \code{\link[rpart]{rpart}} for more details): \describe{
 #'  \item{final.leave}{integer. The minimum number of observations in any
-#'  terminal node, default 1.} \item{cv}{integer. Number of cross-validations,
-#'  default 3.} }
+#'  terminal node, default 1.} \item{algocv}{integer. Number of
+#'  cross-validations, default 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the \code{randomForest} function
 #'  from the package 'randomForest', you can set the following parameters (see
@@ -167,7 +167,7 @@ NULL
 #'  from the package 'e1071', you can set the following parameters (see
 #'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
 #'  Epsilon parameter in the insensitive loss function, default 1e-08.}
-#'  \item{cv}{integer. If an integer value k>0 is specified, a k-fold
+#'  \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
 #'  cross-validation on the training data is performed to assess the quality of
 #'  the model: the accuracy rate for classification and the Mean Squared Error
 #'  for regression. By default, set to 3.} }
@@ -203,10 +203,12 @@ NULL
 #'
 #'
 #'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
 #'
 #'
 #'

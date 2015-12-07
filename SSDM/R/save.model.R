@@ -87,6 +87,7 @@ setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
   # Raster saving
   if(verbose){cat('   rasters ...')}
   writeRaster(stack@diversity.map, paste0(path, "/", 'Results', '/Rasters/Diversity'), 'GTiff', overwrite = T)
+  writeRaster(stack@endemism.map, paste0(path, "/", 'Results', '/Rasters/Endemism'), 'GTiff', overwrite = T)
   writeRaster(stack@uncertainty, paste0(path, "/", 'Results', '/Rasters/uncertainty'), 'GTiff', overwrite = T)
   cat('saved \n')
 

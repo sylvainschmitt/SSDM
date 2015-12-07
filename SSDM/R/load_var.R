@@ -39,7 +39,6 @@ NULL
 load_var <- function (path = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
-
   # Check arguments
   .checkargs(path = path, files = files, format = format, factors = factors,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
@@ -58,7 +57,8 @@ load_var <- function (path = getwd(), files = NULL,
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
-        Raster = raster(paste0(path,'/',files[[i]]))
+        if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
+        Raster = raster(file)
         # Extent and resolution check
         reso = res(Raster)
         extent = extent(Raster)
@@ -88,7 +88,8 @@ load_var <- function (path = getwd(), files = NULL,
     }
     if (length(files) > 0) {
       for (i in 1:length(files)){
-        Raster = raster(paste0(path, '/', files[[i]]))
+        if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
+        Raster = raster(file)
         Raster = reclassify(Raster, c(-Inf,-900,NA))
         Raster = crop(Raster, extentstack)
         names(Raster) = as.character(strsplit(files[i],format[j]))

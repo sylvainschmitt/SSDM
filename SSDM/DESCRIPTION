@@ -14,7 +14,7 @@ Description: SSDM is a package to build multi-species distribution models.
     summing. Thresholding can be based on a specific evaluation metric or by drawing
     repeatedly from a Bernouilli distribution. The SSDM package also provides a
     user-friendly interface.
-License: GPL
+License: GPL (>=3) | file LICENSE
 LazyData: TRUE
 Imports:
     sp (>= 1.2.0),

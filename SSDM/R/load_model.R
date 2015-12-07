@@ -48,14 +48,15 @@ load_enm = function (name, path = getwd()) {
 load_stack = function (name = 'Stack', path = getwd(), GUI = F) {
   path = paste0(path, '/', name)
   stack = Stacked.SDM(name = as.character(read.csv(paste0(path,'/Results/Tables/Name'))[1,2]),
-                                             diversity.map = raster(paste0(path,'/Results/Rasters/Diversity.tif')),
-                                             uncertainty = raster(paste0(path,'/Results/Rasters/uncertainty.tif')),
-                                             evaluation = read.csv(paste0(path,'/Results/Tables/StackEval'), row.names = 1),
-                                             variable.importance = read.csv(paste0(path,'/Results/Tables/VarImp'), row.names = 1),
-                                             algorithm.correlation = read.csv(paste0(path,'/Results/Tables/AlgoCorr'), row.names = 1),
-                                             algorithm.evaluation = read.csv(paste0(path,'/Results/Tables/AlgoEval'), row.names = 1),
-                                             enms = list(),
-                                             parameters = read.csv(paste0(path,'/Results/Tables/Parameters'), row.names = 1, colClasses = "character"))
+                      diversity.map = raster(paste0(path,'/Results/Rasters/Diversity.tif')),
+                      endemism.map = raster(paste0(path,'/Results/Rasters/Endemism.tif')),
+                      uncertainty = raster(paste0(path,'/Results/Rasters/uncertainty.tif')),
+                      evaluation = read.csv(paste0(path,'/Results/Tables/StackEval'), row.names = 1),
+                      variable.importance = read.csv(paste0(path,'/Results/Tables/VarImp'), row.names = 1),
+                      algorithm.correlation = read.csv(paste0(path,'/Results/Tables/AlgoCorr'), row.names = 1),
+                      algorithm.evaluation = read.csv(paste0(path,'/Results/Tables/AlgoEval'), row.names = 1),
+                      enms = list(),
+                      parameters = read.csv(paste0(path,'/Results/Tables/Parameters'), row.names = 1, colClasses = "character"))
   enms = list.dirs(path, recursive = F, full.names = F)
   enms = enms[-which(enms == 'Results')]
   if(GUI) {incProgress(1/(length(enms)+1), detail = 'stack main results')}

@@ -24,14 +24,14 @@ NULL
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence. If NULL presence-only dataset is
-#'  assumed.
+#'  whether a line is a presence or an absence, by setting presence to 1 and
+#'  absence to 0. If NULL presence-only dataset is assumed.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced
 #'  (by default 'Ensemble.SDM').
 #'@param save logical. If set to true, the ensemble SDM is automatically saved.
-#'@param path character. If save is true, the path to the directory in
-#'  which the ensemble SDM will be saved.
+#'@param path character. If save is true, the path to the directory in which the
+#'  ensemble SDM will be saved.
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
 #'  in case of presence-only dataset. If PA is NULL, recommended PA selection
 #'  strategy is used depending on the algorithm (see details below).
@@ -143,7 +143,7 @@ NULL
 #'  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
 #'  minimum number of observations in the trees terminal nodes. Note that this
 #'  is the actual number of observations not the total weight. By default, set
-#'  to 1.} \item{cv}{integer. Number of cross-validations, default 3.}
+#'  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
 #'  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
 #'  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
 #'  cross-validation. By default, set to 1e-03.} }
@@ -152,8 +152,8 @@ NULL
 #'  function from the package 'rpart', you can set the following parameters (see
 #'  \code{\link[rpart]{rpart}} for more details): \describe{
 #'  \item{final.leave}{integer. The minimum number of observations in any
-#'  terminal node, default 1.} \item{cv}{integer. Number of cross-validations,
-#'  default 3.} }
+#'  terminal node, default 1.} \item{algocv}{integer. Number of
+#'  cross-validations, default 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the \code{randomForest} function
 #'  from the package 'randomForest', you can set the following parameters (see
@@ -179,7 +179,7 @@ NULL
 #'  from the package 'e1071', you can set the following parameters (see
 #'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
 #'  Epsilon parameter in the insensitive loss function, default 1e-08.}
-#'  \item{cv}{integer. If an integer value k>0 is specified, a k-fold
+#'  \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
 #'  cross-validation on the training data is performed to assess the quality of
 #'  the model: the accuracy rate for classification and the Mean Squared Error
 #'  for regression. By default, set to 3.} }
@@ -236,10 +236,12 @@ NULL
 #'
 #'
 #'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
 #'
 #'
 #'

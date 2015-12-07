@@ -26,14 +26,14 @@ NULL
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence. If NULL presence-only dataset is
-#'  assumed.
+#'  whether a line is a presence or an absence, by setting presence to 1 and
+#'  absence to 0. If NULL presence-only dataset is assumed.
 #'@param Spcol character. Name of the column containing species names or IDs.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced.
 #'@param save logical. If set to true, the SSDM is automatically saved.
-#'@param path character. If save is true, the path to the directory in
-#'  which the ensemble SDM will be saved.
+#'@param path character. If save is true, the path to the directory in which the
+#'  ensemble SDM will be saved.
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
 #'  in case of presence-only dataset. If PA is NULL, recommended PA selection
 #'  strategy is used depending on the algorithm (see details below).
@@ -66,6 +66,12 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
+#'@param range integer. Set a value of range restriction (in pixels) around
+#'  presences occurrences on habitat suitability maps (all further points will
+#'  have a null probability, see Crisp et al (2011) in references). If NULL, no
+#'  range restriction will be applied.
+#'@param endemism character. Define the method used to create an endemism map
+#'  (see details below).
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -122,7 +128,14 @@ NULL
 #'  suitability maps, \strong{B} (Random Bernoulli) drawing repeatedly from a
 #'  Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
 #'  with the thresholding (depending on the metric, see metric parameter).}
-#'  \item{...}{See algorithm in detail section} }
+#'  \item{endemism}{Choice of the method used to compute the endemism map (see
+#'  Crisp et al. (2001) for more information, see reference below):
+#'  \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
+#'  Endemism map built by counting all species in each cell and weighting each
+#'  by the inverse of its number of occurrences, \strong{CWEI} (Corrected
+#'  Weighted Endemism Index) Endemism map built by dividing the weighted
+#'  endemism index by the total count of species in the cell.} \item{...}{See
+#'  algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
 #'  function from the package 'stats', you can set the following parameters (see
@@ -156,7 +169,7 @@ NULL
 #'  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
 #'  minimum number of observations in the trees terminal nodes. Note that this
 #'  is the actual number of observations not the total weight. By default, set
-#'  to 1.} \item{cv}{integer. Number of cross-validations, default 3.}
+#'  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
 #'  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
 #'  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
 #'  cross-validation. By default, set to 1e-03.} }
@@ -165,8 +178,8 @@ NULL
 #'  function from the package 'rpart', you can set the following parameters (see
 #'  \code{\link[rpart]{rpart}} for more details): \describe{
 #'  \item{final.leave}{integer. The minimum number of observations in any
-#'  terminal node, default 1.} \item{cv}{integer. Number of cross-validations,
-#'  default 3.} }
+#'  terminal node, default 1.} \item{algocv}{integer. Number of
+#'  cross-validations, default 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the \code{randomForest} function
 #'  from the package 'randomForest', you can set the following parameters (see
@@ -192,7 +205,7 @@ NULL
 #'  from the package 'e1071', you can set the following parameters (see
 #'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
 #'  Epsilon parameter in the insensitive loss function, default 1e-08.}
-#'  \item{cv}{integer. If an integer value k>0 is specified, a k-fold
+#'  \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
 #'  cross-validation on the training data is performed to assess the quality of
 #'  the model: the accuracy rate for classification and the Mean Squared Error
 #'  for regression. By default, set to 3.} }
@@ -234,10 +247,18 @@ NULL
 #'
 #'
 #'
+#'
+#'
+#'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
+#'
+#'
+#'
 #'
 #'
 #'
@@ -257,6 +278,15 @@ NULL
 #'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
 #'
 #'
+#'
+#'
+#'
+#'
+#'
+#'
+#'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
+#'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
+#'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 #'
 #'
 #'
@@ -285,6 +315,8 @@ stack_modelling = function(algorithms,
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T,
                            # Diversity map computing
                            method = 'P', metric = 'SES', rep.B = 1000,
+                           # Range restriction and endemism
+                           range = NULL, endemism = 'WEI',
                            # Informations parameters
                            verbose = T, GUI = F,
                            # Modelling parameters
@@ -294,7 +326,8 @@ stack_modelling = function(algorithms,
              save = save, path = path,  PA = PA,  cv = cv, cv.param = cv.param,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, weight = weight,
-             method = method, metric = metric, rep.B = rep.B, verbose = verbose, GUI = GUI)
+             method = method, metric = metric, rep.B = rep.B, range = range, endemism = endemism,
+             verbose = verbose, GUI = GUI)
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
@@ -336,12 +369,13 @@ stack_modelling = function(algorithms,
     if(verbose){stop('You have less than two remaining specie ensemble models, maybe you should try an easier thresholding ?')} else {return(NULL)}
   } else {
     if(verbose){cat('#### Species stacking with ensemble models ##### \n\n')}
-    if(verbose){cat('beug 1')}
     if (!is.null(name)) {enms['name'] = name}
     enms['method'] = method
     enms['metric'] = metric
     enms['thresh'] = thresh
     enms['rep.B'] = rep.B
+    if (!is.null(range)) {enms['range'] = range}
+    enms['endemism'] = endemism
     stack = do.call(stacking, enms)
   }
 

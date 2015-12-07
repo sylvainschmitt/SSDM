@@ -179,7 +179,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
   obj@parameters$cv = cv
   obj@parameters$cv.param = text.cv.param
   obj@parameters$metric = metric
-  # Cross validation
+  # Cross-validation
   metric = switch(metric,
                   'Kappa' = 'maxKappa',
                   'CCR' = 'max.prop.correct',
@@ -213,15 +213,9 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
         evaluation = rbind(evaluation, roweval)
       }
     }
-  } else {
-    if(cv == 'LOO') {
-      k = length(obj@data$Presence)
-      rep = cv.param[1]
-    }
-    if(cv == 'k-fold') {
-      k = cv.param[1]
-      rep = cv.param[2]
-    }
+  } else if(cv == 'k-fold') {
+    k = cv.param[1]
+    rep = cv.param[2]
     for (i in 1:length(rep)) {
       data = obj@data
       data$fold = 0
@@ -256,7 +250,21 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
         }
       }
     }
-  }
+  } else if(cv == 'LOO') {
+      data = obj@data
+      predicted.values = c()
+      for(j in 1:length(data[,1])) {
+        evaldata = data[j,]
+        traindata = data[-j,]
+        trainobj = obj
+        trainobj@data = traindata
+        model = get_model(trainobj, ...)
+        predicted.values[j] = predict(model, evaldata)
+      }
+      threshold = optim.thresh(data$Presence, predicted.values, thresh)
+      threshold = mean(threshold[[which(names(threshold) == metric)]])
+      evaluation = accuracy(data$Presence, predicted.values, threshold)
+    }
   obj@evaluation = evaluation[1,]
   for(i in 1:length(evaluation)){
     obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
@@ -419,10 +427,10 @@ setMethod('get_PA', "CTA.SDM",
             return(PA)})
 
 setMethod('get_model', "CTA.SDM",
-          function(obj, final.leave = 1, cv = 3, ...) {
+          function(obj, final.leave = 1, algocv = 3, ...) {
             data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = rpart(Presence ~ ., data = data,
-                          control = rpart.control(minbucket = final.leave, xval = cv))
+                          control = rpart.control(minbucket = final.leave, xval = algocv))
             return(model)})
 
 ##### GBM Niche Model Class ##### -----
@@ -440,12 +448,12 @@ setMethod('get_PA', "GBM.SDM",
             return(PA)})
 
 setMethod('get_model', "GBM.SDM",
-          function(obj, trees = 2500, final.leave = 1, cv = 3, thresh.shrink = 1e-03, ...) {
+          function(obj, trees = 2500, final.leave = 1, algocv = 3, thresh.shrink = 1e-03, ...) {
             data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = gbm(Presence ~ ., data = data,
                         distribution = 'bernoulli', n.minobsinnode = final.leave,
                         shrinkage = thresh.shrink, bag.fraction = 0.5,
-                        train.fraction = 1, cv.folds = cv, n.trees = trees)
+                        train.fraction = 1, cv.folds = algocv, n.trees = trees)
             return(model)})
 
 ##### RF Niche Model Class ##### -----
@@ -664,8 +672,8 @@ setMethod('get_PA', "SVM.SDM", function(obj) {
   PA['strat'] = 'random'
   return(PA)})
 
-setMethod('get_model', "SVM.SDM", function(obj, epsilon = 1e-08, cv = 3, ...) {
+setMethod('get_model', "SVM.SDM", function(obj, epsilon = 1e-08, algocv = 3, ...) {
   data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
   model = svm(Presence ~ ., data = data, type = 'eps-regression',
-              gamma = 1/(length(data)-1), kernel = 'radial', epsilon = epsilon, cross = cv)
+              gamma = 1/(length(data)-1), kernel = 'radial', epsilon = epsilon, cross = algocv)
   return(model)})
