@@ -371,8 +371,6 @@ stack_modelling = function(algorithms,
     if(verbose){cat('#### Species stacking with ensemble models ##### \n\n')}
     if (!is.null(name)) {enms['name'] = name}
     enms['method'] = method
-    enms['metric'] = metric
-    enms['thresh'] = thresh
     enms['rep.B'] = rep.B
     if (!is.null(range)) {enms['range'] = range}
     enms['endemism'] = endemism

@@ -176,7 +176,7 @@ gui = function (browser = F, maxmem = 10e9) {
                              sliderInput('thresh','Threshold precision',11,10001,101, step = 10),
                              p('Value representing the number of equal interval threshold values between 0 and 1'),
                              uiOutput('tmpUI'),
-                             p('Rasters are saved in temporary files to release memory'),
+                             uiOutput('tmpinfoUI'),
                              checkboxGroupInput('algoparam', 'Algorithm parameters', c('GLM','GAM','MARS','GBM','CTA','RF','ANN','SVM'), inline = T),
                              uiOutput('testUI'),
                              uiOutput('epsilonUI'),
@@ -309,10 +309,22 @@ gui = function (browser = F, maxmem = 10e9) {
       load.var$factors = c()
       if (length(input$factors > 0)) {
         for (i in 1:length(input$factors)) {
-          load.var$factors = c(load.var$factors,
-                               paste0('X',gsub('/','.',
-                                               as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
-                                               fixed = T)))
+          if(Sys.info()[['sysname']] == 'Linux') {
+            load.var$factors = c(load.var$factors,
+                                 paste0('X',gsub('/','.',
+                                                 as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
+                                                 fixed = T)))
+          } else if (Sys.info()[['sysname']] == 'Windows') {
+            load.var$factors = c(load.var$factors, gsub('/','.',
+                                                        as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
+                                                        fixed = T))
+            load.var$factors = gsub('\\', '.', as.character(load.var$factors), fixed = T)
+            load.var$factors = gsub(':', '.', as.character(load.var$factors), fixed = T)
+          } else {
+            load.var$factors = c(load.var$factors, gsub('/','.',
+                                                        as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
+                                                        fixed = T))
+          }
         }
       }
       if('Normalization' %in% input$load.var.options) {
@@ -326,7 +338,7 @@ gui = function (browser = F, maxmem = 10e9) {
                                        format = load.var$formats,
                                        Norm = load.var$norm,
                                        tmp = F,
-                                       factors = c(load.var$factors),
+                                       factors = load.var$factors,
                                        verbose = F,
                                        GUI = T))
       for (i in 1 :length(load.var$vars)) {
@@ -401,7 +413,10 @@ gui = function (browser = F, maxmem = 10e9) {
       validate(
         need(input$model.type != ' ', 'You need to choose the model type first !')
       )
-      if (input$model.type == 'Ensemble SDM') {data$ENM = load_enm(input$dir, path = data$dir)}
+      if (input$model.type == 'Ensemble SDM') {
+        data$ENM = load_enm(name = input$dir, path = data$dir)
+        if(!is.null(data$ENM)){result$ENM = data$ENM}
+        }
       if (input$model.type == 'SSDM') {
         data$Stack = withProgress(message = 'Model loading',
                                   load_stack(name = input$dir, path = data$dir, GUI = T))
@@ -410,10 +425,10 @@ gui = function (browser = F, maxmem = 10e9) {
       output$model.preview <- renderPlot({
         if (input$model.type == 'Ensemble SDM') {
           spplot(data$ENM@projection,
-               main = data$ENM@name,
-               xlab = 'Longitude (\u02DA)',
-               ylab = 'Latitude (\u02DA)',
-               col.regions = rev(terrain.colors(10000)))
+                 main = 'Habitat suitability map',
+                 xlab = 'Longitude (\u02DA)',
+                 ylab = 'Latitude (\u02DA)',
+                 col.regions = rev(terrain.colors(10000)))
         }
         if (input$model.type == 'SSDM') {
           spplot(data$Stack@diversity.map,
@@ -462,10 +477,10 @@ gui = function (browser = F, maxmem = 10e9) {
     output$nameUI <- renderUI({textInput('name','Name')})
     output$uncertUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('uncert', 'Uncertainty mapping', value = T)}})
     output$uncertinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Between-algorithm variance map')}})
-    output$endemismUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('endemism', 'Endemism mapping', c('Any', 'WEI', 'CWEI'), selected = 'WEI')}})
+    output$endemismUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('endemism', 'Endemism mapping', c('None', 'WEI', 'CWEI'), selected = 'WEI')}})
     output$endemisminfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){
       p(switch(input$endemism,
-               'Any' = 'No endemism map will be built',
+               'None' = 'No endemism map will be built',
                'WEI' = 'Endemism map will be built by counting all species in each cell and weighting each by the inverse of its number of occurrences',
                'CWEI' = 'Endemism map will be built by dividing the weighted endemism index by the total count of species in the cell'))}})
     output$metricUI <- renderUI({selectInput('metric', 'Evaluation metric', c('Kappa','CCR','TSS','SES','LW','ROC'), selected = 'SES')})
@@ -540,6 +555,7 @@ gui = function (browser = F, maxmem = 10e9) {
 
     ## Advanced modelling parameters ##
     output$tmpUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('tmp', 'Temporary files', value = F)}})
+    output$tmpinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Rasters are saved in temporary files to release memory')}})
     output$testUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){selectInput('test','Test (GLM/GAM)',c('AIC', 'BIC'))}})
     output$epsilonUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){sliderInput('epsilon','Epsilon (GLM/GAM/SVM) = 1e-X',1,20,8, step = 1)}})
     output$maxitUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'ANN' %in% input$algoparam){sliderInput('maxit','Maximum number of iteration (GLM/GAM/ANN)',100,1000,500, step = 100)}})
@@ -580,7 +596,7 @@ gui = function (browser = F, maxmem = 10e9) {
         }
       }
       if(is.null(input$range) || !input$range) {range = NULL} else {range = input$rangeval}
-      cat('range:', range, '\n')
+      if(is.null(input$endemism) || input$endemism == 'None') {endemism = NULL} else {endemism = input$endemism}
       algoparam = list()
       if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){algoparam$test = input$test} else {algoparam$test = 'AIC'}
       if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){algoparam$epsilon = as.numeric(paste0('1e-', as.character(input$epsilon)))} else {algoparam$epsilon = 1e-08}
@@ -715,7 +731,7 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   metric = input$metric,
                                                   rep.B =  rep.B,
                                                   range = range,
-                                                  endemism = input$endemism,
+                                                  endemism = endemism,
                                                   verbose = F,
                                                   GUI = T,
                                                   test = algoparam$test,

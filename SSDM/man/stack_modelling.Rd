@@ -89,12 +89,12 @@ details below.)}
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
-\item{range}{integer. Set a value of range restriction around presence
-occurrences on SDM habitat suitability map (All points furtherer will have a
-null porbability, see Crisp et al (2011) in references). If NULL, no range
-restriction will be applied on the SDM.}
+\item{range}{integer. Set a value of range restriction (in pixels) around
+presences occurrences on habitat suitability maps (all further points will
+have a null probability, see Crisp et al (2011) in references). If NULL, no
+range restriction will be applied.}
 
-\item{endemism}{character. Define the method used to create the endemism map
+\item{endemism}{character. Define the method used to create an endemism map
 (see details below).}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
@@ -169,13 +169,13 @@ variable importance), and a list of ensemble SDMs for each species (see
  Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
  with the thresholding (depending on the metric, see metric parameter).}
  \item{endemism}{Choice of the method used to compute the endemism map (see
- Crisp et al. (2001) for more informations, see reference below):
- \strong{Any} No endemism map is built, \strong{WEI} (Weighted Endemism
- Index) Endemism map built by counting all species in each cell and weighting
- each by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
- Index) Endemism map built by dividing the weighted endemism index by the
- total count of species in the cell.} \item{...}{See algorithm in detail
- section} }
+ Crisp et al. (2001) for more information, see reference below):
+ \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
+ Endemism map built by counting all species in each cell and weighting each
+ by the inverse of its number of occurrences, \strong{CWEI} (Corrected
+ Weighted Endemism Index) Endemism map built by dividing the weighted
+ endemism index by the total count of species in the cell.} \item{...}{See
+ algorithm in detail section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -308,10 +308,12 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
  thresholds of occurrence in the prediction of species distributions."
  \emph{Ecography} 28:85-393
  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+
 
 
 
@@ -339,8 +341,9 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
- M. D. Crisp, S. Laffan, H. P. Linder and A. Monro (2001) "Endemism in the
- Australian flora"  \emph{Journal of biogeography} 28:183-198
+
+ M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
+ Australian flora"  \emph{Journal of Biogeography} 28:183-198
  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 }
 \seealso{

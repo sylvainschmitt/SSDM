@@ -17,11 +17,6 @@ NULL
 #'@param enm,... character. Ensemble SDMs to be stacked.
 #'@param name character. Optional name given to the final SSDM produced (by
 #'  default 'Species.SDM').
-#'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
-#'@param metric character. Metric used to compute the binary map threshold (see
-#'  details below.)
 #'@param method character. Define the method used to create the local species
 #'  richness map (see details below).
 #'@param rep.B integer. If the method used to create the local species richness
@@ -40,16 +35,6 @@ NULL
 #'
 #'@return an S4 \linkS4class{Stacked.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
-#'
-#'@details \strong{Metric:} choice of the metric used to compute the binary map
-#'  threshold and the confusion matrix (by default SES as recommended by Liu et
-#'  al. (2005) see reference below): \describe{ \item{"Kappa"}{maximizes the
-#'  Kappa} \item{"TSS"}{\strong{True Skill Statistic} maximizes the sum of
-#'  sensitivity and specificity} \item{"CCR"}{maximizes the proportion of
-#'  correctly predicted observations} \item{"SES"}{uses the
-#'  sensitivity-specificity equality} \item{"LW"}{uses the lowest occurrence
-#'  prediction probability} \item{"ROC"}{minimizes the distance between the ROC
-#'  plot (receiving operating curve) and the upper left corner (1,1)} }
 #'
 #'  \strong{Methods:} Choice of the method used to compute the local species
 #'  richness map (see Calabrez et al. (2014) for more informations, see
@@ -145,18 +130,17 @@ NULL
 #'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', metric = 'SES', thresh = 1001, rep.B = 1000, range = NULL, endemism = 'WEI', verbose = T, GUI = F) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = 'WEI', verbose = T, GUI = F) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
-setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P',
-                                               metric = 'SES', thresh = 1001, rep.B = 1000,
+setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P', rep.B = 1000,
                                                range = NULL, endemism = 'WEI',
                                                verbose = T, GUI = F) {
 
   # Check arguments
-  .checkargs(enm = enm, name = name, method = method, metric = metric, thresh = thresh,
-             rep.B = rep.B, range = range, endemism= endemism, verbose = verbose, GUI = GUI)
+  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range, endemism= endemism,
+             verbose = verbose, GUI = GUI)
 
   enms = list(enm, ...)
   if (length(enms) < 2) {stop('You neeed more than one ensemble SDM to do stackings')}
@@ -216,14 +200,12 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if (method == 'T') {
     cat('\n Local species richness coomputed by thresholding and then summing. \n')
     for (i in 1:length(enms)) {
-      enms[[i]] = evaluate(enms[[i]], thresh = thresh, metric = metric)
       stack@diversity.map = stack@diversity.map +
         reclassify(enms[[i]]@projection,
                    c(-Inf,enms[[1]]@evaluation$threshold,0, enms[[i]]@evaluation$threshold,Inf,1))}
   }
   if (method == 'B') {
     cat('\n Local species richness coomputed by drawing repeatedly from a Bernoulli distribution. \n')
-    # rbinom(lengths(enms), 1000 trials, enms.proba)
     proba = stack()
     for (i in 1:length(enms)) {proba = stack(proba, enms[[i]]@projection)}
     diversity.map = calc(proba, fun = function(...) {
@@ -249,7 +231,6 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     stack@uncertainty = a
     names(stack@uncertainty) = 'uncertainty'
   }
-
   cat(' done. \n')
 
   # endemism map
@@ -297,7 +278,6 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
 
   # Algorithm Correlation
   cat('   comparing algorithms correlation...')
-
   algo = c() # Listing all algorithms presents in enms and renaming enms row and columns
   for (i in 1:length(enms)) {
     if(length(enms[[i]]@algorithm.correlation) == 0) {cat('\n', enms[[i]]@name,'algorithms correlation has not been computed. \n')} else {

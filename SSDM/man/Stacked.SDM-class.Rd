@@ -42,8 +42,8 @@ the SSDM.}
  specificity, proportion of correctly predicted occurrences).}
 }}
 \references{
-M. D. Crisp, S. Laffan, H. P. Linder and A. Monro (2001)
- "Endemism in the Australian flora"  \emph{Journal of biogeography}
+M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001)
+ "Endemism in the Australian flora"  \emph{Journal of Biogeography}
  28:183-198
  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 }
