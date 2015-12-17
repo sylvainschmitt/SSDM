@@ -1,7 +1,7 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.1.9005
+Version: 0.1.9006
 Date: 2015-11-02
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
@@ -47,13 +47,13 @@ Collate:
     'ensemble.R'
     'modelling.R'
     'ensemble_modelling.R'
-    'stacking.R'
-    'stack_modelling.R'
-    'save.model.R'
-    'plot.model.R'
-    'load_var.R'
-    'load_occ.R'
-    'load_model.R'
     'gui.R'
+    'load_model.R'
+    'load_occ.R'
+    'load_var.R'
+    'plot.model.R'
+    'save.model.R'
+    'stack_modelling.R'
+    'stacking.R'
     'update.stack.R'
     'zzz.R'
