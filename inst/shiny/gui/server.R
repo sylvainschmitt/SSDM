@@ -79,7 +79,7 @@ server <- function(input, output, session) {
                     'home' = '/home',
                     'root' = '/')
     } else if (Sys.info()[['sysname']] == 'Windows') {
-      path = switch(input$envfiles$root, 'wd' = getwd())
+      path = switch(input$envfiles$root, 'wd' = getwd(), input$envfiles$root)
     } else {
       path = switch(input$envfiles$root,
                     'wd' = getwd(),
@@ -160,7 +160,8 @@ server <- function(input, output, session) {
     file = paste0(switch(input$Occ$root,
                          'wd' = getwd(),
                          'home' = '/home',
-                         'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+                         'root' = '/',
+                         input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
     load.occ$columns = names(read.csv2(file))
   })
   observeEvent(input$sep, {
@@ -168,7 +169,8 @@ server <- function(input, output, session) {
       file = paste0(switch(input$Occ$root,
                            'wd' = getwd(),
                            'home' = '/home',
-                           'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+                           'root' = '/',
+                           input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
       load.occ$columns = names(read.csv2(file, sep = input$sep, nrows = 0))
     }
   })
@@ -177,7 +179,8 @@ server <- function(input, output, session) {
       file = paste0(switch(input$Occ$root,
                            'wd' = getwd(),
                            'home' = '/home',
-                           'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+                           'root' = '/',
+                           input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
       load.occ$columns = names(read.csv2(file, sep = input$sep, nrows = 0))
     }
   })
@@ -197,7 +200,8 @@ server <- function(input, output, session) {
     file = paste0(switch(input$Occ$root,
                          'wd' = getwd(),
                          'home' = '/home',
-                         'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+                         'root' = '/',
+                         input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
     a = try(withProgress(message = 'Occurrences loading',
                          load_occ(path = {},
                                   data$Env,
@@ -244,7 +248,7 @@ server <- function(input, output, session) {
                     'home' = '/home/',
                     'root' = '/')
     } else if (Sys.info()[['sysname']] == 'Windows') {
-      path = switch(input$prevmodel$root, 'wd' = getwd())
+      path = switch(input$prevmodel$root, 'wd' = getwd(), input$prevmodel$root)
     } else {
       path = switch(input$prevmodel$root,
                     'wd' = getwd(),
@@ -937,7 +941,8 @@ server <- function(input, output, session) {
     path = switch(input$prevmodel$root,
                   'wd' = getwd(),
                   'home' = '/home',
-                  'root' = '/')
+                  'root' = '/',
+                  input$prevmodel$root)
     for(i in 2:length(input$prevmodel$path)){
       path = paste0(path, '/', input$prevmodel$path[[i]][1])
     }
