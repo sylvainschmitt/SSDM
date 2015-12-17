@@ -1,6 +1,7 @@
 library(shinydashboard)
 library(shinyFiles)
 library(raster)
+library(gplots)
 
 server <- function(input, output, session) {
   ### Server data ###

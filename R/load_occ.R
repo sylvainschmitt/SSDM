@@ -73,10 +73,11 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
   # Checking points validity
   Occurrences$validity = raster::extract(Env[[1]], Occurrences[,c(which(names(Occurrences) == Xcol),which(names(Occurrences) == Ycol))])
   if(length(which(is.na(Occurrences$validity))) > 0){
-    warning('You have occurrences that aren\'t in the extent of your environmental variables, they will be automatically removed !')
+    warning('You have occurrences that aren\'t in the extent of your environmental variables, they will be automatically removed ! \n')
     Occurrences = Occurrences[-which(is.na(Occurrences$validity)),]
   }
   Occurrences = Occurrences[-which(names(Occurrences) == 'validity')]
+  Occurrences = droplevels(Occurrences)
 
   # Geographical resampling
   if (is.null(Spcol)) {
@@ -95,15 +96,24 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
       deleted = {}
       occ.indices = c(1:length(row.names(SpOccurrences)))
       res.indices = as.numeric(row.names(thin.result[[1]]))
-      # Test species occurrences > 3
-      if(length(res.indices) < 4){
-        warning(paste(levels(Occurrences[,which(names(Occurrences)==Spcol)]), 'have 3 or less occurrences after spatial thinning, it\'s not enough for modelling, this species will be automatically removed !'))
-      }
       for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
       if (length(deleted) > 0) {Occurrences = Occurrences[-deleted,]}
     }
     if (Spcol == 'SpNULL') {Occurrences = Occurrences[-which(names(Occurrences)=='SpNULL')]}
   }
+  Occurrences = droplevels(Occurrences)
+
+  # Test species occurrences > 3
+  for (i in 1:length(levels(Occurrences[,which(names(Occurrences)==Spcol)]))) {
+    sp = levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i]
+    spocc = subset(Occurrences, Occurrences[,which(names(Occurrences)==Spcol)] == sp)
+    l = length(spocc[,1])
+    if(l < 4){
+      warning(paste(sp, 'have 3 or less occurrences after spatial thinning, it\'s not enough for modelling, this species will be automatically removed ! \n'))
+      Occurrences = Occurrences[-which(Occurrences[,which(names(Occurrences)==Spcol)] == sp),]
+      }
+  }
+  Occurrences = droplevels(Occurrences)
 
   #setwd(pdir)
   return(Occurrences)
