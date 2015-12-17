@@ -4,14 +4,17 @@
 \alias{gui}
 \title{SSDM package Global User Interface}
 \usage{
-gui(browser = F, maxmem = 1e+10)
+gui(browser = F, maxmem = 1e+10, col = "blue")
 }
 \arguments{
 \item{browser}{logical. Option to plot the user global interface in your
 internet browser.}
 
 \item{maxmem}{numeric. Option to choose the maximum memory allocated to the
-  user interface.}
+user interface.}
+
+\item{col}{character. User interface color theme. One of "blue", "black",
+  "purple", "green", "red", or "yellow".}
 }
 \value{
 Open a window with a shiny app to use the SSDM package with an

@@ -1,6 +1,12 @@
 #' @include Algorithm.SDM.R Ensemble.SDM.R Stacked.SDM.R
-#' @import shiny
-#' @import shinydashboard raster
+#' @importFrom raster stack crop extent aggregate reclassify
+#' @importFrom shiny h1 h2 h3 p reactiveValues observeEvent icon brushOpts shinyApp
+#' @importFrom shiny fluidPage fluidRow tabPanel actionButton
+#' @importFrom shiny selectInput sliderInput radioButtons checkboxInput checkboxGroupInput
+#' @importFrom shiny textOutput uiOutput plotOutput dataTableOutput tableOutput
+#' @importFrom shiny renderText renderUI renderPlot renderDataTable renderTable
+#' @importFrom shinydashboard dashboardPage dashboardHeader dashboardSidebar dashboardBody box tabBox
+#' @importFrom shinydashboard sidebarMenu sidebarMenuOutput renderMenu menuItem menuSubItem tabItems tabItem
 #' @importFrom gplots heatmap.2
 #' @importFrom sp spplot SpatialPoints
 #' @importFrom raster stack crop extent aggregate reclassify
@@ -38,7 +44,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       sidebarMenu(
         menuItem("Stacked species", tabName = "stack", icon = icon("dashboard")),
         menuItem("Ensemble model", tabName = "enm", icon = icon("pagelines")),
-        selectInput('enmchoice', 'Ensemble model specie :', choices, selected = NULL, multiple = FALSE,
+        selectInput('enmchoice', 'Species:', choices, selected = NULL, multiple = FALSE,
                     selectize = TRUE, width = NULL, size = NULL)
       )
     ),
@@ -141,7 +147,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       ranges$x <- NULL
       ranges$y <- NULL
     })
-    eval = character()
+    eval = 'Mean'
     ensemble.metric = strsplit(x@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
     for (i in 1:length(ensemble.metric)) {
       eval = paste(eval, paste(ensemble.metric[i],':',round(x@evaluation[1,which(names(x@evaluation) == ensemble.metric[i])], digits = 3)))
@@ -158,7 +164,6 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     output$endemism <- renderPlot({
       if (!is.null(ranges$x)) {endemism = crop(x@endemism.map, c(ranges$x, ranges$y))} else {endemism = x@endemism.map}
       spplot(endemism,
-             main = eval,
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))
@@ -166,7 +171,6 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     output$uncertainty <- renderPlot({
       if (!is.null(ranges$x)) {uncert = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert = x@uncertainty}
       spplot(uncert,
-             main = eval,
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))
@@ -251,7 +255,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       x@parameters$endemism
     })
     output$varimp.info <- renderText({
-      varimp.info = 'Axes evaluated with the variation of '
+      varimp.info = 'Variable relative contribution evaluated with '
       for (i in 1:length(x@parameters$axes.metric)) {
         if (i == 1) {
           varimp.info = paste(varimp.info, x@parameters$axes.metric[i])
@@ -320,10 +324,9 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     output$enm.uncertainty <- renderPlot({
       if (!is.null(ranges$x)) {uncert.map = crop(x@enms[[which(choices == input$enmchoice)]]@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@enms[[which(choices == input$enmchoice)]]@uncertainty}
       spplot(uncert.map,
-           main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)), legend.args=list(text='Models \nvariance', font = 3, line = 1),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)))
+             xlab = 'Longitude (\u02DA)',
+             ylab = 'Latitude (\u02DA)',
+             col.regions = rev(terrain.colors(10000)))
       })
     # Evaluation
     output$enm.evaluation.barplot <- renderPlot({
@@ -541,7 +544,6 @@ setMethod('plot', 'SDM', function(x, y, ...) {
       output$uncertainty <- renderPlot({
         if (!is.null(ranges$x)) {uncert.map = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@uncertainty}
         spplot(uncert.map,
-             main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))

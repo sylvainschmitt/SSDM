@@ -1,4 +1,5 @@
 #' @include Algorithm.SDM.R checkargs.R
+#' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
 NULL
 

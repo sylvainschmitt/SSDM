@@ -51,7 +51,7 @@ NULL
 #' }
 #'
 #'@export
-setMethod(update, 'Stacked.SDM',
+setMethod('update', 'Stacked.SDM',
           function(object,
                    # Modelling data input
                    Occurrences, Env,

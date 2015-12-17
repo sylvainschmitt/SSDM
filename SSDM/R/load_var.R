@@ -1,4 +1,5 @@
 #' @include checkargs.R
+#' @importFrom shiny incProgress
 #' @importFrom raster raster stack res extent crop reclassify as.factor
 NULL
 

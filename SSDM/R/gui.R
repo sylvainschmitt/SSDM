@@ -5,8 +5,14 @@
 #' @include save.model.R load_model.R plot.model.R
 #' @importFrom sp spplot SpatialMultiPoints
 #' @importFrom raster stack crop extent aggregate reclassify
-#' @import shiny
-#' @import shinydashboard
+#' @importFrom shiny h1 h2 h3 p reactiveValues observeEvent icon brushOpts shinyApp runApp
+#' @importFrom shiny fluidPage fluidRow tabPanel actionButton validate need withProgress
+#' @importFrom shiny textInput selectInput sliderInput radioButtons checkboxInput checkboxGroupInput
+#' @importFrom shiny textOutput uiOutput plotOutput dataTableOutput tableOutput
+#' @importFrom shiny renderText renderUI renderPlot renderDataTable renderTable
+#' @importFrom shinydashboard dashboardPage dashboardHeader dashboardSidebar dashboardBody box tabBox
+#' @importFrom shinydashboard sidebarMenu sidebarMenuOutput renderMenu menuItem menuSubItem tabItems tabItem
+#' @importFrom shinyFiles shinyDirChoose shinyFileChoose shinyDirButton shinyFilesButton
 #' @importFrom gplots heatmap.2
 NULL
 
@@ -18,6 +24,8 @@ NULL
 #'   internet browser.
 #' @param maxmem numeric. Option to choose the maximum memory allocated to the
 #'   user interface.
+#' @param col character. User interface color theme. One of "blue", "black",
+#'   "purple", "green", "red", or "yellow".
 #'
 #' @return Open a window with a shiny app to use the SSDM package with an
 #'   user-friendly interface.
@@ -31,30 +39,21 @@ NULL
 #' }
 #'
 #' @export
-gui = function (browser = F, maxmem = 10e9) {
+gui = function (browser = F, maxmem = 10e9, col = 'blue') {
 
   #### User Interface ####
-  ui <- dashboardPage(
+  ui <- dashboardPage(skin = col,
     dashboardHeader(title = 'SSDM'),
-    dashboardSidebar(
-      sidebarMenu(id = 'actions',
-                  menuItem('Welcome page', tabName = 'welcomepage'),
-                  menuItem('Load',
-                           menuSubItem('New data', tabName = 'newdata'),
-                           menuSubItem('Previous model', tabName = 'previousmodel')),
-                  uiOutput('modelling.menu'),
-                  uiOutput('plotting.menu')
-      )
-    ),
+    dashboardSidebar(sidebarMenuOutput('menu')),
     dashboardBody(
       tabItems(
         ### Welcome page ###
         tabItem('welcomepage',
                 h1('SSDM: Stacked species distribution modelling', align = 'center'),
                 h1(' '),
-                h2('Welcome to SSDM package user-friendly interface', align = 'center'),
+                h2('Welcome to the user-friendly interface', align = 'center'),
                 h2(' '),
-                p('SSDM is a package to build multi-species distribution models. Individual SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species, an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map, and can assess variable importance, algorithm accuracy, and between-algorithm correlation. Methods to stack individual SDMs include summing individual probabilities and thresholding then summing. Thresholding can be based on a specific evaluation metric or by drawing repeatedly from a Bernouilli distribution.'),
+                p('SSDM is a package to map species richness and endemism based on stacked species distribution models (SSDM). Individual SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species, an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map, and can assess variable importance, algorithm accuracy, and between-algorithm correlation. Methods to stack individual SDMs include summing individual probabilities and thresholding then summing. Thresholding can be based on a specific evaluation metric or by drawing repeatedly from a Bernouilli distribution.'),
                 h3(' '),
                 p('This interface allows you to load new data or previously built SDMs, ensemble SDMs or SSDMs.'),
                 h3(' '),
@@ -68,9 +67,10 @@ gui = function (browser = F, maxmem = 10e9) {
                 fluidPage(
                   fluidRow(
                     box(title = 'Environmental variable', height = 600,
-                        uiOutput('file'),
+                        uiOutput('Envbug'),
+                        shinyFilesButton('envfiles', 'Rasters selection', 'Please select rasters', FALSE, multiple = T),
                         uiOutput('factors'),
-                        p('Specify whether an environmental variable is a categorical variable'),
+                        p('Which variable should be considered as a categorical variable'),
                         checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = T),
                         actionButton('load', 'Load')
                     ),
@@ -80,12 +80,8 @@ gui = function (browser = F, maxmem = 10e9) {
                   ),
                   fluidRow(
                     box(title = 'Occurrence table',
-                        fileInput('Occ', 'Occurrences', multiple = F, accept = c('text/csv',
-                                                                                 'text/comma-separated-values',
-                                                                                 'text/tab-separated-values',
-                                                                                 'text/plain',
-                                                                                 '.csv',
-                                                                                 '.tsv')),
+                        uiOutput('Occbug'),
+                        shinyFilesButton('Occ', 'Occurrence selection', 'Please select occurrence file', FALSE),
                         radioButtons('sep', 'Separator',
                                      c(Comma = ',',
                                        Semicolon = ';',
@@ -116,15 +112,12 @@ gui = function (browser = F, maxmem = 10e9) {
                 fluidPage(
                   fluidRow(
                     box(title = 'Load SDM',
-                        textOutput('getwd'),
-                        uiOutput('path'),
+                        shinyDirButton('prevmodel', 'Select previous model folder', 'Please select previous model folder', FALSE),
                         selectInput('model.type','Choose model type', c(' ', 'Ensemble SDM', 'SSDM')),
-                        actionButton('home', 'home', icon = icon('home')),
-                        actionButton('back', 'back', icon = icon('long-arrow-left')),
-                        actionButton('open', 'open', icon = icon('folder-open-o')),
                         actionButton('load.model', 'load', icon = icon('file'))
                     ),
                     box('Preview',
+                        textOutput('prevmodelbug'),
                         plotOutput('model.preview')
                     )
                   )
@@ -261,12 +254,8 @@ gui = function (browser = F, maxmem = 10e9) {
                 fluidPage(
                   fluidRow(
                     box(title = 'Save results',
-                        textInput('savename','Name','SDM'),
                         textOutput('savegetwd'),
-                        uiOutput('savepath'),
-                        actionButton('savehome', 'home', icon = icon('home')),
-                        actionButton('saveback', 'back', icon = icon('long-arrow-left')),
-                        actionButton('saveopen', 'open', icon = icon('folder-open-o')),
+                        shinyDirButton('save', 'Folder selection', 'Please select folder to save the model', FALSE),
                         actionButton('savemodel', 'save', icon = icon('floppy-o'))
                     )
                   )
@@ -277,10 +266,39 @@ gui = function (browser = F, maxmem = 10e9) {
   )
 
   #### Server ####
-  server <- function(input, output) {
+  server <- function(input, output, session) {
     ### Server data ###
     data <- reactiveValues(Env = stack(), Occ = data.frame(), dir = getwd(), ENM = NULL, enms = list(), Stack = NULL)
     result <- reactiveValues(ENM = NULL)
+
+    ### Menu ###
+    output$menu <- renderMenu({
+      sidebarMenu(
+        id = 'actions',
+        menuItem('Welcome page', tabName = 'welcomepage', selected = T),
+        menuItem('Load',
+                 menuSubItem('New data', tabName = 'newdata'),
+                 menuSubItem('Previous model', tabName = 'previousmodel')
+        ),
+        if(length(data$Occ) > 0) {
+          menuItem('Modelling',
+                   menuSubItem('Modelling tab', 'modelling'),
+                   selectInput('modellingchoice', 'Modelling type ',
+                               c('Algorithm modelling', 'Ensemble modelling', 'Stack modelling'),
+                               selected = 'Stack modelling')
+          )
+        },
+        if(!is.null(data$Stack) || !is.null(data$ENM)) {
+          if(inherits(data$ENM,'Algorithm.SDM')) {tabname = 'Algorithm SDM'} else {tabname = 'Ensemble SDM'}
+          menuItem('Results',
+                   if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
+                   menuItem(tabname, tabName = "stackenm", icon = icon("pagelines")),
+                   if(!is.null(data$Stack)){selectInput('enmchoice', 'Species:', data$enms, selectize = TRUE)},
+                   if(!inherits(data$ENM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
+          )
+        }
+      )
+    })
 
     ### Load Menu ###
 
@@ -288,110 +306,165 @@ gui = function (browser = F, maxmem = 10e9) {
 
     # Environmental variable loading
     load.var <- reactiveValues(factors = c(), formats = c(), norm = T,  vars = list())
-    observeEvent(input$Env, {
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyFileChoose(input, 'envfiles', session=session,
+                     roots=c( wd='.', home = '/home', root = '/'),
+                     filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = T)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyFileChoose(input, 'envfiles', session=session, roots=c( wd='.', disks),
+                      filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
+    } else {
+      shinyFileChoose(input, 'envfiles', session=session, roots=c( wd='.', home = '/user', root = '/'),
+                      filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
+    }
+    observeEvent(input$envfiles,{
       load.var$vars = list()
-      for (i in 1:length(input$Env$name))
-        load.var$vars[[i]] = input$Env$name[i]
+      for(i in 1:length(input$envfiles$files)){
+        load.var$vars[[i]] = as.character(input$envfiles$files[[i]][length(input$envfiles$files[[i]])])
+      }
     })
-    output$file <- renderUI({fileInput('Env', 'Environment', multiple = T)})
     output$factors <- renderUI({
-      selectInput('factors', 'Factors', load.var$vars, multiple = T, selectize = T)
+      selectInput('factors', 'Categorical', load.var$vars, multiple = T, selectize = T)
     })
     observeEvent(input$load, {
       validate(
         need(length(load.var$vars) > 0, 'Choose environment variable files first !')
       )
+      if(Sys.info()[['sysname']] == 'Linux') {
+        path = switch(input$envfiles$root,
+                      'wd' = getwd(),
+                      'home' = '/home',
+                      'root' = '/')
+      } else if (Sys.info()[['sysname']] == 'Windows') {
+        path = switch(input$envfiles$root, 'wd' = getwd())
+      } else {
+        path = switch(input$envfiles$root,
+                      'wd' = getwd(),
+                      'home' = '/home',
+                      'root' = '/')
+      }
+      for(i in 2:(length(input$envfiles$files[[1]]))-1){
+        path = paste0(path, '/', input$envfiles$files[[1]][i])
+      }
       load.var$formats = c()
       for (i in 1 :length(load.var$vars)) {
         format = paste0('.',strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][2])
         if (!(format %in% load.var$formats)) {load.var$formats = c(load.var$formats, format)}
-      }
-      load.var$factors = c()
-      if (length(input$factors > 0)) {
-        for (i in 1:length(input$factors)) {
-          if(Sys.info()[['sysname']] == 'Linux') {
-            load.var$factors = c(load.var$factors,
-                                 paste0('X',gsub('/','.',
-                                                 as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
-                                                 fixed = T)))
-          } else if (Sys.info()[['sysname']] == 'Windows') {
-            load.var$factors = c(load.var$factors, gsub('/','.',
-                                                        as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
-                                                        fixed = T))
-            load.var$factors = gsub('\\', '.', as.character(load.var$factors), fixed = T)
-            load.var$factors = gsub(':', '.', as.character(load.var$factors), fixed = T)
-          } else {
-            load.var$factors = c(load.var$factors, gsub('/','.',
-                                                        as.character(input$Env$datapath[which(input$Env$name == input$factors[i])]),
-                                                        fixed = T))
-          }
-        }
       }
       if('Normalization' %in% input$load.var.options) {
         load.var$norm = T
       } else {
         load.var$norm = F
       }
-      data$Env = withProgress(message = 'Variables loading',
-                              load_var(path = NULL,
-                                       files =  gsub('\\', '/', as.character(input$Env$datapath), fixed = T),
+      a = try(withProgress(message = 'Variables loading',
+                              load_var(path,
+                                       files = unlist(load.var$vars),
                                        format = load.var$formats,
                                        Norm = load.var$norm,
                                        tmp = F,
                                        factors = load.var$factors,
                                        verbose = F,
-                                       GUI = T))
-      for (i in 1 :length(load.var$vars)) {
-        names(data$Env)[i] = strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][1]
-      }
-      output$layerchoice <- renderUI({
-        selectInput('layer', 'Variable', as.list(names(data$Env)), multiple = F, selectize = T)
-      })
-      output$env <- renderPlot({
-        if(!is.null(input$layer)){
-          i = as.numeric(which(as.list(names(data$Env)) == input$layer))
-          if(data$Env[[i]]@data@isfactor) {
-            map = !as.factor(data$Env[[i]])
-          } else {
-              map = data$Env[[i]]
-              }
-          spplot(map,
-                 main = names(data$Env)[i],
-                 xlab = 'Longitude (\u02DA)',
-                 ylab = 'Latitude (\u02DA)',
-                 col.regions = rev(terrain.colors(10000)))
+                                       GUI = T)))
+      if(inherits(a, 'try-error')){
+        output$Envbug <- renderUI(p('Environmental variables loading failed, please check your inputs and try again'))
+      } else {
+        output$Envbug <- renderUI(p())
+        data$Env = a
+        for (i in 1 :length(load.var$vars)) {
+          names(data$Env)[i] = strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][1]
         }
+        output$layerchoice <- renderUI({
+          selectInput('layer', 'Variable', as.list(names(data$Env)), multiple = F, selectize = T)
         })
+        output$env <- renderPlot({
+          if(!is.null(input$layer)){
+            i = as.numeric(which(as.list(names(data$Env)) == input$layer))
+            if(data$Env[[i]]@data@isfactor) {
+              map = !as.factor(data$Env[[i]])
+            } else {
+              map = data$Env[[i]]
+            }
+            spplot(map,
+                   main = names(data$Env)[i],
+                   xlab = 'Longitude (\u02DA)',
+                   ylab = 'Latitude (\u02DA)',
+                   col.regions = rev(terrain.colors(10000)))
+          }
+        })
+      }
       })
 
     # Occurrences loading
     load.occ <- reactiveValues(columns = c())
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyFileChoose(input, 'Occ', session=session,
+                      roots=c( wd='.', home = '/home', root = '/'),
+                      filetypes=c('',"csv", "txt"))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = T)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyFileChoose(input, 'Occ', session=session, roots=c( wd='.', disks),
+                      filetypes=c('',"csv", "txt"))
+    } else {
+      shinyFileChoose(input, 'Occ', session=session, roots=c( wd='.', home = '/user', root = '/'),
+                      filetypes=c('',"csv", "txt"))
+    }
     observeEvent(input$Occ, {
-      load.occ$columns = names(read.csv2(input$Occ$datapath))
+      file = paste0(switch(input$Occ$root,
+               'wd' = getwd(),
+               'home' = '/home',
+               'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+      load.occ$columns = names(read.csv2(file))
     })
     observeEvent(input$sep, {
-      if(!is.null(input$Occ$datapath)) {load.occ$columns = names(read.csv2(input$Occ$datapath, sep = input$sep, nrows = 0))}
+      if(!is.null(input$Occ)) {
+        file = paste0(switch(input$Occ$root,
+                             'wd' = getwd(),
+                             'home' = '/home',
+                             'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+        load.occ$columns = names(read.csv2(file, sep = input$sep, nrows = 0))
+        }
     })
     observeEvent(input$Occ, {
-      if(!is.null(input$Occ$datapath)) {load.occ$columns = names(read.csv2(input$Occ$datapath, sep = input$sep, nrows = 0))}
+      if(!is.null(input$Occ)) {
+        file = paste0(switch(input$Occ$root,
+                             'wd' = getwd(),
+                             'home' = '/home',
+                             'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+        load.occ$columns = names(read.csv2(file, sep = input$sep, nrows = 0))
+        }
     })
     output$Xcol <- renderUI({selectInput('Xcol', 'X column', load.occ$columns, multiple = F)})
     output$Ycol <- renderUI({selectInput('Ycol', 'Y column', load.occ$columns, multiple = F)})
-    output$Pcol <- renderUI({selectInput('Pcol', 'Presence column', c('None', load.occ$columns), multiple = F)})
+    output$Pcol <- renderUI({selectInput('Pcol', 'Presence (1) / absence (0) column', c('None', load.occ$columns), multiple = F)})
     output$Spcol <- renderUI({selectInput('Spcol', 'Species column', c('None', load.occ$columns), multiple = F)})
     output$reso <- renderUI({if(input$GeoRes){sliderInput('reso', 'Resampling grid coefficient', 1,10,1)}})
     observeEvent(input$load2, {
       validate(
         need(length(data$Env@layers) > 0, 'You need to load environmental variable before !'),
-        need(length(input$Occ$datapath) > 0, 'Choose occurrences file first !')
+        need(length(input$Occ) > 0, 'Choose occurrences file first !')
       )
       if(is.null(input$dec)) {dec = ","} else {dec = input$dec}
       if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
       if(is.null(input$sep)) {sep = ""} else {sep = input$sep}
-      data$Occ = withProgress(message = 'Occurrences loading',
+      file = paste0(switch(input$Occ$root,
+                           'wd' = getwd(),
+                           'home' = '/home',
+                           'root' = '/'), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+      a = try(withProgress(message = 'Occurrences loading',
                               load_occ(path = {},
                                        data$Env,
-                                       file = as.character(input$Occ$datapath),
+                                       file,
                                        Xcol = input$Xcol,
                                        Ycol = input$Ycol,
                                        Spcol = Spcol,
@@ -400,59 +473,79 @@ gui = function (browser = F, maxmem = 10e9) {
                                        verbose = F,
                                        GUI = T,
                                        sep = sep,
-                                       dec = dec))
+                                       dec = dec)))
+      if(inherits(a, 'try-error')){
+        output$Occbug <- renderUI(p('Occurrences loading failed, please check your inputs and try again'))
+      } else {
+        output$Occbug <- renderUI(p(' '))
+        data$Occ = a
+      }
     })
     output$occ <- renderDataTable({if(length(data$Occ) > 0) {data$Occ}})
 
     ## Load previous model page ##
-    output$getwd <- renderText({data$dir})
-    observeEvent(input$open, {data$dir = paste0(data$dir, '/', input$dir)})
-    observeEvent(input$back, {data$dir = paste0(strsplit(data$dir, '/')[[1]][-length(strsplit(data$dir, '/')[[1]])], collapse = '/')})
-    observeEvent(input$home, {data$dir = getwd()})
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = T)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', disks), filetypes=c(''))
+    } else {
+      shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
+    }
     observeEvent(input$load.model, {
       validate(
         need(input$model.type != ' ', 'You need to choose the model type first !')
       )
+      if(Sys.info()[['sysname']] == 'Linux') {
+        path = switch(input$prevmodel$root,
+                      'wd' = getwd(),
+                      'home' = '/home/',
+                      'root' = '/')
+      } else if (Sys.info()[['sysname']] == 'Windows') {
+        path = switch(input$prevmodel$root, 'wd' = getwd())
+      } else {
+        path = switch(input$prevmodel$root,
+                      'wd' = getwd(),
+                      'home' = '/home',
+                      'root' = '/')
+      }
+      for(i in 2:(length(input$prevmodel$path)-1)){
+        path = paste0(path, '/', input$prevmodel$path[[i]][1])
+      }
+      name = input$prevmodel$path[[length(input$prevmodel$path)]][1]
       if (input$model.type == 'Ensemble SDM') {
-        data$ENM = load_enm(name = input$dir, path = data$dir)
-        if(!is.null(data$ENM)){result$ENM = data$ENM}
-        }
+        a = try(load_enm(name, path))
+      }
       if (input$model.type == 'SSDM') {
-        data$Stack = withProgress(message = 'Model loading',
-                                  load_stack(name = input$dir, path = data$dir, GUI = T))
-        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
-        }
-      output$model.preview <- renderPlot({
+        a = try(withProgress(message = 'Model loading', load_stack(name, path, GUI = T)))
+      }
+      if(inherits(a, 'try-error')){
+        output$prevmodelbug <- renderText('Previous model loading failed, please check your inputs and try again')
+      } else {
+        output$prevmodelbug <- renderText(' ')
         if (input$model.type == 'Ensemble SDM') {
-          spplot(data$ENM@projection,
-                 main = 'Habitat suitability map',
-                 xlab = 'Longitude (\u02DA)',
-                 ylab = 'Latitude (\u02DA)',
-                 col.regions = rev(terrain.colors(10000)))
+          data$ENM = a
+          if(!is.null(data$ENM)){result$ENM = data$ENM}
+          output$model.preview <- renderPlot({spplot(data$ENM@projection,
+                                                     main = 'Habitat suitability map',
+                                                     xlab = 'Longitude (\u02DA)',
+                                                     ylab = 'Latitude (\u02DA)',
+                                                     col.regions = rev(terrain.colors(10000)))})
         }
         if (input$model.type == 'SSDM') {
-          spplot(data$Stack@diversity.map,
-               main = data$Stack@name,
-               xlab = 'Longitude (\u02DA)',
-               ylab = 'Latitude (\u02DA)',
-               col.regions = rev(terrain.colors(10000)))
+          data$Stack = a
+          for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
+          output$model.preview <- renderPlot({spplot(data$Stack@diversity.map,
+                                                     main = data$Stack@name,
+                                                     xlab = 'Longitude (\u02DA)',
+                                                     ylab = 'Latitude (\u02DA)',
+                                                     col.regions = rev(terrain.colors(10000)))})
         }
-      })
-    })
-    output$path <- renderUI(selectInput('dir','Choose model path', list.dirs(data$dir, full.names = F, recursive = F)))
-
-    ### Modelling Menu ###
-    output$modelling.menu <- renderUI({
-      if(length(data$Occ) > 0) {
-        sidebarMenu(
-          menuItem('Modelling',
-                   menuSubItem('Modelling tab', 'modelling'),
-                   selectInput('modellingchoice', 'Modelling type ',
-                               c('Algorithm modelling', 'Ensemble modelling', 'Stack modelling'),
-                               selected = 'Stack modelling')
-          )
-
-        )
       }
     })
 
@@ -551,7 +644,7 @@ gui = function (browser = F, maxmem = 10e9) {
     output$weightUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('weight', 'Ensemble weighted', value = T)}})
     output$rangeUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){checkboxInput('range', 'Range restriction', value = F)}})
     output$rangevalUI <- renderUI({if(input$modellingchoice == 'Stack modelling' && input$range){sliderInput('rangeval', 'Range restriction value', 1,100,5, step = 1)}})
-    output$rangeinfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling' && input$range){p('Set a value of range restriction (in pixels) around presences occurrences on habitat suitability maps (all further points will have a null probability)')}})
+    output$rangeinfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling' && input$range){p('Set a value of range restriction (in pixels) around presence occurrences on habitat suitability maps (all further points will have a null probability)')}})
 
     ## Advanced modelling parameters ##
     output$tmpUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('tmp', 'Temporary files', value = F)}})
@@ -732,7 +825,7 @@ gui = function (browser = F, maxmem = 10e9) {
                                                   rep.B =  rep.B,
                                                   range = range,
                                                   endemism = endemism,
-                                                  verbose = F,
+                                                  verbose = T,
                                                   GUI = T,
                                                   test = algoparam$test,
                                                   maxit = algoparam$maxit,
@@ -755,21 +848,6 @@ gui = function (browser = F, maxmem = 10e9) {
       }
       })
 
-     ### Results Menu ###
-    output$plotting.menu <- renderUI({
-      if(!is.null(data$Stack) || !is.null(data$ENM)) {
-          if(inherits(data$ENM,'Algorithm.SDM')) {tabname = 'Algorithm SDM'} else {tabname = 'Ensemble SDM'}
-          sidebarMenu(
-            menuItem('Results',
-                     if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
-                     menuItem(tabname, tabName = "stackenm", icon = icon("pagelines")),
-                     if(!is.null(data$Stack)){selectInput('enmchoice', 'Ensemble model specie :', data$enms, selectize = TRUE)},
-                     if(!inherits(data$ENM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
-            )
-          )
-    }
-    })
-
     ## Stack results ##
     output$Stackname <- renderUI(h2(data$Stack@name, align = 'center'))
     ranges <- reactiveValues(x = NULL, y = NULL)
@@ -789,7 +867,7 @@ gui = function (browser = F, maxmem = 10e9) {
       ranges$y <- NULL
     })
     output$Diversity <- renderPlot({
-      eval = character()
+      eval = 'Mean'
       ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
       for (i in 1:length(ensemble.metric)) {
         eval = paste(eval, paste(ensemble.metric[i],':',round(data$Stack@evaluation[1,which(names(data$Stack@evaluation) == ensemble.metric[i])], digits = 3)))
@@ -803,29 +881,15 @@ gui = function (browser = F, maxmem = 10e9) {
            col.regions = rev(terrain.colors(10000)))
     })
     output$endemism <- renderPlot({
-      eval = character()
-      ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
-      for (i in 1:length(ensemble.metric)) {
-        eval = paste(eval, paste(ensemble.metric[i],':',round(data$Stack@evaluation[1,which(names(data$Stack@evaluation) == ensemble.metric[i])], digits = 3)))
-        if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
-      }
       if (!is.null(ranges$x)) {endemism = crop(data$Stack@endemsim.map, c(ranges$x, ranges$y))} else {endemism = data$Stack@endemism.map}
       spplot(endemism,
-             main = eval,
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))
     })
     output$Uncertainity <- renderPlot({
-      eval = character()
-      ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
-      for (i in 1:length(ensemble.metric)) {
-        eval = paste(eval, paste(ensemble.metric[i],':',round(data$Stack@evaluation[1,which(names(data$Stack@evaluation) == ensemble.metric[i])], digits = 3)))
-        if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
-      }
       if (!is.null(ranges$x)) {uncert = crop(data$Stack@uncertainty, c(ranges$x, ranges$y))} else {uncert = data$Stack@uncertainty}
       spplot(uncert,
-             main = eval,
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))
@@ -919,11 +983,11 @@ gui = function (browser = F, maxmem = 10e9) {
       evaluation.info = 'Evaluation of models with'
       for (i in 1:length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
         if (i == 1) {
-          evaluation.info = paste(evaluation.info, strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+          evaluation.info = paste0(evaluation.info, ' ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
         } else if (i == length(data$Stack@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste(evaluation.info, 'and', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+          evaluation.info = paste0(evaluation.info, ' and ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
         } else {
-          evaluation.info = paste(evaluation.info, ',', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+          evaluation.info = paste0(evaluation.info, ', ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
         }
       }
       evaluation.info
@@ -971,9 +1035,7 @@ gui = function (browser = F, maxmem = 10e9) {
     output$enm.uncertainty <- renderPlot({
       if(!inherits(result$ENM,'Algorithm.SDM')) {
         if (!is.null(ranges$x)) {uncert.map = crop(result$ENM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = result$ENM@uncertainty}
-        spplot(uncert.map,
-               main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
-               col.regions = rev(terrain.colors(10000)))
+        spplot(uncert.map, col.regions = rev(terrain.colors(10000)))
       }
     })
     # Evaluation
@@ -1091,7 +1153,7 @@ gui = function (browser = F, maxmem = 10e9) {
       text
     })
     output$enm.varimp.info <- renderText({
-      varimp.info = 'Axes evaluated with the variation of '
+      varimp.info = 'Variable relative contribution evaluated with '
       for (i in 1:length(result$ENM@parameters$axes.metric)) {
         if (i == 1) {
           varimp.info = paste(varimp.info, result$ENM@parameters$axes.metric[i])
@@ -1107,11 +1169,11 @@ gui = function (browser = F, maxmem = 10e9) {
       evaluation.info = 'Models evaluated with'
       for (i in 1:length(strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
         if (i == 1) {
-          evaluation.info = paste(evaluation.info, strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+          evaluation.info = paste0(evaluation.info, ' ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
         } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste(evaluation.info, 'and', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+          evaluation.info = paste0(evaluation.info, ' and ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
         } else {
-          evaluation.info = paste(evaluation.info, ',', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],'(>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+          evaluation.info = paste0(evaluation.info, ' , ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
         }
       }
       if (result$ENM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
@@ -1121,19 +1183,36 @@ gui = function (browser = F, maxmem = 10e9) {
     ### Save Menu ###
 
     ## Save model page ##
-    output$savegetwd <- renderText({data$dir})
-    observeEvent(input$saveopen, {data$dir = paste0(data$dir, '/', input$savedir)})
-    observeEvent(input$saveback, {data$dir = paste0(strsplit(data$dir, '/')[[1]][-length(strsplit(data$dir, '/')[[1]])], collapse = '/')})
-    observeEvent(input$savehome, {data$dir = getwd()})
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyDirChoose(input, 'save', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = T)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyDirChoose(input, 'save', session=session, roots=c( wd='.', disks), filetypes=c(''))
+    } else {
+      shinyDirChoose(input, 'save', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
+    }
     observeEvent(input$savemodel, {
-      if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = input$savename, path = data$dir, verbose = F, GUI = T)}
-        if(!is.null(data$Stack)) {save.stack(data$Stack, name = input$savename, path = data$dir, verbose = F, GUI = T)}
-    })
-    output$savepath <- renderUI(selectInput('savedir','Choose path', list.dirs(data$dir, full.names = F, recursive = F)))
+        path = switch(input$prevmodel$root,
+                      'wd' = getwd(),
+                      'home' = '/home',
+                      'root' = '/')
+      for(i in 2:length(input$prevmodel$path)){
+        path = paste0(path, '/', input$prevmodel$path[[i]][1])
+      }
+      if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = data$ENM@name, path, verbose = F, GUI = T)}
+        if(!is.null(data$Stack)) {save.stack(data$Stack, name = data$Stack@name, path, verbose = F, GUI = T)}
+     })
   }
+
 
   #### Launching server ####
   #options(shiny.launch.browser = browser)
   options(shiny.maxRequestSize = maxmem)
-  shinyApp(ui, server)
+  app <- shinyApp(ui, server)
+  return(runApp(app))
 }

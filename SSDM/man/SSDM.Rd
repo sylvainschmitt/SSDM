@@ -6,7 +6,7 @@
 \alias{SSDM-package}
 \title{SSDM: Stacked species distribution modelling}
 \description{
-SSDM is a package to build multi-species distribution models. Individual
+SSDM is a package to map species richness and endemism based on stacked species distribution models (SSDM). Individual
 SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species,
 an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map,
 and can assess variable importance, algorithm accuracy, and between-algorithm

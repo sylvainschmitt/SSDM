@@ -1,6 +1,6 @@
 #' @include Ensemble.SDM.R checkargs.R
 #' @importFrom sp Polygon Polygons SpatialPolygons bbox
-#' @importFrom raster raster stack reclassify mask
+#' @importFrom raster raster stack reclassify mask calc overlay
 NULL
 
 #'Stack different ensemble SDMs in an SSDM

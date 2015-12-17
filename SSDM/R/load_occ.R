@@ -1,4 +1,5 @@
 #' @include checkargs.R
+#' @importFrom shiny incProgress
 #' @importFrom spThin thin
 #' @importFrom raster res extract
 NULL

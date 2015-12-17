@@ -1,4 +1,5 @@
 #' @include modelling.R ensemble.R Ensemble.SDM.R checkargs.R
+#' @importFrom shiny incProgress
 #' @importFrom raster writeRaster
 NULL
 

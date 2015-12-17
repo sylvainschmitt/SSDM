@@ -1,5 +1,6 @@
 #' @include Algorithm.SDM.R ensemble.R Ensemble.SDM.R checkargs.R
 #'   stacking.R Stacked.SDM.R
+#' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
 NULL
 

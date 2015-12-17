@@ -1,4 +1,5 @@
 #' @include Ensemble.SDM.R Stacked.SDM.R
+#' @importFrom shiny incProgress
 #' @importFrom raster raster stack
 NULL
 
