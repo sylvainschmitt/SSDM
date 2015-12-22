@@ -283,8 +283,10 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     if(length(enms[[i]]@algorithm.correlation) == 0) {cat('\n', enms[[i]]@name,'algorithms correlation has not been computed. \n')} else {
       for (j in 1:length(enms[[i]]@algorithm.correlation)) {
         if (length(strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]]) > 1){
-          names(enms[[i]]@algorithm.correlation)[j] = strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
-          row.names(enms[[i]]@algorithm.correlation)[j] = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]][2]
+          a = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.SDM', fixed = T)[[1]][1]
+          a = tail(strsplit(a, '.', fixed = T)[[1]], n = 1)
+          names(enms[[i]]@algorithm.correlation)[j] = a
+          row.names(enms[[i]]@algorithm.correlation)[j] = a
         }
         if(!(names(enms[[i]]@algorithm.correlation)[j] %in% algo)) {algo = c(algo, names(enms[[i]]@algorithm.correlation)[j])}
       }

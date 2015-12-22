@@ -83,6 +83,7 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
   if (is.null(Spcol)) {
     Occurrences$SpNULL = 1
     Spcol = 'SpNULL'
+    Occurrences$SpNULL = as.factor(Occurrences$SpNULL)
   }
   for (i in 1:length(levels(Occurrences[,which(names(Occurrences)==Spcol)]))) {
     if (GeoRes) {
@@ -99,7 +100,6 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
       for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
       if (length(deleted) > 0) {Occurrences = Occurrences[-deleted,]}
     }
-    if (Spcol == 'SpNULL') {Occurrences = Occurrences[-which(names(Occurrences)=='SpNULL')]}
   }
   Occurrences = droplevels(Occurrences)
 
@@ -113,6 +113,7 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
       Occurrences = Occurrences[-which(Occurrences[,which(names(Occurrences)==Spcol)] == sp),]
       }
   }
+  if (Spcol == 'SpNULL') {Occurrences = Occurrences[-which(names(Occurrences)=='SpNULL')]}
   Occurrences = droplevels(Occurrences)
 
   #setwd(pdir)

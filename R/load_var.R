@@ -38,7 +38,7 @@ NULL
 #'
 #'@export
 load_var <- function (path = getwd(), files = NULL,
-                      format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
+                      format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.envi','.bil','.img'),
                       factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
   # Check arguments
   .checkargs(path = path, files = files, format = format, factors = factors,

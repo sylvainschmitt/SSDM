@@ -43,7 +43,7 @@
   if(!inherits(Xcol, 'character')){stop('Xcol parameter should be a character (column name).')}
   if(!inherits(Ycol, 'character')){stop('Ycol parameter should be a character (column name).')}
   if(!inherits(Pcol, 'character') && !is.null(Pcol)){stop('Pcol parameter should be a character (column name), or NULL if no presence column.')}
-  if(!inherits(Spcol, 'character')){stop('Spcol parameter should be a character (column name).')}
+  if(!inherits(Spcol, 'character') && !is.null(Pcol)){stop('Spcol parameter should be a character (column name), or NULL if no species column..')}
 
   # Name and Spname
   if(!inherits(name, 'character') && !is.null(name)){stop('name parameter should be a character, or NULL to be automatically defined.')}

@@ -5,7 +5,7 @@
 \title{Load environmental variables}
 \usage{
 load_var(path = getwd(), files = NULL, format = c(".grd", ".tif", ".asc",
-  ".sdat", ".rst", ".nc", ".tif", ".envi", ".bil", ".img"), factors = NULL,
+  ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), factors = NULL,
   Norm = T, tmp = T, verbose = T, GUI = F)
 }
 \arguments{

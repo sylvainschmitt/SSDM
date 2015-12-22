@@ -1,3 +1,6 @@
+SSDM 0.1.9009 Stacking Algo. Corr. row names duplicate (strsplit)
+              Duplicated '.tif' in load_occ doc @Dimitri_Justeau
+              Null supported by Spcol (default) in .checkargs @Dimitri_Justeau
 SSDM 0.1.9008 Windows gui data input fix (default switch)
 SSDM 0.1.9007 load_occ porr data load improvement (occ not in spatial extent + less than 3 occ)
 SSDM 0.1.9006 ShinyApp structure in inst and shinyFiles working
