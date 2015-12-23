@@ -63,7 +63,8 @@ load_var <- function (path = getwd(), files = NULL,
         # Extent and resolution check
         reso = res(Raster)
         extent = extent(Raster)
-        if (is.null(resostack)) {
+        #if (is.null(resostack)) {
+        if (i==1 && j==1) {
           resostack = reso
           extentstack = extent
         } else {
