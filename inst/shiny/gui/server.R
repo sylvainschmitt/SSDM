@@ -105,7 +105,7 @@ server <- function(input, output, session) {
                                   format = load.var$formats,
                                   Norm = load.var$norm,
                                   tmp = F,
-                                  factors = load.var$factors,
+                                  categorical = load.var$factors,
                                   verbose = F,
                                   GUI = T)))
     if(inherits(a, 'try-error')){

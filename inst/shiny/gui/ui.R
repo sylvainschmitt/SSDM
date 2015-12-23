@@ -26,7 +26,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                   fluidRow(
                                     box(title = 'Environmental variable', height = 600,
                                         uiOutput('Envbug'),
-                                        shinyFilesButton('envfiles', 'Rasters selection', 'Please select rasters', FALSE, multiple = T),
+                                        shinyFilesButton('envfiles', 'Raster selection', 'Please select rasters', FALSE, multiple = T),
                                         uiOutput('factors'),
                                         p('Which variable should be considered as a categorical variable'),
                                         checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = T),
