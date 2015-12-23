@@ -30,7 +30,7 @@
                       file = NULL,
                       files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
-                      factors = NULL,
+                      categorical = NULL,
                       Norm = T,
                       enm = Ensemble.SDM(),
                       stack = Stacked.SDM(),
@@ -122,7 +122,7 @@
   if(!inherits(file,'character') && !is.null(file)){stop('file parameter should be characters or NULL')}
   if(!inherits(files,'character') && !is.null(files)){stop('files parameter should be characters or NULL')}
   if(!is.null(format) && !inherits(format,'character') || (inherits(format,'character') && !(format %in% c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img')))){stop('format parameter should be .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil or .img')}
-  if(!inherits(factors,'character') && !is.null(factors)){stop('factors parameter should be characters or NULL')}
+  if(!inherits(categorical,'character') && !is.null(categorical)){stop('categorical parameter should be characters or NULL')}
   if(!inherits(Norm,'logical')){stop('Norm parameter should be a logical (True or False).')}
 
   # save

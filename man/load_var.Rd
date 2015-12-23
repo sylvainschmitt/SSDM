@@ -5,7 +5,7 @@
 \title{Load environmental variables}
 \usage{
 load_var(path = getwd(), files = NULL, format = c(".grd", ".tif", ".asc",
-  ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), factors = NULL,
+  ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
   Norm = T, tmp = T, verbose = T, GUI = F)
 }
 \arguments{
@@ -19,7 +19,7 @@ be loaded.}
 \item{format}{character. Format of environmental variables files
 (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).}
 
-\item{factors}{character. Specify whether an environmental variable is a categorical variable.}
+\item{categorical}{character. Specify whether an environmental variable is a categorical variable.}
 
 \item{Norm}{logical. If set to true, normalizes environmental variables between 0 and 1.}
 

@@ -1,3 +1,7 @@
+SSDM 0.1.9010 uncertainties stack bug catch in try
+              load_var with only folder path debug @Dimitri_Justeau
+              load_var parameter: factors -> categorical @Dimitri_Justeau
+              Presence / absence occurrences modelling @Robin_Pouteau
 SSDM 0.1.9009 Stacking Algo. Corr. row names duplicate (strsplit)
               Duplicated '.tif' in load_occ doc @Dimitri_Justeau
               Null supported by Spcol (default) in .checkargs @Dimitri_Justeau

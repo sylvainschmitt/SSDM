@@ -16,7 +16,7 @@ NULL
 #'  be loaded.
 #'@param format character. Format of environmental variables files
 #'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
-#'@param factors character. Specify whether an environmental variable is a categorical variable.
+#'@param categorical character. Specify whether an environmental variable is a categorical variable.
 #'@param Norm logical. If set to true, normalizes environmental variables between 0 and 1.
 #'@param tmp logical. If set to true, rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
@@ -39,9 +39,9 @@ NULL
 #'@export
 load_var <- function (path = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.envi','.bil','.img'),
-                      factors = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
+                      categorical = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
   # Check arguments
-  .checkargs(path = path, files = files, format = format, factors = factors,
+  .checkargs(path = path, files = files, format = format, categorical = categorical,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
 
   # pdir = getwd()
@@ -63,7 +63,7 @@ load_var <- function (path = getwd(), files = NULL,
         # Extent and resolution check
         reso = res(Raster)
         extent = extent(Raster)
-        if (j == 1  && i == 1) {
+        if (is.null(resostack)) {
           resostack = reso
           extentstack = extent
         } else {
@@ -94,7 +94,7 @@ load_var <- function (path = getwd(), files = NULL,
         Raster = reclassify(Raster, c(-Inf,-900,NA))
         Raster = crop(Raster, extentstack)
         names(Raster) = as.character(strsplit(files[i],format[j]))
-        if (names(Raster) %in% factors) {
+        if (names(Raster) %in% categorical) {
           Raster = raster::as.factor(Raster)
           row.names(Raster@data@attributes[[1]]) = Raster@data@attributes[[1]]$ID
           fun = max

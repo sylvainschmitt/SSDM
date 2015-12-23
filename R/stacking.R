@@ -223,7 +223,16 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   uncertainities = stack()
   for (i in 1:length(enms)) {
     a = try(enms[[i]]@uncertainty)
-    if (inherits(a, 'try-error')) {cat('Ensemble model',enms[[i]]@name,'uncertinity map not computed')} else {uncertainities = stack(uncertainities, a)}
+    if (inherits(a, 'try-error')) {
+      cat('Ensemble model',enms[[i]]@name,'uncertinity map not computed')
+    } else {
+        b = try(stack(uncertainities, a))
+        if(inherits(b, 'try-error')) {
+          cat('Ensemble model', enms[[i]]@name, ':', b)
+          } else {
+            uncertainities = b
+          }
+        }
   }
   a = try(calc(uncertainities, mean))
   if (inherits(a, 'try-error')) {cat('No uncertainty map to do uncertainty mapping')

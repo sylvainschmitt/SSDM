@@ -261,12 +261,20 @@ modelling = function(algorithm,
     PO = T # Presence only
     if(verbose){cat('No presence column, presence-only data set is supposed.\n')}
     model@parameters$data = 'presence-only data set'
-  } else if ((Pcol %in% names(Occurrences)) == F) {stop('Presence column is not well defined')}
+  } else if ((Pcol %in% names(Occurrences)) == F) {
+    stop('Presence column is not well defined')
+  } else {
+    PO = F
+  }
   if (!is.null(PA)) {PO = T}
   if (PO) {cat('Pseudo-absence selection will be computed.\n')}
   data = data.frame(X = Occurrences[which(names(Occurrences) == Xcol)], Y = Occurrences[which(names(Occurrences) == Ycol)])
   names(data) = c('X','Y')
-  if (PO) {data$Presence = 1} else {data$Presence = Occurrences[which(names(Occurrences == Pcol))]}
+  if (PO) {
+    data$Presence = 1
+  } else {
+    data$Presence = Occurrences[,which(names(Occurrences) == Pcol)]
+  }
 
   # Environment data input test | RasterStack needed
   if (is.raster(Env)) {Env = stack(Env)}
@@ -275,14 +283,15 @@ modelling = function(algorithm,
   if(GUI) {incProgress(1/5, detail = 'Data ckecked')}
 
   # Pseudo - absences selection
-  if(verbose){cat('Pseudo absence selection... \n')}
   model@data = data
   if (PO) {
+    if(verbose){cat('Pseudo absence selection... \n')}
     model = PA.select(model, Env, PA)
-    model@parameters['PA'] = T}
+    model@parameters['PA'] = T
+    if(verbose){cat('   done. \n\n')}
+    if(GUI) {incProgress(1/5, detail = 'Pseudo-absence selected')}
+  }
   model = data.values(model, Env)
-  if(verbose){cat('   done. \n\n')}
-  if(GUI) {incProgress(1/5, detail = 'Pseudo-absence selected')}
 
   # Evaluation
   if(verbose){cat('Model evaluation...\n')}
