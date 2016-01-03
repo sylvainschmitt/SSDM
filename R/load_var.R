@@ -52,7 +52,14 @@ load_var <- function (path = getwd(), files = NULL,
   # Rasters loading
   files.null = files
   if (is.null(files)) {files.null = T} else {files.null = F}
-  for (j in 1:length(format)) {
+  resostack = c(0, 0)
+  extentstack = extent(-Inf,Inf,-Inf,Inf)
+  if(files.null){
+    n = length(format)
+  } else {
+    n = 1
+  }
+  for (j in 1:n) {
     if(files.null) {
       files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
@@ -63,19 +70,12 @@ load_var <- function (path = getwd(), files = NULL,
         # Extent and resolution check
         reso = res(Raster)
         extent = extent(Raster)
-        #if (is.null(resostack)) {
-        if (i==1 && j==1) {
-          resostack = reso
-          extentstack = extent
-        } else {
-          resostack[1] = max(reso[1], resostack[1])
-          resostack[2] = max(reso[2], resostack[2])
-          # Extent and resolution adpatation
-          extentstack@xmin = max(extentstack@xmin, extent@xmin)
-          extentstack@xmax = min(extentstack@xmax, extent@xmax)
-          extentstack@ymin = max(extentstack@ymin, extent@ymin)
-          extentstack@ymax = min(extentstack@ymax, extent@ymax)
-        }
+        resostack[1] = max(reso[1], resostack[1])
+        resostack[2] = max(reso[2], resostack[2])
+        extentstack@xmin = max(extentstack@xmin, extent@xmin)
+        extentstack@xmax = min(extentstack@xmax, extent@xmax)
+        extentstack@ymin = max(extentstack@ymin, extent@ymin)
+        extentstack@ymax = min(extentstack@ymax, extent@ymax)
         if(GUI) {incProgress(1/(length(files)*3), detail = paste(i,'loaded'))}
       }
     }
@@ -84,7 +84,7 @@ load_var <- function (path = getwd(), files = NULL,
   if(verbose) {cat('Variables treatment \n')}
 
   if(verbose) {cat('   resolution and extent adaptation...')}
-  for (j in 1:length(format)) {
+  for (j in 1:n) {
     if(files.null) {
       files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
