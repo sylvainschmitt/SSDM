@@ -2,6 +2,7 @@
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
+#' @importFrom parallel mclapply
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species
@@ -77,6 +78,9 @@ NULL
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+#'  used all you available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -252,10 +256,14 @@ NULL
 #'
 #'
 #'
+#'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
+#'
 #'
 #'
 #'
@@ -285,9 +293,13 @@ NULL
 #'
 #'
 #'
+#'
+#'
 #'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
 #'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
 #'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+#'
+#'
 #'
 #'
 #'
@@ -319,7 +331,7 @@ stack_modelling = function(algorithms,
                            # Range restriction and endemism
                            range = NULL, endemism = 'WEI',
                            # Informations parameters
-                           verbose = T, GUI = F,
+                           verbose = T, GUI = F, cores = 1,
                            # Modelling parameters
                            ...) {
   # Check arguments
@@ -328,7 +340,7 @@ stack_modelling = function(algorithms,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, weight = weight,
              method = method, metric = metric, rep.B = rep.B, range = range, endemism = endemism,
-             verbose = verbose, GUI = GUI)
+             verbose = verbose, GUI = GUI, cores = cores)
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
@@ -342,28 +354,34 @@ stack_modelling = function(algorithms,
 
   # Ensemble models creation
   if(verbose){cat('#### Ensemble models creation ##### \n\n')}
-  enms = list()
-  for (i in 1:length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))) {
-    enm.name = paste0(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))[i])
-    Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))[i])
-    if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
-    enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                 Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
-                                 PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                 axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                 ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                 weight = weight, verbose = verbose, GUI = F, ...))
-    if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)])))+1),
-                         detail = paste(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i],' ensemble SDM built'))}
-    if (inherits(enm, "try-error")) {if(verbose){cat(enm)}} else {
-      if (tmp && !is.null(enm)) {
-        enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
-        enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
-      }
-      if(!is.null(enm)) {enms[[length(enms)+1]] = enm}
-      if(verbose){cat('\n\n')}
-    }
-  }
+  species = levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))
+  enms = parallel::mclapply(species,
+                            function(species){
+                              for (i in 1:length(species)) {
+                                enm.name = paste0(species[i])
+                                Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species[i])
+                                if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
+                                enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
+                                                             Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
+                                                             PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                                             axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                                             ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                                             weight = weight, verbose = verbose, GUI = F, ...))
+                                if(GUI) {incProgress(1/(length(species)+1),
+                                                     detail = paste(species[i],' ensemble SDM built'))}
+                                if (inherits(enm, "try-error")) {if(verbose){cat(enm)}} else {
+                                  if (tmp && !is.null(enm)) {
+                                    enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
+                                    enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
+                                  }
+                                  if(verbose){cat('\n\n')}
+                                }
+                              }
+                              return(enm)
+                            },
+                            mc.cores = cores
+  )
+  enms = enms[!sapply(enms,is.null)]
 
   # Species stacking
   if (length(enms) < 2) {
@@ -390,6 +408,5 @@ stack_modelling = function(algorithms,
       else {save.stack(stack, path = path)}
     }
   }
-
   return(stack)
 }

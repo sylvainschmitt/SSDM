@@ -1,3 +1,4 @@
+SSDM 0.1.9012 Parallel computing for stack_modelling with parallel::mclapply
 SSDM 0.1.9011 load_var format and reso + extent bugged fixed @Dimitri_Justeau
 SSDM 0.1.9010 uncertainties stack bug catch in try
               load_var with only folder path debug @Dimitri_Justeau

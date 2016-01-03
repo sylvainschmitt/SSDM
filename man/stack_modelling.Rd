@@ -11,7 +11,7 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   uncertainty = T, tmp = F, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = T, method = "P", metric = "SES",
   rep.B = 1000, range = NULL, endemism = "WEI", verbose = T, GUI = F,
-  ...)
+  cores = 1, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -102,6 +102,10 @@ the console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the
 user interface).}
+
+\item{cores}{integer. Specify the number of CPU cores used to do the
+computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+used all you available CPU cores.}
 
 \item{...}{additional parameters for the algorithm modelling function (see
  details below).}
@@ -309,6 +313,8 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
+
  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
  thresholds of occurrence in the prediction of species distributions."
  \emph{Ecography} 28:85-393
@@ -330,10 +336,14 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
+
 
 
 

@@ -568,6 +568,7 @@ server <- function(input, output, session) {
                                                 endemism = endemism,
                                                 verbose = T,
                                                 GUI = T,
+                                                cores = as.numeric(parallel::detectCores()),
                                                 test = algoparam$test,
                                                 maxit = algoparam$maxit,
                                                 epsilon = algoparam$epsilon,

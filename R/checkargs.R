@@ -35,7 +35,8 @@
                       enm = Ensemble.SDM(),
                       stack = Stacked.SDM(),
                       range = NULL,
-                      endemism = 'WEI'){
+                      endemism = 'WEI',
+                      cores = 1){
   ## Argument checking function ##
   # Occurrences, Environment, and part of X, Y, Pcol are directly defined in functions
 
@@ -136,4 +137,7 @@
       stop('range parameter should be numeric and > 0 (see help).')
     }
   }
+
+  # Cores
+  if(!inherits(cores,'numeric') || abs(cores-round(cores)) != 0 || cores < 1){stop('cores parameter should be an integer > 0 (see help).')}
 }
