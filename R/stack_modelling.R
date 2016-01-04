@@ -357,9 +357,8 @@ stack_modelling = function(algorithms,
   species = levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))
   enms = parallel::mclapply(species,
                             function(species){
-                              for (i in 1:length(species)) {
-                                enm.name = paste0(species[i])
-                                Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species[i])
+                                enm.name = paste0(species)
+                                Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
                                 if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
                                 enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
                                                              Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
@@ -367,8 +366,8 @@ stack_modelling = function(algorithms,
                                                              axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                                              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
                                                              weight = weight, verbose = verbose, GUI = F, ...))
-                                if(GUI) {incProgress(1/(length(species)+1),
-                                                     detail = paste(species[i],' ensemble SDM built'))}
+                                if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
+                                                     detail = paste(species,' ensemble SDM built'))}
                                 if (inherits(enm, "try-error")) {if(verbose){cat(enm)}} else {
                                   if (tmp && !is.null(enm)) {
                                     enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
@@ -376,7 +375,6 @@ stack_modelling = function(algorithms,
                                   }
                                   if(verbose){cat('\n\n')}
                                 }
-                              }
                               return(enm)
                             },
                             mc.cores = cores

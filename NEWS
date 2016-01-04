@@ -1,3 +1,5 @@
+SSDM 0.1.9013 Parallel computing: for loop correctly removed
+              load_var tested
 SSDM 0.1.9012 Parallel computing for stack_modelling with parallel::mclapply
 SSDM 0.1.9011 load_var format and reso + extent bugged fixed @Dimitri_Justeau
 SSDM 0.1.9010 uncertainties stack bug catch in try
