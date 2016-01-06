@@ -2,7 +2,6 @@
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
-#' @importFrom parallel mclapply
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species
@@ -103,7 +102,7 @@ NULL
 #'  \item{cv}{\strong{Cross-validation} method used to split the occurrence
 #'  dataset used for evaluation: \strong{holdout} data are partitioned into a
 #'  training set and an evaluation set using a fraction (\emph{cv.param[1]}) and
-#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-folds}
+#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-fold}
 #'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in
 #'  the training set and once the evaluation set and the operation can be
 #'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
@@ -344,7 +343,7 @@ stack_modelling = function(algorithms,
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
-  if (algorithms == 'all') {algorithms = available.algo}
+  if ('all' %in% algorithms) {algorithms = available.algo}
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
@@ -355,30 +354,71 @@ stack_modelling = function(algorithms,
   # Ensemble models creation
   if(verbose){cat('#### Ensemble models creation ##### \n\n')}
   species = levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))
-  enms = parallel::mclapply(species,
-                            function(species){
-                                enm.name = paste0(species)
-                                Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
-                                if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
-                                enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                                             Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
-                                                             PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                                             axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                                             ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                             weight = weight, verbose = verbose, GUI = F, ...))
-                                if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
-                                                     detail = paste(species,' ensemble SDM built'))}
-                                if (inherits(enm, "try-error")) {if(verbose){cat(enm)}} else {
-                                  if (tmp && !is.null(enm)) {
-                                    enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
-                                    enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
-                                  }
-                                  if(verbose){cat('\n\n')}
-                                }
-                              return(enm)
-                            },
-                            mc.cores = cores
-  )
+
+  if(cores > 1 && requireNamespace("parallel", quietly = TRUE)){
+    if(verbose){cat('Opening clusters,', cores, 'cores \n')}
+    if((parallel::detectCores()-1) < cores){warning('It seems you attributed more cores than your CPU have !')}
+    cl = parallel::makeCluster(cores, outfile = "")
+    if(verbose){cat('Exporting environment to clusters \n')}
+    parallel::clusterExport(cl, varlist=c(lsf.str(envir = globalenv()), ls(envir = environment())), envir = environment())
+    enms = parallel::parLapply(cl, species,
+                               function(species){
+                                 enm.name = species
+                                 Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
+                                 if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
+                                 enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
+                                                              Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
+                                                              PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                                              axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                                              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                                              weight = weight, verbose = verbose, GUI = F, ...))
+                                 if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
+                                                      detail = paste(species,' ensemble SDM built'))}
+                                 if (inherits(enm, "try-error")) {
+                                   if(verbose){cat(enm)}
+                                   enm = NULL
+                                 } else {
+                                   if (tmp && !is.null(enm)) {
+                                     enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
+                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
+                                   }
+                                   if(verbose){cat('\n\n')}
+                                 }
+                                 return(enm)
+                               }
+    )
+    if(verbose){cat('Closing clusters \n')}
+    parallel::stopCluster(cl)
+
+  } else {
+    enms = lapply(species,
+                  function(species){
+                    enm.name = species
+                    Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
+                    if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
+                    enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
+                                                 Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
+                                                 PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                                 axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                                 ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                                 weight = weight, verbose = verbose, GUI = F, ...))
+                    if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
+                                         detail = paste(species,' ensemble SDM built'))}
+                    if (inherits(enm, "try-error")) {
+                      if(verbose){cat(enm)}
+                      enm = NULL
+                    } else {
+                      if (tmp && !is.null(enm)) {
+                        enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
+                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
+                      }
+                      if(verbose){cat('\n\n')}
+                    }
+                    return(enm)
+                  }
+    )
+  }
+
   enms = enms[!sapply(enms,is.null)]
 
   # Species stacking

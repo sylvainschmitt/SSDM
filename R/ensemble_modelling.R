@@ -86,7 +86,7 @@ NULL
 #'  \item{cv}{\strong{Cross-validation} method used to split the occurrence
 #'  dataset used for evaluation: \strong{holdout} data are partitioned into a
 #'  training set and an evaluation set using a fraction (\emph{cv.param[1]}) and
-#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-folds}
+#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-fold}
 #'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in
 #'  the training set and once the evaluation set and the operation can be
 #'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
@@ -297,7 +297,7 @@ ensemble_modelling = function(algorithms,
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
-  if (algorithms == 'all') {algorithms = available.algo}
+  if ('all' %in% algorithms) {algorithms = available.algo}
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {

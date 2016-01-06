@@ -54,13 +54,13 @@ setMethod('save.enm', 'Ensemble.SDM', function (enm,
 
   # Tables saving
   if(verbose){cat('   tables ...')}
-  write.csv(enm@evaluation, paste0(path, "/", name, '/Tables/ENMeval'))
-  write.csv(enm@algorithm.evaluation, paste0(path, "/", name, '/Tables/AlgoEval'))
-  write.csv(enm@algorithm.correlation, paste0(path, "/", name, '/Tables/AlgoCorr'))
-  write.csv(enm@variable.importance, paste0(path, "/", name, '/Tables/VarImp'))
-  write.csv(enm@data, paste0(path, "/", name, '/Tables/Data'))
-  write.csv(enm@name, paste0(path, "/", name, '/Tables/Name'))
-  write.csv(enm@parameters, paste0(path, "/", name, '/Tables/Parameters'))
+  write.csv(enm@evaluation, paste0(path, "/", name, '/Tables/ENMeval.csv'))
+  write.csv(enm@algorithm.evaluation, paste0(path, "/", name, '/Tables/AlgoEval.csv'))
+  write.csv(enm@algorithm.correlation, paste0(path, "/", name, '/Tables/AlgoCorr.csv'))
+  write.csv(enm@variable.importance, paste0(path, "/", name, '/Tables/VarImp.csv'))
+  write.csv(enm@data, paste0(path, "/", name, '/Tables/Data.csv'))
+  write.csv(enm@name, paste0(path, "/", name, '/Tables/Name.csv'))
+  write.csv(enm@parameters, paste0(path, "/", name, '/Tables/Parameters.csv'))
   if(verbose){cat('saved \n \n')}
 })
 
@@ -80,29 +80,30 @@ setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
   # Directories creation
   dir.create(path = paste0(path, "/", name))
   path = paste0(path, "/", name)
-  dir.create(path = paste0(path, "/", 'Results'))
-  dir.create(path = paste0(path, "/", 'Results',"/Rasters"))
-  dir.create(path = paste0(path, "/", 'Results', "/Tables"))
+  dir.create(path = paste0(path, "/", 'Stack'))
+  dir.create(path = paste0(path, "/", 'Species'))
+  dir.create(path = paste0(path, "/", 'Stack',"/Rasters"))
+  dir.create(path = paste0(path, "/", 'Stack', "/Tables"))
 
   # Raster saving
   if(verbose){cat('   rasters ...')}
-  writeRaster(stack@diversity.map, paste0(path, "/", 'Results', '/Rasters/Diversity'), 'GTiff', overwrite = T)
-  writeRaster(stack@endemism.map, paste0(path, "/", 'Results', '/Rasters/Endemism'), 'GTiff', overwrite = T)
-  writeRaster(stack@uncertainty, paste0(path, "/", 'Results', '/Rasters/uncertainty'), 'GTiff', overwrite = T)
+  writeRaster(stack@diversity.map, paste0(path, "/", 'Stack', '/Rasters/Diversity'), 'GTiff', overwrite = T)
+  writeRaster(stack@endemism.map, paste0(path, "/", 'Stack', '/Rasters/Endemism'), 'GTiff', overwrite = T)
+  writeRaster(stack@uncertainty, paste0(path, "/", 'Stack', '/Rasters/uncertainty'), 'GTiff', overwrite = T)
   cat('saved \n')
 
   # Tables saving
   if(verbose){cat('   tables ...')}
-  write.csv(stack@evaluation, paste0(path, "/", 'Results', '/Tables/StackEval'))
-  write.csv(stack@algorithm.evaluation, paste0(path, "/", 'Results', '/Tables/AlgoEval'))
-  write.csv(stack@algorithm.correlation, paste0(path, "/", 'Results', '/Tables/AlgoCorr'))
-  write.csv(stack@variable.importance, paste0(path, "/", 'Results', '/Tables/VarImp'))
-  write.csv(stack@name, paste0(path, "/", 'Results', '/Tables/Name'))
-  write.csv(stack@parameters, paste0(path, "/", 'Results', '/Tables/Parameters'))
+  write.csv(stack@evaluation, paste0(path, "/", 'Stack', '/Tables/StackEval.csv'))
+  write.csv(stack@algorithm.evaluation, paste0(path, "/", 'Stack', '/Tables/AlgoEval.csv'))
+  write.csv(stack@algorithm.correlation, paste0(path, "/", 'Stack', '/Tables/AlgoCorr.csv'))
+  write.csv(stack@variable.importance, paste0(path, "/", 'Stack', '/Tables/VarImp.csv'))
+  write.csv(stack@name, paste0(path, "/", 'Stack', '/Tables/Name.csv'))
+  write.csv(stack@parameters, paste0(path, "/", 'Stack', '/Tables/Parameters.csv'))
   cat('saved \n\n')
 
   # ENMS saving
   if(verbose){cat('   enms ... \n\n')}
-  for (i in 1:length(stack@enms)) {save.enm(stack@enms[[i]], path = path, verbose = verbose, GUI = GUI)}
+  for (i in 1:length(stack@enms)) {save.enm(stack@enms[[i]], path = paste0(path,'/','Species'), verbose = verbose, GUI = GUI)}
   if(verbose){cat('saved \n \n')}
 })

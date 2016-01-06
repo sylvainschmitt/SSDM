@@ -539,6 +539,11 @@ server <- function(input, output, session) {
         output$modelfailed = renderText('No ensemble SDM were kept, maybe you should try lower ensemble threshold(s) ?')
       }
     }
+    if(requireNamespace("parallel", quietly = TRUE)){
+      cores = parallel::detectCores() - 1
+    } else {
+      cores = 1
+    }
     if(input$modellingchoice == 'Stack modelling'){
       data$Stack = withProgress(message = 'SSDM',
                                 stack_modelling(algo,
@@ -568,7 +573,6 @@ server <- function(input, output, session) {
                                                 endemism = endemism,
                                                 verbose = T,
                                                 GUI = T,
-                                                cores = as.numeric(parallel::detectCores()),
                                                 test = algoparam$test,
                                                 maxit = algoparam$maxit,
                                                 epsilon = algoparam$epsilon,
