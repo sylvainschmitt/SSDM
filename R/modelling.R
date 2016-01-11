@@ -320,11 +320,14 @@ modelling = function(algorithm,
     model = evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric, Env, ...)
     if(verbose){cat('   done. \n\n')}
     if(GUI) {incProgress(1/5, detail = 'SDM axes contribution evaluated')}
-
+    rm(list = ls()[-which(ls() == 'model')])
+    gc()
     return(model)
   } else {
     if(verbose){cat('Model have been rejected, NULL is returned ! \n')}
     if(GUI) {incProgress(2/5, detail = 'SDM rejected')}
+    rm(list = ls())
+    gc()
     return(NULL)
   }
 }

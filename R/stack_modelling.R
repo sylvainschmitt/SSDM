@@ -371,7 +371,7 @@ stack_modelling = function(algorithms,
                                                               PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                                               axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                                               ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                              weight = weight, verbose = verbose, GUI = F, ...))
+                                                              weight = weight, verbose = verbose, GUI = F, n.cores = 1, ...))
                                  if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
                                                       detail = paste(species,' ensemble SDM built'))}
                                  if (inherits(enm, "try-error")) {

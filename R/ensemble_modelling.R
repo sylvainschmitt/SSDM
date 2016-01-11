@@ -356,6 +356,7 @@ ensemble_modelling = function(algorithms,
 
   # Removing tmp
   if (tmp) {unlink('./.models', recursive = T, force = T)}
-
+  rm(list = ls()[-which(ls() == 'enm')])
+  gc()
   return(enm)
 }

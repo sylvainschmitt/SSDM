@@ -1,7 +1,7 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.1.9014
+Version: 0.1.9015
 Date: 2015-11-02
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
@@ -31,9 +31,10 @@ Imports:
     e1071 (>= 1.6.7),
     shiny (>= 0.12.2),
     shinydashboard (>= 0.5.1),
-    shinyFiles (>= 0.6.0),
     gplots (>= 0.1.0),
     spThin (>= 0.1.0)
+Suggests:
+    shinyFiles (>= 0.6.0)
 Depends:
     R (>= 3.2.2)
 Collate:

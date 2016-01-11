@@ -29,7 +29,7 @@ load_enm = function (name, path = getwd()) {
   path = paste0(path, '/', name)
   a = try(read.csv(paste0(path,'/Tables/AlgoCorr.csv'), row.names = 1))
   if (inherits(a, 'try-error')) {
-    cat('Algorithm correlation table empty !')
+    cat('Algorithm correlation table empty ! \n')
     a = data.frame()
   }
   enm = Ensemble.SDM(name = as.character(read.csv(paste0(path,'/Tables/Name.csv'))[1,2]),
@@ -48,13 +48,18 @@ load_enm = function (name, path = getwd()) {
 #' @export
 load_stack = function (name = 'Stack', path = getwd(), GUI = F) {
   path = paste0(path, '/', name)
+  a = try(read.csv(paste0(path,'/Stack/Tables/AlgoCorr.csv'), row.names = 1))
+  if (inherits(a, 'try-error')) {
+    cat('Algorithm correlation table empty ! \n')
+    a = data.frame()
+  }
   stack = Stacked.SDM(name = as.character(read.csv(paste0(path,'/Stack/Tables/Name.csv'))[1,2]),
                       diversity.map = raster(paste0(path,'/Stack/Rasters/Diversity.tif')),
                       endemism.map = raster(paste0(path,'/Stack/Rasters/Endemism.tif')),
                       uncertainty = raster(paste0(path,'/Stack/Rasters/uncertainty.tif')),
                       evaluation = read.csv(paste0(path,'/Stack/Tables/StackEval.csv'), row.names = 1),
                       variable.importance = read.csv(paste0(path,'/Stack/Tables/VarImp.csv'), row.names = 1),
-                      algorithm.correlation = read.csv(paste0(path,'/Stack/Tables/AlgoCorr.csv'), row.names = 1),
+                      algorithm.correlation = a,
                       algorithm.evaluation = read.csv(paste0(path,'/Stack/Tables/AlgoEval.csv'), row.names = 1),
                       enms = list(),
                       parameters = read.csv(paste0(path,'/Stack/Tables/Parameters.csv'), row.names = 1, colClasses = "character"))

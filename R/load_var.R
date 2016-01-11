@@ -1,6 +1,6 @@
 #' @include checkargs.R
 #' @importFrom shiny incProgress
-#' @importFrom raster raster stack res extent crop reclassify as.factor
+#' @importFrom raster raster stack res extent crop reclassify as.factor resample
 NULL
 
 #'Load environmental variables
@@ -93,7 +93,6 @@ load_var <- function (path = getwd(), files = NULL,
         if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
         Raster = raster(file)
         Raster = reclassify(Raster, c(-Inf,-900,NA))
-        Raster = crop(Raster, extentstack)
         names(Raster) = as.character(strsplit(files[i],format[j]))
         if (names(Raster) %in% categorical) {
           Raster = raster::as.factor(Raster)
@@ -101,10 +100,12 @@ load_var <- function (path = getwd(), files = NULL,
           fun = max
         } else {fun = mean}
         if (round(res(Raster)[1], digits = 6) != round(resostack[1], digits = 6) || round(res(Raster)[2], digits = 6) != round(resostack[2], digits = 6)) {
-          cat(c((res(Raster)[1]/resostack[1]),(res(Raster)[2]/resostack[2])))
-          Raster = aggregate(Raster, fact = (res(Raster)[1]/resostack[1]), fun = fun)
+          cat('\n', names(Raster), 'is aggregated to the coarsest resolution \n')
+          Raster = aggregate(Raster, fact = c((resostack[1]/res(Raster)[1]), (resostack[2]/res(Raster)[2])), fun = fun)
         }
-        Env = stack(Env, Raster)
+        Raster = crop(Raster, extentstack)
+        if(i>1){Raster = resample(Raster, Env[[1]])}
+        Env = stack(Env, Raster, quick = T)
         if(GUI) {incProgress((1/(length(files)*3)), detail = paste(i,'treated'))}
       }
     }

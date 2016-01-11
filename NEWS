@@ -1,3 +1,9 @@
+SSDM 0.1.9015 n.cores parameter in GBM auto-adapted to parallel computing in stack_modelling
+              gc() added at the end of each modelling function to avoid memory loss
+              ensemble.AlgoSDM() weight corrected
+              .cran-comment in .Rbuildignore
+              shinyFiles in Suggests and checked when gui() is used
+              Check with 0 Notes 0 Warnings 0 Errors
 SSDM 0.1.9014 Parallel computing with parallel::parLapply
               .csv in save_model @DJ
               Species in ./Species in save_stack @DJ

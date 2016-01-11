@@ -255,7 +255,7 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
       if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
         test = F
       }
-      weight.value = c(weight.value, ensemble.thresh[j])
+      weight.value = c(weight.value, models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])])
     }
     weight.value = mean(weight.value)
     if (test) {
