@@ -301,12 +301,17 @@ ensemble_modelling = function(algorithms,
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
-    path = get("tmpdir",envir=.PkgEnv)
+    tmppath = get("tmpdir",envir=.PkgEnv)
     if (!("/.models" %in% list.dirs(path))) (dir.create(paste0(path,'/.models')))
   }
 
   # Algorithms models creation
-  if(verbose){cat('#### Algorithms models creation ##### \n\n')}
+  if(is.null(name)){
+    spname = 'species'
+  } else {
+    spname = name
+  }
+  if(verbose){cat(sprintf('#### Algorithms models creation for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   models = list()
   for (i in 1:length(algorithms)) {
     for (j in 1:rep) {
@@ -320,15 +325,15 @@ ensemble_modelling = function(algorithms,
       if(GUI) {incProgress(1/(length(algorithms)+1),
                            detail = paste(algorithms[i],'SDM built'))}
       if (inherits(model, "try-error")) {if(verbose){cat(model)}} else {
-        if (tmp) {model@projection = writeRaster(model@projection, paste0(path,'/.models/',j,model.name), overwrite = T)}
+        if (tmp) {model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/',j,model.name), overwrite = T)}
         models[model.name] = model
       }
-      if(verbose){cat('\n\n')}
+      if(verbose){cat(sprintf('%s done for %s %s \n\n', model.name, spname, format(Sys.time(), '%Y-%m-%d %T')))}
     }
   }
 
   # Ensemble modelling
-  if(verbose){cat('#### Ensemble modelling with algorithms models ##### \n\n')}
+  if(verbose){cat(sprintf('#### Ensemble modelling with algorithms models for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   algo = list()
   for (i in 1:length(models)) {algo[[i]] = models[[i]]}
   if (!is.null(name)) {algo['name'] = name}
@@ -338,6 +343,7 @@ ensemble_modelling = function(algorithms,
   algo[['ensemble.thresh']] = ensemble.thresh
   algo['weight'] = weight
   enm = do.call(ensemble, algo)
+  if(verbose){cat(sprintf('Ensemble modelling done for %s %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   if(GUI) {incProgress(1/(length(algorithms)+1), detail = 'Ensemble SDM built')}
 
   if(!is.null(enm)) {

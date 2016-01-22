@@ -110,8 +110,7 @@ setMethod('update', 'Stacked.SDM',
             enms = list()
             for(i in 1:length(stack@enms)) {enms[[i]] = stack@enms[[i]]}
             enms['method'] = stack@parameters$method
-            enms['metric'] = stack@parameters$metric
-            enms['thresh'] = thresh
+            enms['endemism'] = strsplit(stack@parameters$endemism, '|', fixed = 'T')[[1]]
             enms['rep.B'] = stack@parameters$rep.B
             newstack = do.call(stacking, enms)
             if(verbose) {cat('   done.\n')}

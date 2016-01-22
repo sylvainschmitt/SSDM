@@ -98,6 +98,8 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
       occ.indices = c(1:length(row.names(SpOccurrences)))
       res.indices = as.numeric(row.names(thin.result[[1]]))
       for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
+      deleted = row.names(SpOccurrences[deleted,])
+      deleted = which(row.names(Occurrences) %in% deleted)
       if (length(deleted) > 0) {Occurrences = Occurrences[-deleted,]}
     }
   }

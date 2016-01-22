@@ -1,6 +1,6 @@
 #' @include Ensemble.SDM.R checkargs.R
 #' @importFrom sp Polygon Polygons SpatialPolygons bbox
-#' @importFrom raster raster stack reclassify mask calc overlay
+#' @importFrom raster raster stack reclassify mask calc overlay values
 NULL
 
 #'Stack different ensemble SDMs in an SSDM
@@ -23,9 +23,9 @@ NULL
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
 #'@param range integer. Set a value of range restriction (in pixels) around
-#'  presences occurrences on habitat suitability maps (all further points
-#'  will have a null probability, see Crisp et al (2011) in references). If
-#'  NULL, no range restriction will be applied.
+#'  presences occurrences on habitat suitability maps (all further points will
+#'  have a null probability, see Crisp et al (2011) in references). If NULL, no
+#'  range restriction will be applied.
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
 #'@param verbose logical. If set to true, allows the function to print text in
@@ -45,11 +45,15 @@ NULL
 #'
 #'  \strong{Endemism:} Choice of the method used to compute the endemism map
 #'  (see Crisp et al. (2001) for more information, see reference below):
-#'  \describe{\item{NULL}{No endemism map}\item{WEI}{(Weighted Endemism
-#'  Index) Endemism map built by counting all species in each cell and weighting
-#'  each by the inverse of its number of occurrences} \item{CWEI}{(Corrected Weighted Endemism
-#'  Index) Endemism map built by dividing the weighted endemism index by the
-#'  total count of species in the cell}}
+#'  \describe{\item{NULL}{No endemism map}\item{WEI}{(Weighted Endemism Index)
+#'  Endemism map built by counting all species in each cell and weighting each
+#'  by the inverse of its range} \item{CWEI}{(Corrected Weighted Endemism Index)
+#'  Endemism map built by dividing the weighted endemism index by the total
+#'  count of species in the cell.}}First string of the character is the method
+#'  either WEI or CWEI, and in those cases second string of the vector is used
+#'  to precise range calculation, whether the total number of occurrences
+#'  \strong{'NbOcc'} whether the surface of the binary map species distribution
+#'  \strong{'Binary'}.
 #'
 #' @examples
 #' # Loading data
@@ -102,10 +106,14 @@ NULL
 #'
 #'
 #'
+#'
+#'
 #'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
 #'  species distribution  models  and  adjusting  bias  by linking them to
 #'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
 #'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+#'
+#'
 #'
 #'
 #'
@@ -128,14 +136,16 @@ NULL
 #'
 #'
 #'
+#'
+#'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = 'WEI', verbose = T, GUI = F) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = c('WEI','Binary'), verbose = T, GUI = F) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P', rep.B = 1000,
-                                               range = NULL, endemism = 'WEI',
+                                               range = NULL, endemism = c('WEI','Binary'),
                                                verbose = T, GUI = F) {
 
   # Check arguments
@@ -247,18 +257,23 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if(is.null(endemism)) {
     'unactivated'
   } else {
-      for (i in 1:length(enms)) {
-        nbocc = length(as.factor(enms[[i]]@data$Presence[enms[[i]]@data$Presence==1])) / sum(enms[[i]]@algorithm.evaluation$kept.model)
-        if(endemism == 'WEI') {
-          stack@endemism.map = stack@endemism.map + enms[[i]]@projection / nbocc
-        } else if (endemism == 'CWEI') {
-          stack@endemism.map = stack@endemism.map + overlay(enms[[i]]@projection, stack@diversity.map, fun =
-                                                              function(x,y){
-                                                                y = round(y)
-                                                                x[which(y > 0)] =  x[which(y > 0)] / nbocc / y[which(y > 0)]
-                                                                return(x)})
+    for (i in 1:length(enms)) {
+      if(endemism[2] == 'NbOcc'){
+        endweight = length(as.factor(enms[[i]]@data$Presence[enms[[i]]@data$Presence==1])) / sum(enms[[i]]@algorithm.evaluation$kept.model)
+      } else if(endemism[2] == 'Binary') {
+        endweight = sum(values(reclassify(enms[[i]]@projection, c(-Inf,enms[[i]]@evaluation$threshold,0,enms[[i]]@evaluation$threshold,Inf,1))), na.rm = T)
       }
+      if(endemism[1] == 'WEI') {
+        stack@endemism.map = stack@endemism.map + enms[[i]]@projection / endweight
+      } else if (endemism[1] == 'CWEI') {
+        stack@endemism.map = stack@endemism.map + overlay(enms[[i]]@projection, stack@diversity.map, fun =
+                                                            function(x,y){
+                                                              y = round(y)
+                                                              x[which(y > 0)] =  x[which(y > 0)] / endweight / y[which(y > 0)]
+                                                              return(x)})
       }
+    }
+    stack@endemism.map = stack@endemism.map / stack@endemism.map@data@max
   }
   cat(' done. \n')
 
@@ -343,6 +358,6 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   stack@parameters$method = method
   if (method == 'B') {stack@parameters$rep.B = rep.B}
   stack@parameters$range = range
-  stack@parameters$endemism = endemism
+  stack@parameters$endemism = paste0(endemism[1],'|',endemism[2])
 
   return(stack)})

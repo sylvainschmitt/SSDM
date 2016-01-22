@@ -7,10 +7,11 @@
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", rep.B = 1000,
-  range = NULL, endemism = "WEI", verbose = T, GUI = F)
+  range = NULL, endemism = c("WEI", "Binary"), verbose = T, GUI = F)
 
 \S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "P",
-  rep.B = 1000, range = NULL, endemism = "WEI", verbose = T, GUI = F)
+  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
+  verbose = T, GUI = F)
 }
 \arguments{
 \item{enm,...}{character. Ensemble SDMs to be stacked.}
@@ -26,9 +27,9 @@ is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
 \item{range}{integer. Set a value of range restriction (in pixels) around
-presences occurrences on habitat suitability maps (all further points
-will have a null probability, see Crisp et al (2011) in references). If
-NULL, no range restriction will be applied.}
+presences occurrences on habitat suitability maps (all further points will
+have a null probability, see Crisp et al (2011) in references). If NULL, no
+range restriction will be applied.}
 
 \item{endemism}{character. Define the method used to create an endemism map
 (see details below).}
@@ -52,11 +53,15 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
 
  \strong{Endemism:} Choice of the method used to compute the endemism map
  (see Crisp et al. (2001) for more information, see reference below):
- \describe{\item{NULL}{No endemism map}\item{WEI}{(Weighted Endemism
- Index) Endemism map built by counting all species in each cell and weighting
- each by the inverse of its number of occurrences} \item{CWEI}{(Corrected Weighted Endemism
- Index) Endemism map built by dividing the weighted endemism index by the
- total count of species in the cell}}
+ \describe{\item{NULL}{No endemism map}\item{WEI}{(Weighted Endemism Index)
+ Endemism map built by counting all species in each cell and weighting each
+ by the inverse of its range} \item{CWEI}{(Corrected Weighted Endemism Index)
+ Endemism map built by dividing the weighted endemism index by the total
+ count of species in the cell.}}First string of the character is the method
+ either WEI or CWEI, and in those cases second string of the vector is used
+ to precise range calculation, whether the total number of occurrences
+ \strong{'NbOcc'} whether the surface of the binary map species distribution
+ \strong{'Binary'}.
 }
 \description{
 This is a function to stack several ensemble SDMs in an SSDM. The function
@@ -118,10 +123,14 @@ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
 
 
 
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
+
 
 
 

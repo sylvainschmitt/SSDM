@@ -10,8 +10,8 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   cv.param = c(0.7, 1), thresh = 1001, axes.metric = "Pearson",
   uncertainty = T, tmp = F, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = T, method = "P", metric = "SES",
-  rep.B = 1000, range = NULL, endemism = "WEI", verbose = T, GUI = F,
-  cores = 1, ...)
+  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
+  verbose = T, GUI = F, cores = 1, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -176,10 +176,13 @@ variable importance), and a list of ensemble SDMs for each species (see
  Crisp et al. (2001) for more information, see reference below):
  \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
  Endemism map built by counting all species in each cell and weighting each
- by the inverse of its number of occurrences, \strong{CWEI} (Corrected
- Weighted Endemism Index) Endemism map built by dividing the weighted
- endemism index by the total count of species in the cell.} \item{...}{See
- algorithm in detail section} }
+ by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
+ Index) Endemism map built by dividing the weighted endemism index by the
+ total count of species in the cell. First string of the character is the
+ method either WEI or CWEI, and in those cases second string of the vector is
+ used to precise range calculation, whether the total number of occurrences
+ \strong{'NbOcc'} whether the surface of the binary map species distribution
+ \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -315,6 +318,7 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
  thresholds of occurrence in the prediction of species distributions."
  \emph{Ecography} 28:85-393
@@ -338,10 +342,12 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
 
 
 

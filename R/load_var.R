@@ -1,6 +1,6 @@
 #' @include checkargs.R
 #' @importFrom shiny incProgress
-#' @importFrom raster raster stack res extent crop reclassify as.factor resample
+#' @importFrom raster raster stack res extent crop reclassify as.factor resample readAll
 NULL
 
 #'Load environmental variables
@@ -92,7 +92,8 @@ load_var <- function (path = getwd(), files = NULL,
       for (i in 1:length(files)){
         if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
         Raster = raster(file)
-        Raster = reclassify(Raster, c(-Inf,-900,NA))
+        Raster = readAll(Raster)
+        Raster[Raster[] <= -900] = NA
         names(Raster) = as.character(strsplit(files[i],format[j]))
         if (names(Raster) %in% categorical) {
           Raster = raster::as.factor(Raster)
@@ -104,7 +105,9 @@ load_var <- function (path = getwd(), files = NULL,
           Raster = aggregate(Raster, fact = c((resostack[1]/res(Raster)[1]), (resostack[2]/res(Raster)[2])), fun = fun)
         }
         Raster = crop(Raster, extentstack)
-        if(i>1){Raster = resample(Raster, Env[[1]])}
+        if(i>1 && (any(res(Raster)!=res(Env)) || extent(Raster)!=extentstack)){
+          Raster = resample(Raster, Env[[1]])
+        }
         Env = stack(Env, Raster, quick = T)
         if(GUI) {incProgress((1/(length(files)*3)), detail = paste(i,'treated'))}
       }

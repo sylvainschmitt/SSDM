@@ -320,6 +320,11 @@ server <- function(input, output, session) {
              'None' = 'No endemism map will be built',
              'WEI' = 'Endemism map will be built by counting all species in each cell and weighting each by the inverse of its number of occurrences',
              'CWEI' = 'Endemism map will be built by dividing the weighted endemism index by the total count of species in the cell'))}})
+  output$endemismrangeUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){if(input$endemism != 'None'){selectInput('endemismrange', 'Range in endemism mapping', c('NbOcc', 'Binary'), selected = 'Binary')}}})
+  output$endemismrangeinfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){
+    p(switch(input$endemismrange,
+             'NbOcc' = 'Range in endemism index computing is the total number of occurrences.',
+             'Binary' = 'Range in endemism index comuting is the surface of the binary map species distribution.'))}})
   output$metricUI <- renderUI({selectInput('metric', 'Evaluation metric', c('Kappa','CCR','TSS','SES','LW','ROC'), selected = 'SES')})
   output$metricinfoUI <- renderUI({
     p(switch(input$metric,
@@ -573,7 +578,7 @@ server <- function(input, output, session) {
                                                 metric = input$metric,
                                                 rep.B =  rep.B,
                                                 range = range,
-                                                endemism = endemism,
+                                                endemism = c(endemism, input$endemismrange),
                                                 verbose = T,
                                                 GUI = T,
                                                 test = algoparam$test,

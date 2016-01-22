@@ -1,3 +1,10 @@
+SSDM 0.1.9016 Weighted endemism index major change : range definition
+              load_occ major beug fixed, wrong rows were removed
+              tmppath change in ensemble and stack_modelling (overwrite of path var issue) @FD
+              raster::readAll to force loading Env in memory (load_var) @FD
+              Raster[Raster[]<=-900]=NA instead of reclassify @FD
+              Resample with more condition to avoid extra computing @FD
+              Add timestampt to ensemble_modelling @FD
 SSDM 0.1.9015 n.cores parameter in GBM auto-adapted to parallel computing in stack_modelling
               gc() added at the end of each modelling function to avoid memory loss
               ensemble.AlgoSDM() weight corrected

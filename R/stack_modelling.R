@@ -136,10 +136,13 @@ NULL
 #'  Crisp et al. (2001) for more information, see reference below):
 #'  \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
 #'  Endemism map built by counting all species in each cell and weighting each
-#'  by the inverse of its number of occurrences, \strong{CWEI} (Corrected
-#'  Weighted Endemism Index) Endemism map built by dividing the weighted
-#'  endemism index by the total count of species in the cell.} \item{...}{See
-#'  algorithm in detail section} }
+#'  by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
+#'  Index) Endemism map built by dividing the weighted endemism index by the
+#'  total count of species in the cell. First string of the character is the
+#'  method either WEI or CWEI, and in those cases second string of the vector is
+#'  used to precise range calculation, whether the total number of occurrences
+#'  \strong{'NbOcc'} whether the surface of the binary map species distribution
+#'  \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
 #'  function from the package 'stats', you can set the following parameters (see
@@ -257,10 +260,12 @@ NULL
 #'
 #'
 #'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
 #'
 #'
 #'
@@ -294,9 +299,11 @@ NULL
 #'
 #'
 #'
+#'
 #'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
 #'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
 #'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+#'
 #'
 #'
 #'
@@ -328,7 +335,7 @@ stack_modelling = function(algorithms,
                            # Diversity map computing
                            method = 'P', metric = 'SES', rep.B = 1000,
                            # Range restriction and endemism
-                           range = NULL, endemism = 'WEI',
+                           range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
                            verbose = T, GUI = F, cores = 1,
                            # Modelling parameters
@@ -347,8 +354,8 @@ stack_modelling = function(algorithms,
   for (i in 1:length(algorithms)) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
-    path = get("tmpdir",envir=.PkgEnv)
-    if (!("/.enms" %in% list.dirs(path))) (dir.create(paste0(path,'/.enms')))
+    tmppath = get("tmpdir",envir=.PkgEnv)
+    if (!("/.enms" %in% list.dirs(tmppath))) (dir.create(paste0(tmppath,'/.enms')))
     }
 
   # Ensemble models creation
@@ -430,7 +437,7 @@ stack_modelling = function(algorithms,
     enms['method'] = method
     enms['rep.B'] = rep.B
     if (!is.null(range)) {enms['range'] = range}
-    enms['endemism'] = endemism
+    enms$endemism = endemism
     stack = do.call(stacking, enms)
   }
 
