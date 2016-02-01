@@ -52,7 +52,9 @@ NULL
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithm is saved in a temporary file to release memory. But beware: if you
 #'  close R, temporary files will be destroyed. To avoid any loss you can save
-#'  your ensemble SDM with \code{\link{save.model}}.
+#'  your ensemble SDM with \code{\link{save.model}}. Depending on number,
+#'  resolution and extent of models, temporary files can take a lot of disk
+#'  space. Temporary files are written in R environment temporary folder.
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
@@ -238,10 +240,14 @@ NULL
 #'
 #'
 #'
+#'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
+#'
 #'
 #'
 #'
@@ -302,7 +308,7 @@ ensemble_modelling = function(algorithms,
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
     tmppath = get("tmpdir",envir=.PkgEnv)
-    if (!("/.models" %in% list.dirs(path))) (dir.create(paste0(path,'/.models')))
+    if (!("/.models" %in% list.dirs(path))) (dir.create(paste0(tmppath,'/.models')))
   }
 
   # Algorithms models creation

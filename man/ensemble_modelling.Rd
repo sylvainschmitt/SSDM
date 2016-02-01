@@ -67,7 +67,9 @@ an algorithm correlation matrix.}
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithm is saved in a temporary file to release memory. But beware: if you
 close R, temporary files will be destroyed. To avoid any loss you can save
-your ensemble SDM with \code{\link{save.model}}.}
+your ensemble SDM with \code{\link{save.model}}. Depending on number,
+resolution and extent of models, temporary files can take a lot of disk
+space. Temporary files are written in R environment temporary folder.}
 
 \item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
 will be included in the ensemble SDM (see details below).}
@@ -261,6 +263,8 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
  "Selecting pseudo-absences for species distribution models: how, where and
  how many?" \emph{Methods Ecology and Evolution} 3:327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
+
+
 
 
 

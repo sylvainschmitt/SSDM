@@ -67,7 +67,9 @@ an algorithm correlation matrix.}
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithms is saved in a temporary file to release memory. But beware: if
 you close R, temporary files will be destroyed. To avoid any loss you can
-save your SSDM with \code{\link{save.model}}.}
+save your SSDM with \code{\link{save.model}}. Depending on number,
+resolution and extent of models, temporary files can take a lot of disk
+space. Temporary files are written in R environment temporary folder.}
 
 \item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
 will be included in the ensemble SDM (see details below).}
