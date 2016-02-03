@@ -951,13 +951,13 @@ server <- function(input, output, session) {
     shinyDirChoose(input, 'save', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
   }
   observeEvent(input$savemodel, {
-    path = switch(input$prevmodel$root,
+    path = switch(input$save$root,
                   'wd' = getwd(),
                   'home' = '/home',
                   'root' = '/',
-                  input$prevmodel$root)
-    for(i in 2:length(input$prevmodel$path)){
-      path = paste0(path, '/', input$prevmodel$path[[i]][1])
+                  input$save$root)
+    for(i in 2:length(input$save$path)){
+      path = paste0(path, '/', input$save$path[[i]][1])
     }
     if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = data$ENM@name, path, verbose = F, GUI = T)}
     if(!is.null(data$Stack)) {save.stack(data$Stack, name = data$Stack@name, path, verbose = F, GUI = T)}

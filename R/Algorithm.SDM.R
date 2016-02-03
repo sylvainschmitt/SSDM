@@ -450,7 +450,7 @@ setMethod('get_PA', "GBM.SDM",
             return(PA)})
 
 setMethod('get_model', "GBM.SDM",
-          function(obj, trees = 2500, final.leave = 1, algocv = 3, 
+          function(obj, trees = 2500, final.leave = 1, algocv = 3,
                    thresh.shrink = 1e-03, n.cores = NULL, ...) {
             data = obj@data[-c(which(names(obj@data) == 'X'),which(names(obj@data) == 'Y'))]
             model = gbm(Presence ~ ., data = data,

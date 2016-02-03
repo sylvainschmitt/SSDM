@@ -216,7 +216,6 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                 fluidPage(
                                   fluidRow(
                                     box(title = 'Save results',
-                                        textOutput('savegetwd'),
                                         shinyDirButton('save', 'Folder selection', 'Please select folder to save the model', FALSE),
                                         actionButton('savemodel', 'save', icon = icon('floppy-o'))
                                     )
