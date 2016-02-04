@@ -21,12 +21,9 @@ T. Ibanez, J. Munzinger, G. Dagostini, V. Hequet, F. Rigault, T.
   mixed rainforest in New Caledonia: new data from the New Caledonian Plant
   Inventory and Permanent Plot Network (NC-PIPPN)." \emph{Applied Vegetation
   Science} 17:386-397
-  \url{http://www.researchgate.net/profile/Jerome_Munzinger/publication/
-  258499017_Structural_and_floristic_diversity_of_mixed_tropical_rain_forest_in_New_Caledonia_new_data_
 
 
-  from_the_New_Caledonian_Plant_Inventory_and_Permanent_Plot_Network_%28NC-PIPPN%29/links/
-   0deec52b8b1996488e000000.pdf}
+  \url{http://www.researchgate.net/profile/Jerome_Munzinger/publication/258499017_Structural_and_floristic_diversity_of_mixed_tropical_rain_forest_in_New_Caledonia_new_data_from_the_New_Caledonian_Plant_Inventory_and_Permanent_Plot_Network_\%28NC-PIPPN\%29/links/0deec52b8b1996488e000000.pdf}
 }
 \keyword{datasets}
 

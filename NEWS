@@ -1,3 +1,6 @@
+SSDM 0.1.9019 Occurrences man url corrected
+              Check -as--cran
+              Check on CRAN win-build
 SSDM 0.1.9018 save tab in gui debug for ESDM @Jay
 SSDM 0.1.9017 tmppath in ensemble_modelling dir creation @Jay
               tmp doc in ensemble_ and stack_modelling @FD
