@@ -56,6 +56,7 @@ NULL
 #'  \strong{'Binary'}.
 #'
 #' @examples
+#' \dontrun{
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
@@ -72,7 +73,6 @@ NULL
 #' SSDM = stacking(ESDM1, ESDM2)
 #'
 #' # Results plotting
-#' \dontrun{
 #' plot(SSDM)
 #' }
 #'

@@ -10,6 +10,10 @@
 #' @importFrom dismo maxent
 #' @importFrom nnet nnet
 #' @importFrom e1071 svm
+#' @importFrom grDevices heat.colors is.raster rainbow terrain.colors
+#' @importFrom graphics arrows barplot legend
+#' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
+#' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 NULL
 
 ##### New generics ##### ----

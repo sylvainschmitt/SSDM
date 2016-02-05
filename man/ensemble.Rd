@@ -71,6 +71,7 @@ ensemble.metric (metric(s) used to select the best SDMs that will be
  from the confusion matrix} }
 }
 \examples{
+\dontrun{
 # Loading data
 data(Env)
 data(Occurrences)
@@ -82,7 +83,6 @@ SVM = modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
 ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
 
 # Results plotting
-\dontrun{
 plot(ESDM)
 }
 }

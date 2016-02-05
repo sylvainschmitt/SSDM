@@ -74,6 +74,7 @@ algorithm correlation matrix and variable importance), and a list of ensemble
 SDMs for each species (see \code{\link{ensemble_modelling}}).
 }
 \examples{
+\dontrun{
 # Loading data
 data(Env)
 data(Occurrences)
@@ -90,7 +91,6 @@ ESDM2 = ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
 SSDM = stacking(ESDM1, ESDM2)
 
 # Results plotting
-\dontrun{
 plot(SSDM)
 }
 }

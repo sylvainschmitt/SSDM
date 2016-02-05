@@ -191,6 +191,7 @@ NULL
 #'  be more or less time- and memory-consuming.
 #'
 #' @examples
+#' \dontrun{
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
@@ -202,7 +203,6 @@ NULL
 #'                           ensemble.thresh = c(0.6))
 #'
 #' # Results plotting
-#' \dontrun{
 #' plot(ESDM)
 #' }
 #'
