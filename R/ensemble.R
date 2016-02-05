@@ -44,6 +44,7 @@ NULL
 #'  \code{\link{plot.model}} function.
 #'
 #' @examples
+#' \dontrun{
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
@@ -55,7 +56,6 @@ NULL
 #' ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
 #'
 #' # Results plotting
-#' \dontrun{
 #' plot(ESDM)
 #' }
 #'

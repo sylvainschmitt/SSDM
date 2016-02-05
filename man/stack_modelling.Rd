@@ -282,6 +282,7 @@ variable importance), and a list of ensemble SDMs for each species (see
  be more or less time- and memory-consuming.
 }
 \examples{
+\dontrun{
 # Loading data
 data(Env)
 data(Occurrences)
@@ -292,7 +293,6 @@ SSDM = stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
                        Spcol = 'SPECIES')
 
 # Results plotting
-\dontrun{
 plot(SSDM)
 }
 }

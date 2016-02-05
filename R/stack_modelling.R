@@ -223,6 +223,7 @@ NULL
 #'  be more or less time- and memory-consuming.
 #'
 #' @examples
+#' \dontrun{
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
@@ -233,7 +234,6 @@ NULL
 #'                        Spcol = 'SPECIES')
 #'
 #' # Results plotting
-#' \dontrun{
 #' plot(SSDM)
 #' }
 #'
