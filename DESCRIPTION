@@ -1,18 +1,18 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.1.9020
+Version: 0.1.9021
 Date: 2016-02-05
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
-Description: SSDM allows to map species richness and endemism based on stacked
+Description: Allows to map species richness and endemism based on stacked
     species distribution models (SSDM). Individuals SDMs can be created using a
     single or multiple algorithms (ensemble SDMs). For each species, an SDM can
     yield a habitat suitability map, a binary map, a between-algorithm variance
     map, and can assess variable importance, algorithm accuracy, and between-
     algorithm correlation. Methods to stack individual SDMs include summing
     individual probabilities and thresholding then summing. Thresholding can be
-    based on a specific evaluation metric or by drawing repeatedly from a Bernouilli
+    based on a specific evaluation metric or by drawing repeatedly from a Bernoulli
     distribution. The SSDM package also provides a user-friendly interface.
 License: GPL (>=3) | file LICENSE
 LazyData: TRUE
