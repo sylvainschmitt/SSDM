@@ -35,7 +35,7 @@ NULL
 #' @export
 setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
   choices = list()
-  #for (i in 1:length(x@enms)) {choices[[i]] = strsplit(x@enms[[i]]@name, '.', fixed = T)[[1]][1]}
+  for (i in 1:length(x@enms)) {choices[[i]] = strsplit(x@enms[[i]]@name, '.', fixed = T)[[1]][1]}
   if (inherits(x@enms[[1]], 'Algorithm.SDM')) {full = F} else {full = T}
 
   ui <- dashboardPage(
