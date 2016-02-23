@@ -2,7 +2,7 @@ Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
 Version: 0.1.9022
-Date: 2016-02-05
+Date: 2016-02-17
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
 Description: Allows to map species richness and endemism based on stacked

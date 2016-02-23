@@ -388,8 +388,8 @@ stack_modelling = function(algorithms,
                                    enm = NULL
                                  } else {
                                    if (tmp && !is.null(enm)) {
-                                     enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
-                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
+                                     enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = T)
+                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = T)
                                    }
                                    if(verbose){cat('\n\n')}
                                  }
@@ -418,8 +418,8 @@ stack_modelling = function(algorithms,
                       enm = NULL
                     } else {
                       if (tmp && !is.null(enm)) {
-                        enm@projection = writeRaster(enm@projection[[1]], paste0(path, '/.enms/proba',enm.name), overwrite = T)
-                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(path, '/.enms/uncert',enm.name), overwrite = T)
+                        enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = T)
+                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = T)
                       }
                       if(verbose){cat('\n\n')}
                     }
