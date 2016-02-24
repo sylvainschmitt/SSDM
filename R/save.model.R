@@ -34,7 +34,7 @@ setGeneric('save.enm', function (enm, name = strsplit(enm@name, '.', fixed = T)[
 #' @rdname save.model
 #' @export
 setMethod('save.enm', 'Ensemble.SDM', function (enm,
-                                                        name = strsplit(enm@name, '.', fixed = T)[[1]][1],
+                                                        name = strsplit(enm@name, '.Ensemble.SDM', fixed = T)[[1]][1],
                                                         path = getwd(),
                                                         verbose = T, GUI = F) {
   # Check arguments

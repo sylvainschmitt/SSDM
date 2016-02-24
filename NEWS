@@ -1,3 +1,5 @@
+SSDM 0.1.9022 tmmpath in stack_modelling()
+              split with '.Ensemble.SDM' instead of '.' in save, plot, and gui
 SSDM 0.1.9022 ESDM list in plot.model bug fixed
 SSDM 0.1.9021 CRAN second submit changes
 SSDM 0.1.9020 CRAN first submit changes

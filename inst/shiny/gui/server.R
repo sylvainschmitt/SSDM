@@ -283,7 +283,7 @@ server <- function(input, output, session) {
       }
       if (input$model.type == 'SSDM') {
         data$Stack = a
-        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
+        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = T)[[i]][1]}
         output$model.preview <- renderPlot({spplot(data$Stack@diversity.map,
                                                    main = data$Stack@name,
                                                    xlab = 'Longitude (\u02DA)',
@@ -595,7 +595,7 @@ server <- function(input, output, session) {
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
-        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.', fixed = T)[[i]][1]}
+        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = T)[[i]][1]}
       } else {
         output$modelfailed = renderText('You have less than two remaining ensemble SDMs, maybe you should try lower ensemble threshold(s) ?')
       }
@@ -750,6 +750,8 @@ server <- function(input, output, session) {
   ## ENM Stack Result ##
   observeEvent(input$enmchoice, {
     if(!is.null(data$Stack)){
+      print(data$enms)
+      print(input$enmchoice)
       if(length(data$enms) > 0){result$ENM = data$Stack@enms[[which(data$enms == input$enmchoice)]]}
     }
   })
