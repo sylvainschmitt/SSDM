@@ -2,6 +2,11 @@
 #'
 #' User interface of the SSDM package.
 #'
+#' @param port char. The TCP port that the application should listen on (see
+#'   \code{\link[shiny]{runApp}} for more details).
+#' @param host char. The IPv4 address that the application should listen on (see
+#'   \code{\link[shiny]{runApp}} for more details).
+#'
 #' @return Open a window with a shiny app to use the SSDM package with an
 #'   user-friendly interface.
 #'
