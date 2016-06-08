@@ -14,10 +14,10 @@
 #' }
 #'
 #' @export
-gui = function () {
+gui = function (port = getOption("shiny.port"), host = getOption("shiny.host", "127.0.0.1")) {
   appDir <- system.file("shiny", "gui", package = "SSDM")
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `mypackage`.", call. = FALSE)
   }
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(appDir, display.mode = "normal", port = port, host = host)
 }
