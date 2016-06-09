@@ -438,7 +438,7 @@ server <- function(input, output, session) {
       }
     }
     if(is.null(input$range) || !input$range) {range = NULL} else {range = input$rangeval}
-    if(is.null(input$endemism) || input$endemism == 'None') {endemism = NULL} else {endemism = input$endemism}
+    if(is.null(input$endemism) || input$endemism == 'None') {endemism = NULL} else {endemism = c(input$endemism, input$endemismrange)}
     algoparam = list()
     if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){algoparam$test = input$test} else {algoparam$test = 'AIC'}
     if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){algoparam$epsilon = as.numeric(paste0('1e-', as.character(input$epsilon)))} else {algoparam$epsilon = 1e-08}
@@ -578,7 +578,7 @@ server <- function(input, output, session) {
                                                 metric = input$metric,
                                                 rep.B =  rep.B,
                                                 range = range,
-                                                endemism = c(endemism, input$endemismrange),
+                                                endemism = endemism,
                                                 verbose = T,
                                                 GUI = T,
                                                 test = algoparam$test,

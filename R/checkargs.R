@@ -131,7 +131,14 @@
   if(!inherits(stack,'Stacked.SDM')){stop('stack parameter should be a Stacked.SDM.')}
 
   # Range and Endemism parameters
-  if(!is.null(endemism)){if(!inherits(endemism,'character') || !(endemism %in% c('Any','WEI','CWEI'))){stop('endemism parameter should be Any, WEI, or CWEI (see help).')}}
+  if(!is.null(endemism) && length(endemism) > 1){
+    if(!inherits(endemism[1],'character') || !(endemism[1] %in% c('WEI','CWEI'))){
+      stop('endemism parameter first value should be WEI, or CWEI (see help).')
+    }
+    if(!inherits(endemism[2],'character') || !(endemism[2] %in% c('NbOcc','Binary'))){
+      stop('endemism parameter second value should be NbOcc, or Binary (see help).')
+    }
+  }
   if(!is.null(range)){
     if(!inherits(range,'numeric') && range < 0){
       stop('range parameter should be numeric and > 0 (see help).')

@@ -1,3 +1,4 @@
+SSDM 0.1.9025 Dimitri Justeau: endemism parameter bug in the gui fixed
 SSDM 0.1.9024 Dimitri Justeau: Enable host and port option when launching the gui
               README
 SSDM 0.1.9023 tmmpath in stack_modelling()
