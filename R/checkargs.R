@@ -146,5 +146,5 @@
   }
 
   # Cores
-  if(!inherits(cores,'numeric') || abs(cores-round(cores)) != 0 || cores < 1){stop('cores parameter should be an integer > 0 (see help).')}
+  if(!inherits(cores,'numeric') || abs(cores-round(cores)) != 0 || cores < 0){stop('cores parameter should be an integer > 0 (see help).')}
 }

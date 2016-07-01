@@ -339,7 +339,7 @@ stack_modelling = function(algorithms,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
-                           verbose = T, GUI = F, cores = 1,
+                           verbose = T, GUI = F, cores = 0,
                            # Modelling parameters
                            ...) {
   # Check arguments
@@ -364,7 +364,7 @@ stack_modelling = function(algorithms,
   if(verbose){cat('#### Ensemble models creation ##### \n\n')}
   species = levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))
 
-  if(cores > 1 && requireNamespace("parallel", quietly = TRUE)){
+  if(cores > 0 && requireNamespace("parallel", quietly = TRUE)){
     if(verbose){cat('Opening clusters,', cores, 'cores \n')}
     if((parallel::detectCores()-1) < cores){warning('It seems you attributed more cores than your CPU have !')}
     cl = parallel::makeCluster(cores, outfile = "")
