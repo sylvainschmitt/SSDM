@@ -30,7 +30,9 @@ NULL
 #'  not).
 #'
 #' @examples
+#' \dontrun{
 #' load_var(system.file("extdata",  package = 'SSDM'))
+#' }
 #'
 #'@seealso \code{\link{load_occ}} to load occurrences.
 #'

@@ -43,7 +43,9 @@ Function to load environmental variables in the form of rasters to perform
 \code{\link{stack_modelling}}.
 }
 \examples{
+\dontrun{
 load_var(system.file("extdata",  package = 'SSDM'))
+}
 
 }
 \seealso{

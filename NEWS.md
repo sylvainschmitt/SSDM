@@ -1,6 +1,22 @@
 NEWS
 ================
 
+SSDM 0.1.9030
+=============
+
+SSDM 0.1.9029
+=============
+
+-   `rgdal` in DEPENDENCIES for testthat in Travis
+-   cran-comment.md
+-   NEWS link in README
+-   .Rbuildignore
+
+SSDM 0.1.9028
+=============
+
+-   Travis test
+
 SSDM 0.1.9027
 =============
 
