@@ -1,7 +1,7 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.1.9028
+Version: 0.1.9029
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
 URL: https://github.com/sylvainschmitt/SSDM
@@ -19,6 +19,7 @@ License: GPL (>=3) | file LICENSE
 LazyData: TRUE
 Imports:
     sp (>= 1.2.0),
+    rgdal (>= 1.1-10),
     raster (>= 2.4.20),
     methods (>= 3.2.2),
     SDMTools (>= 1.1.221),
