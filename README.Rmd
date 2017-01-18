@@ -22,7 +22,7 @@ You can install the latest version of **SSDM** from Github using the [`devtools`
 if (!requireNamespace("devtools", quietly = TRUE))
   install.packages("devtools")
 
-devtools::install_github("calligross/ggthemeassist")
+devtools::install_github("sylvainschmitt/SSDM")
 ```
 
 ### Install from CRAN
