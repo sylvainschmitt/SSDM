@@ -180,10 +180,10 @@ NULL
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
-#' Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#' Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
 #'
 #' # SDM building
-#' SDM = modelling('GLM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' SDM <- modelling('GLM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
 #'
 #' # Results plotting
 #' \dontrun{
@@ -229,9 +229,9 @@ modelling = function(algorithm,
                      # Evaluation parameters
                      cv = 'holdout', cv.param = c(0.7,2), thresh = 1001, metric = 'SES', axes.metric = 'Pearson',
                      # Selection parameters
-                     select = F, select.metric = c('AUC'), select.thresh = c(0.75),
+                     select = FALSE, select.metric = c('AUC'), select.thresh = c(0.75),
                      # Informations parameters
-                     verbose = T, GUI = F,
+                     verbose = TRUE, GUI = FALSE,
                      # Modelling parameters
                      ...) {
   # Check arguments
@@ -255,19 +255,19 @@ modelling = function(algorithm,
   # Occurrences data input test | Data frame needed
   if (is.matrix(Occurrences)) {Occurrences = data.frame(Occurrences)}
   if (!is.data.frame(Occurrences)) {stop('Occurrences data set is not a data frame or a matrix')}
-  if ((Xcol %in% names(Occurrences)) == F) {stop('X column is not well defined')}
-  if ((Ycol %in% names(Occurrences)) == F) {stop('Y column is not well defined')}
+  if ((Xcol %in% names(Occurrences)) == FALSE) {stop('X column is not well defined')}
+  if ((Ycol %in% names(Occurrences)) == FALSE) {stop('Y column is not well defined')}
   if (is.null(Pcol)) {
-    PO = T # Presence only
+    PO = TRUE # Presence only
     if(verbose){cat('No presence column, presence-only data set is supposed.\n')}
     model@parameters$data = 'presence-only data set'
-  } else if ((Pcol %in% names(Occurrences)) == F) {
+  } else if ((Pcol %in% names(Occurrences)) == FALSE) {
     stop('Presence column is not well defined')
   } else {
-    PO = F
+    PO = FALSE
   }
-  if (!is.null(PA)) {PO = T}
-  if (PO) {cat('Pseudo-absence selection will be computed.\n')}
+  if (!is.null(PA)) {PO = TRUE}
+  if (PO) {if(verbose) {cat('Pseudo-absence selection will be computed.\n')}}
   data = data.frame(X = Occurrences[which(names(Occurrences) == Xcol)], Y = Occurrences[which(names(Occurrences) == Ycol)])
   names(data) = c('X','Y')
   if (PO) {
@@ -286,8 +286,8 @@ modelling = function(algorithm,
   model@data = data
   if (PO) {
     if(verbose){cat('Pseudo absence selection... \n')}
-    model = PA.select(model, Env, PA)
-    model@parameters['PA'] = T
+    model = PA.select(model, Env, PA, verbose)
+    model@parameters['PA'] = TRUE
     if(verbose){cat('   done. \n\n')}
     if(GUI) {incProgress(1/5, detail = 'Pseudo-absence selected')}
   }
@@ -300,11 +300,11 @@ modelling = function(algorithm,
   if(GUI) {incProgress(1/5, detail = 'SDM evaluated')}
 
   # Model selection
-  test = T
+  test = TRUE
   if(select) {
-    for (j in 1:length(select.metric)) {
+    for (j in seq_len(length(select.metric))) {
       if(model@evaluation[,which(names(model@evaluation) == select.metric[j])] < select.thresh[j]) {
-        test = F
+        test = FALSE
       }
     }
   }

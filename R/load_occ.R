@@ -34,16 +34,16 @@ NULL
 #'  not).
 #'
 #' @examples
-#'\dontrun{
-#' load.occ(path)
-#'}
+#' load_occ(path = system.file("extdata",  package = 'SSDM'), Env,
+#'          Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+#'          file = 'Occurences.txt', sep = ',')
 #'
 #'@seealso \code{\link{load_var}} to load environmental variables.
 #'
 #'@export
 load_occ = function(path = getwd(), Env, file = NULL, ...,
                      Xcol = 'Longitude', Ycol = 'Latitude', Spcol = NULL,
-                     GeoRes = T, reso = max(res(Env@layers[[1]])), verbose = T, GUI = F) {
+                     GeoRes = TRUE, reso = max(res(Env@layers[[1]])), verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(path = path, file = file, Xcol = Xcol, Ycol = Ycol, Spcol = Spcol,
              GeoRes = GeoRes, reso = reso, verbose = verbose, GUI = GUI)
@@ -85,19 +85,19 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
     Spcol = 'SpNULL'
     Occurrences$SpNULL = as.factor(Occurrences$SpNULL)
   }
-  for (i in 1:length(levels(Occurrences[,which(names(Occurrences)==Spcol)]))) {
+  for (i in seq_len(length(levels(Occurrences[,which(names(Occurrences)==Spcol)])))) {
     if (GeoRes) {
       if(verbose) {cat(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i],'geographical resampling \n')}
       SpOccurrences = subset(Occurrences, Occurrences[which(names(Occurrences)==Spcol)] == levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i])
       thin.result = thin(SpOccurrences, long.col = Xcol, lat.col = Ycol, spec.col = Spcol,
-                         thin.par = reso, reps = 1, locs.thinned.list.return = T,
-                         write.files = F, write.log.file = F, verbose = F)
+                         thin.par = reso, reps = 1, locs.thinned.list.return = TRUE,
+                         write.files = FALSE, write.log.file = FALSE, verbose = FALSE)
       if(GUI) {incProgress(1/length(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))),
                            detail = paste(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i],'thinned'))}
       deleted = {}
-      occ.indices = c(1:length(row.names(SpOccurrences)))
+      occ.indices = c(seq_len(length(row.names(SpOccurrences))))
       res.indices = as.numeric(row.names(thin.result[[1]]))
-      for (i in 1:length(occ.indices)) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
+      for (i in seq_len(length(occ.indices))) {if(!(occ.indices[i] %in% res.indices)) {deleted = c(deleted, occ.indices[i])}}
       deleted = row.names(SpOccurrences[deleted,])
       deleted = which(row.names(Occurrences) %in% deleted)
       if (length(deleted) > 0) {Occurrences = Occurrences[-deleted,]}
@@ -106,7 +106,7 @@ load_occ = function(path = getwd(), Env, file = NULL, ...,
   Occurrences = droplevels(Occurrences)
 
   # Test species occurrences > 3
-  for (i in 1:length(levels(Occurrences[,which(names(Occurrences)==Spcol)]))) {
+  for (i in seq_len(length(levels(Occurrences[,which(names(Occurrences)==Spcol)])))) {
     sp = levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)]))[i]
     spocc = subset(Occurrences, Occurrences[,which(names(Occurrences)==Spcol)] == sp)
     l = length(spocc[,1])

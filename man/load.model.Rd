@@ -8,7 +8,7 @@
 \usage{
 load_enm(name, path = getwd())
 
-load_stack(name = "Stack", path = getwd(), GUI = F)
+load_stack(name = "Stack", path = getwd(), GUI = FALSE)
 }
 \arguments{
 \item{name}{character. Name of the folder that contains the model to be

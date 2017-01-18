@@ -7,8 +7,8 @@
 \usage{
 \S4method{update}{Stacked.SDM}(object, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spname = NULL, name = stack@name,
-  save = F, path = getwd(), thresh = 1001, tmp = F, verbose = T,
-  GUI = F, ...)
+  save = FALSE, path = getwd(), thresh = 1001, tmp = FALSE, verbose = TRUE,
+  GUI = FALSE, ...)
 }
 \arguments{
 \item{object}{Stacked.SDM. The previously built SSDM.}

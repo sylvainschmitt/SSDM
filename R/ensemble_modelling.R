@@ -195,10 +195,10 @@ NULL
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
-#' Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#' Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
 #'
 #' # ensemble SDM building
-#' ESDM = ensemble_modelling(c('CTA', 'MARS'), Occurrences, Env, rep = 1,
+#' ESDM <- ensemble_modelling(c('CTA', 'MARS'), Occurrences, Env, rep = 1,
 #'                           Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
 #'                           ensemble.thresh = c(0.6))
 #'
@@ -282,16 +282,16 @@ ensemble_modelling = function(algorithms,
                               # Occurrences reading
                               Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
                               # Model creation
-                              rep = 10, name = NULL, save = F, path = getwd(),
+                              rep = 10, name = NULL, save = FALSE, path = getwd(),
                               # Pseudo-absences definition
                               PA = NULL,
                               # Evaluation parameters
                               cv = 'holdout', cv.param = c(0.7,1), thresh = 1001, metric = 'SES',
-                              axes.metric = 'Pearson', uncertainty = T, tmp = F,
+                              axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE,
                               # Assembling parameters
-                              ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T,
+                              ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                               # Informations parameters
-                              verbose = T, GUI = F,
+                              verbose = TRUE, GUI = FALSE,
                               # Modelling parameters
                               ...) {
   # Check arguments
@@ -304,7 +304,7 @@ ensemble_modelling = function(algorithms,
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
   if ('all' %in% algorithms) {algorithms = available.algo}
-  for (i in 1:length(algorithms)) {
+  for (i in seq_len(length(algorithms))) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
     tmppath = get("tmpdir",envir=.PkgEnv)
@@ -319,20 +319,20 @@ ensemble_modelling = function(algorithms,
   }
   if(verbose){cat(sprintf('#### Algorithms models creation for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   models = list()
-  for (i in 1:length(algorithms)) {
+  for (i in seq_len(length(algorithms))) {
     for (j in 1:rep) {
       model.name = paste0(algorithms[i],'.',j)
       if(verbose){cat('Modelling :', model.name, '\n\n')}
       model = try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol, Ycol = Ycol, Pcol = Pcol,
                             name = NULL, PA = PA, cv = cv, cv.param = cv.param, thresh = thresh,
-                            metric = metric, axes.metric =axes.metric, select = F,
+                            metric = metric, axes.metric =axes.metric, select = FALSE,
                             select.metric = ensemble.metric, select.thresh = ensemble.thresh,
                             verbose = verbose, GUI = GUI, ...))
       if(GUI) {incProgress(1/(length(algorithms)+1),
                            detail = paste(algorithms[i],'SDM built'))}
       if (inherits(model, "try-error")) {if(verbose){cat(model)}} else {
-        if (tmp) {model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/',j,model.name), overwrite = T)}
-        models[model.name] = model
+        if (tmp) {model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/',j,model.name), overwrite = TRUE)}
+        suppressWarnings({models[model.name] = model})
       }
       if(verbose){cat(sprintf('%s done for %s %s \n\n', model.name, spname, format(Sys.time(), '%Y-%m-%d %T')))}
     }
@@ -341,13 +341,14 @@ ensemble_modelling = function(algorithms,
   # Ensemble modelling
   if(verbose){cat(sprintf('#### Ensemble modelling with algorithms models for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   algo = list()
-  for (i in 1:length(models)) {algo[[i]] = models[[i]]}
+  for (i in seq_len(length(models))) {algo[[i]] = models[[i]]}
   if (!is.null(name)) {algo['name'] = name}
   algo['thresh'] = thresh
   algo['uncertainty'] = uncertainty
   algo[['ensemble.metric']] = ensemble.metric
   algo[['ensemble.thresh']] = ensemble.thresh
   algo['weight'] = weight
+  algo['verbose'] = verbose
   enm = do.call(ensemble, algo)
   if(verbose){cat(sprintf('Ensemble modelling done for %s %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
   if(GUI) {incProgress(1/(length(algorithms)+1), detail = 'Ensemble SDM built')}
@@ -355,7 +356,7 @@ ensemble_modelling = function(algorithms,
   if(!is.null(enm)) {
     # Parameters
     text.algorithms = character()
-    for (i in 1:length(algorithms)) {text.algorithms = paste0(text.algorithms,'.',algorithms[i])}
+    for (i in seq_len(length(algorithms))) {text.algorithms = paste0(text.algorithms,'.',algorithms[i])}
     enm@parameters$algorithms = text.algorithms
     enm@parameters$rep = rep
 
@@ -367,7 +368,7 @@ ensemble_modelling = function(algorithms,
   }
 
   # Removing tmp
-  if (tmp) {unlink('./.models', recursive = T, force = T)}
+  if (tmp) {unlink('./.models', recursive = TRUE, force = TRUE)}
   rm(list = ls()[-which(ls() == 'enm')])
   gc()
   return(enm)

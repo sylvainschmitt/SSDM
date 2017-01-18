@@ -9,17 +9,17 @@
 \alias{save.stack,Stacked.SDM-method}
 \title{Save ensemble SDMs and SSDMs}
 \usage{
-save.enm(enm, name = strsplit(enm@name, ".", fixed = T)[[1]][1],
-  path = getwd(), verbose = T, GUI = F)
+save.enm(enm, name = strsplit(enm@name, ".", fixed = TRUE)[[1]][1],
+  path = getwd(), verbose = TRUE, GUI = FALSE)
 
 \S4method{save.enm}{Ensemble.SDM}(enm, name = strsplit(enm@name,
-  ".Ensemble.SDM", fixed = T)[[1]][1], path = getwd(), verbose = T,
-  GUI = F)
+  ".Ensemble.SDM", fixed = TRUE)[[1]][1], path = getwd(), verbose = TRUE,
+  GUI = FALSE)
 
-save.stack(stack, name = "Stack", path = getwd(), verbose = T, GUI = F)
+save.stack(stack, name = "Stack", path = getwd(), verbose = TRUE, GUI = FALSE)
 
 \S4method{save.stack}{Stacked.SDM}(stack, name = "Stack", path = getwd(),
-  verbose = T, GUI = F)
+  verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{enm}{Ensemble.SDM. Ensemble SDM to be saved.}

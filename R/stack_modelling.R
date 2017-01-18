@@ -229,7 +229,7 @@ NULL
 #' data(Occurrences)
 #'
 #' # SSDM building
-#' SSDM = stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
+#' SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
 #'                        Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
 #'                        Spcol = 'SPECIES')
 #'
@@ -326,20 +326,20 @@ stack_modelling = function(algorithms,
                            # Occurrences reading
                            Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL, Spcol = 'SpeciesID',
                            # Model creation
-                           rep = 10, name = NULL, save = F, path = getwd(),
+                           rep = 10, name = NULL, save = FALSE, path = getwd(),
                            # Pseudo-absences definition
                            PA = NULL,
                            # Evaluation parameters
                            cv = 'holdout', cv.param = c(0.7,1), thresh = 1001,
-                           axes.metric = 'Pearson', uncertainty = T, tmp = F,
+                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE,
                            # Assembling parameters
-                           ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = T,
+                           ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
                            method = 'P', metric = 'SES', rep.B = 1000,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
-                           verbose = T, GUI = F, cores = 0,
+                           verbose = TRUE, GUI = FALSE, cores = 1,
                            # Modelling parameters
                            ...) {
   # Check arguments
@@ -353,7 +353,7 @@ stack_modelling = function(algorithms,
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
   if ('all' %in% algorithms) {algorithms = available.algo}
-  for (i in 1:length(algorithms)) {
+  for (i in seq_len(length(algorithms))) {
     if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
   if (tmp) {
     tmppath = get("tmpdir",envir=.PkgEnv)
@@ -376,11 +376,11 @@ stack_modelling = function(algorithms,
                                  Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
                                  if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
                                  enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                                              Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
+                                                              Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
                                                               PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                                               axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                                               ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                              weight = weight, verbose = verbose, GUI = F, n.cores = 1, ...))
+                                                              weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1, ...))
                                  if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
                                                       detail = paste(species,' ensemble SDM built'))}
                                  if (inherits(enm, "try-error")) {
@@ -388,8 +388,8 @@ stack_modelling = function(algorithms,
                                    enm = NULL
                                  } else {
                                    if (tmp && !is.null(enm)) {
-                                     enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = T)
-                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = T)
+                                     enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = TRUE)
+                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = TRUE)
                                    }
                                    if(verbose){cat('\n\n')}
                                  }
@@ -406,11 +406,11 @@ stack_modelling = function(algorithms,
                     Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
                     if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
                     enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                                 Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = F, path = path,
+                                                 Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
                                                  PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                                  axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                                  ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                 weight = weight, verbose = verbose, GUI = F, ...))
+                                                 weight = weight, verbose = verbose, GUI = FALSE, ...))
                     if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
                                          detail = paste(species,' ensemble SDM built'))}
                     if (inherits(enm, "try-error")) {
@@ -418,8 +418,8 @@ stack_modelling = function(algorithms,
                       enm = NULL
                     } else {
                       if (tmp && !is.null(enm)) {
-                        enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = T)
-                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = T)
+                        enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = TRUE)
+                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = TRUE)
                       }
                       if(verbose){cat('\n\n')}
                     }
@@ -440,6 +440,7 @@ stack_modelling = function(algorithms,
     enms['rep.B'] = rep.B
     if (!is.null(range)) {enms['range'] = range}
     enms$endemism = endemism
+    enms['verbose'] = verbose
     stack = do.call(stacking, enms)
   }
 

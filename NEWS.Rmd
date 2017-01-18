@@ -2,6 +2,23 @@
 title: "NEWS"
 output: github_document
 ---
+# SSDM 0.1.9027
+- formal testing with `testthat` (39%)
+- `quit` button in gui
+- `stack_modelling`example fix
+- warning messages corrected or removed
+- T/F replace by `TRUE` and `FALSE`
+- `goodpractice` package check
+- `length(x)`replaced by `seq_len(x)`
+- `<-` instead of `=` in examples
+- Package startup message
+- `shinyFiles` in DEPENDENCIES
+- Spelling checked in `plot(SSDM)`
+- Raw `Env`and `Occurrences` data
+- Example data in `gui`
+- Fixed working directory in `gui`
+- Repository and bug report in DESCRIPTION
+- Travis support
 
 # SSDM 0.1.9026 
 - checkargs

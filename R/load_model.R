@@ -46,7 +46,7 @@ load_enm = function (name, path = getwd()) {
 
 #' @rdname load.model
 #' @export
-load_stack = function (name = 'Stack', path = getwd(), GUI = F) {
+load_stack = function (name = 'Stack', path = getwd(), GUI = FALSE) {
   path = paste0(path, '/', name)
   a = try(read.csv(paste0(path,'/Stack/Tables/AlgoCorr.csv'), row.names = 1))
   if (inherits(a, 'try-error')) {
@@ -63,9 +63,9 @@ load_stack = function (name = 'Stack', path = getwd(), GUI = F) {
                       algorithm.evaluation = read.csv(paste0(path,'/Stack/Tables/AlgoEval.csv'), row.names = 1),
                       enms = list(),
                       parameters = read.csv(paste0(path,'/Stack/Tables/Parameters.csv'), row.names = 1, colClasses = "character"))
-  enms = list.dirs(paste0(path, '/Species'), recursive = F, full.names = F)
+  enms = list.dirs(paste0(path, '/Species'), recursive = FALSE, full.names = FALSE)
   if(GUI) {incProgress(1/(length(enms)+1), detail = 'stack main results')}
-  for (i in 1:length(enms)) {
+  for (i in seq_len(length(enms))) {
     cat(enms[i])
     enm = load_enm(enms[i], path = paste0(path, '/Species'))
     stack@enms[[enm@name]] = enm

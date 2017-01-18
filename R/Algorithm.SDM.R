@@ -19,7 +19,7 @@ NULL
 ##### New generics ##### ----
 setGeneric('get_PA', function(obj) {return(standardGeneric('get_PA'))})
 setGeneric('PA.select', function(obj, Env, ...) {return(standardGeneric('PA.select'))})
-setGeneric('data.values', function(obj, Env, na.rm = T) {return(standardGeneric('data.values'))})
+setGeneric('data.values', function(obj, Env, na.rm = TRUE) {return(standardGeneric('data.values'))})
 setGeneric('get_model', function(obj, ...) {return(standardGeneric('get_model'))})
 setGeneric('evaluate', function(obj, cv = 'holdout', cv.param = c(0.7, 2), thresh = 1001, metric = 'SES', Env, ...) {return(standardGeneric('evaluate'))})
 setGeneric('project', function(obj, Env, ...) {return(standardGeneric('project'))})
@@ -98,7 +98,7 @@ Algorithm.SDM <- function(algorithm = 'Algorithm',
 # 3 - Internal undocumented methods #
 setMethod('get_PA', "Algorithm.SDM", function(obj) {return(obj)})
 
-setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL) {
+setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL, verbose = TRUE) {
   if (is.null(PA)) {
     PA = get_PA(obj)
     obj@parameters$PA = 'default'
@@ -108,9 +108,9 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL) {
 
   # Mask defining
   if (PA$strat == '2nd') {
-    cat('   second far selection \n')
+    if(verbose) {cat('   second far selection \n')}
     circles = list()
-    for (i in 1:length(obj@data$X)) {
+    for (i in seq_len(length(obj@data$X))) {
       x = obj@data$X[i]
       y = obj@data$Y[i]
       pts = seq(0, 2 * pi, length.out = 100)
@@ -121,7 +121,7 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL) {
     sc= SpatialPolygons(list(Polygons(circles, 'Circles')))
     Mask = mask(Env[[1]], sc)
   } else {
-    cat('   random selection \n')
+    if(verbose) {cat('   random selection \n')}
     Mask = Env[[1]]
     }
 
@@ -145,11 +145,11 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL) {
 
   return(obj)})
 
-setMethod('data.values', "Algorithm.SDM", function(obj, Env, na.rm = T) {
+setMethod('data.values', "Algorithm.SDM", function(obj, Env, na.rm = TRUE) {
   values = data.frame(extract(Env, cbind(obj@data$X, obj@data$Y)))
 
   # Categorical variables as factor
-  for (i in 1:length(Env@layers)) {
+  for (i in seq_len(length(Env@layers))) {
     if(Env[[i]]@data@isfactor) {
       col = which(names(values) == Env[[i]]@data@names)
       values[,col] = as.factor(values[,col])
@@ -165,7 +165,7 @@ setMethod('data.values', "Algorithm.SDM", function(obj, Env, na.rm = T) {
 
   # NAs removing
   if(na.rm) {
-    for (i in 1:length(Env@layers)) {
+    for (i in seq_len(length(Env@layers))) {
       if(length(which(is.na(obj@data[i+3]))) > 0) {obj@data = obj@data[-c(which(is.na(obj@data[i+3]))),]}
     }
   }
@@ -177,7 +177,7 @@ setMethod('get_model', "Algorithm.SDM", function(obj, ....) {return(obj)})
 setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env, ...) {
   # Parameters
   text.cv.param = character()
-  for (i in 1:length(cv.param)) {
+  for (i in seq_len(length(cv.param))) {
     text.cv.param = paste0(text.cv.param,'|',cv.param[i])
   }
   obj@parameters$cv = cv
@@ -194,10 +194,10 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
   if(cv == 'holdout') {
     for (i in 1:cv.param[2]) {
       data = obj@data
-      data$train = F
+      data$train = FALSE
       for (p in 0:1) {
         datap = data[which(data$Presence == p),]
-        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = TRUE
         data[which(data$Presence == p),] = datap
       }
       evaldata = data[-which(data$train),]
@@ -220,12 +220,12 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
   } else if(cv == 'k-fold') {
     k = cv.param[1]
     rep = cv.param[2]
-    for (i in 1:length(rep)) {
+    for (i in seq_len(length(rep))) {
       data = obj@data
       data$fold = 0
       for (p in 0:1) {
         datap = data[which(data$Presence == p),]
-        indices = c(1:length(datap$fold))
+        indices = seq_len(length(datap$fold))
         fold = 1
         while(length(indices) > 0){
           j = sample(indices, 1)
@@ -257,7 +257,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
   } else if(cv == 'LOO') {
       data = obj@data
       predicted.values = c()
-      for(j in 1:length(data[,1])) {
+      for(j in seq_len(length(data[,1]))) {
         evaldata = data[j,]
         traindata = data[-j,]
         trainobj = obj
@@ -270,25 +270,26 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
       evaluation = accuracy(data$Presence, predicted.values, threshold)
     }
   obj@evaluation = evaluation[1,]
-  for(i in 1:length(evaluation)){
-    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
+  for(i in seq_len(length(evaluation))) {
+    obj@evaluation[i] = mean(evaluation[,i], na.rm = TRUE)
   }
   return(obj)})
 
 setMethod('project', "Algorithm.SDM",  function(obj, Env, ...) {
   model = get_model(obj, ...)
-  proj = raster::predict(Env, model,
-                         fun = function(model, x){
-                           x= as.data.frame(x)
-                           for (i in 1:length(Env@layers)) {
-                             if(Env[[i]]@data@isfactor) {
-                               x[,i] = as.factor(x[,i])
-                               x[,i] = droplevels(x[,i])
-                               levels(x[,i]) = Env[[i]]@data@attributes[[1]]$ID
-                             }
-                           }
-                           return(predict(model, x))
-                         })
+  proj = suppressWarnings(
+    raster::predict(Env, model,
+                    fun = function(model, x){
+                      x= as.data.frame(x)
+                      for (i in seq_len(length(Env@layers))) {
+                        if(Env[[i]]@data@isfactor) {
+                          x[,i] = as.factor(x[,i])
+                          x[,i] = droplevels(x[,i])
+                          levels(x[,i]) = Env[[i]]@data@attributes[[1]]$ID
+                        }
+                      }
+                      return(predict(model, x))
+                    }))
   # Rescaling projection
   proj = reclassify(proj, c(-Inf,0,0))
   proj = proj / proj@data@max
@@ -322,8 +323,8 @@ setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, thresh =
 
   # Variable importance normalization (%)
   if(sum(obj@variable.importance) == 0) {
-    all.null = T
-    for (i in 1:length(obj@variable.importance[1,])) {if(obj@variable.importance[1,i] != 0) {all.null = F}}
+    all.null = TRUE
+    for (i in seq_len(length(obj@variable.importance[1,]))) {if(obj@variable.importance[1,i] != 0) {all.null = FALSE}}
     if (all.null) {
       obj@variable.importance[1,] = 100 / length(obj@variable.importance)
     } else {
@@ -359,7 +360,7 @@ setMethod('get_model', "GLM.SDM",
             }
             model = glm(formula(formula), data = data, test = test,
                         control = glm.control(epsilon = epsilon, maxit = maxit))
-            for(i in 1:length(data)) {
+            for(i in seq_len(length(data))) {
               if(is.factor(data[,i])) {
                 model$xlevels[[which(names(model$xlevels) == paste0(names(data)[i]))]] = levels(data[,i])
               }
@@ -391,7 +392,7 @@ setMethod('get_model', "GAM.SDM",
             }
             model = gam(formula(formula), data = data, test = test,
                         control = gam.control(epsilon = epsilon, maxit = maxit))
-                        for(i in 1:length(data)) {
+                        for(i in seq_len(length(data))) {
                           if(is.factor(data[,i])) {
                             model$xlevels[[which(names(model$xlevels) == names(data)[i])]] = levels(data[,i])
                           }
@@ -516,10 +517,10 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
   if(cv == 'holdout') {
     for (i in 1:cv.param[2]) {
       data = obj@data
-      data$train = F
+      data$train = FALSE
       for (p in 0:1) {
         datap = data[which(data$Presence == p),]
-        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = T
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[1]))] = TRUE
         data[which(data$Presence == p),] = datap
       }
       evaldata = data[-which(data$train),]
@@ -548,12 +549,12 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
       k = cv.param[1]
       rep = cv.param[2]
     }
-    for (i in 1:length(rep)) {
+    for (i in seq_len(length(rep))) {
       data = obj@data
       data$fold = 0
       for (p in 0:1) {
         datap = data[which(data$Presence == p),]
-        indices = c(1:length(datap$fold))
+        indices = seq_len(length(datap$fold))
         fold = 1
         while(length(indices) > 0){
           j = sample(indices, 1)
@@ -584,8 +585,8 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
     }
   }
   obj@evaluation = evaluation[1,]
-  for(i in 1:length(evaluation)){
-    obj@evaluation[i] = mean(evaluation[,i], na.rm = T)
+  for(i in seq_len(length(evaluation))) {
+    obj@evaluation[i] = mean(evaluation[,i], na.rm = TRUE)
   }
   return(obj)})
 
@@ -594,7 +595,7 @@ setMethod('project', "MAXENT.SDM",  function(obj, Env, ...) {
   proj = raster::predict(Env, model,
                          fun = function(model, x){
                            x= as.data.frame(x)
-                           for (i in 1:length(Env@layers)) {
+                           for (i in seq_len(length(Env@layers))) {
                              if(Env[[i]]@data@isfactor) {
                                x[,i] = as.factor(x[,i])
                                x[,i] = droplevels(x[,i])
@@ -634,8 +635,8 @@ setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, thresh = 10
 
   # Variable importance normalization (%)
   if(sum(obj@variable.importance) == 0) {
-    all.null = T
-    for (i in 1:length(obj@variable.importance[1,])) {if(obj@variable.importance[1,i] != 0) {all.null = F}}
+    all.null = TRUE
+    for (i in seq_len(length(obj@variable.importance[1,]))) {if(obj@variable.importance[1,i] != 0) {all.null = FALSE}}
     if (all.null) {
       obj@variable.importance[1,] = 100 / length(obj@variable.importance)
     } else {

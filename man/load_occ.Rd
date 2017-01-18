@@ -5,8 +5,8 @@
 \title{Load occurrence data}
 \usage{
 load_occ(path = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
-  Ycol = "Latitude", Spcol = NULL, GeoRes = T,
-  reso = max(res(Env@layers[[1]])), verbose = T, GUI = F)
+  Ycol = "Latitude", Spcol = NULL, GeoRes = TRUE,
+  reso = max(res(Env@layers[[1]])), verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{path}{character. Path to the directory that contains the occurrence table.}
@@ -49,9 +49,9 @@ Function to load occurrence data from a table to perform \code{\link{modelling}}
 \code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 }
 \examples{
-\dontrun{
-load.occ(path)
-}
+load_occ(path = system.file("extdata",  package = 'SSDM'), Env,
+        Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+        file = 'Occurences.txt', sep = ',')
 
 }
 \seealso{

@@ -28,10 +28,10 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                   fluidRow(
                                     box(title = 'Environmental variable', height = 600,
                                         uiOutput('Envbug'),
-                                        shinyFilesButton('envfiles', 'Raster selection', 'Please select rasters', FALSE, multiple = T),
+                                        shinyFilesButton('envfiles', 'Raster selection', 'Please select rasters', FALSE, multiple = TRUE),
                                         uiOutput('factors'),
                                         p('Which variable should be considered as a categorical variable'),
-                                        checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = T),
+                                        checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = TRUE),
                                         actionButton('load', 'Load')
                                     ),
                                     box(title = 'Preview', height = 600,
@@ -47,16 +47,16 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                                        Semicolon = ';',
                                                        Tab = '\t',
                                                        'White space' = ' '),
-                                                     ',', inline = T),
+                                                     ',', inline = TRUE),
                                         radioButtons('dec', 'Decimal',
                                                      c(Point ='.',
                                                        Comma = ','),
-                                                     '.', inline = T),
+                                                     '.', inline = TRUE),
                                         uiOutput('Xcol'),
                                         uiOutput('Ycol'),
                                         uiOutput('Spcol'),
                                         uiOutput('Pcol'),
-                                        checkboxInput('GeoRes', 'Geographic resampling', value = T),
+                                        checkboxInput('GeoRes', 'Geographic resampling', value = TRUE),
                                         uiOutput('reso'),
                                         p('Geographical thinning can be performed on occurrences to limit geographical biases in the SDMs.'),
                                         actionButton('load2', 'Load')),
@@ -89,7 +89,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                 fluidRow(
                                   tabBox(
                                     tabPanel('Basic',
-                                             uiOutput('specie'),
+                                             uiOutput('species'),
                                              uiOutput('algoUI'),
                                              uiOutput('repUI'),
                                              uiOutput('nameUI'),
@@ -106,7 +106,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                              uiOutput('repBslide')
                                     ),
                                     tabPanel('Intermediate',
-                                             checkboxInput('PA', 'Automatic Pseudo-Absences', value = T),
+                                             checkboxInput('PA', 'Automatic Pseudo-Absences', value = TRUE),
                                              uiOutput('PAnbUI'),
                                              uiOutput('PAstratUI'),
                                              selectInput('cval', 'Model evaluation method', c('holdout','k-fold','LOO'), selected = 'holdout'),
@@ -132,7 +132,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                              p('Value representing the number of equal interval threshold values between 0 and 1'),
                                              uiOutput('tmpUI'),
                                              uiOutput('tmpinfoUI'),
-                                             checkboxGroupInput('algoparam', 'Algorithm parameters', c('GLM','GAM','MARS','GBM','CTA','RF','ANN','SVM'), inline = T),
+                                             checkboxGroupInput('algoparam', 'Algorithm parameters', c('GLM','GAM','MARS','GBM','CTA','RF','ANN','SVM'), inline = TRUE),
                                              uiOutput('testUI'),
                                              uiOutput('epsilonUI'),
                                              uiOutput('maxitUI'),
@@ -218,6 +218,17 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                     box(title = 'Save results',
                                         shinyDirButton('save', 'Folder selection', 'Please select folder to save the model', FALSE),
                                         actionButton('savemodel', 'save', icon = icon('floppy-o'))
+                                    )
+                                  )
+                                )
+                        ),
+
+                        ### Quit page ###
+                        tabItem('quitpage',
+                                fluidPage(
+                                  fluidRow(
+                                    box(title = 'Are you sur you want to quit ?',
+                                        actionButton('quitgui', 'Quit')
                                     )
                                   )
                                 )

@@ -30,16 +30,14 @@ NULL
 #'  not).
 #'
 #' @examples
-#'\dontrun{
-#' load.var(path)
-#'}
+#' load_var(system.file("extdata",  package = 'SSDM'))
 #'
 #'@seealso \code{\link{load_occ}} to load occurrences.
 #'
 #'@export
 load_var <- function (path = getwd(), files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.envi','.bil','.img'),
-                      categorical = NULL, Norm = T, tmp = T, verbose = T, GUI = F) {
+                      categorical = NULL, Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(path = path, files = files, format = format, categorical = categorical,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
@@ -51,7 +49,7 @@ load_var <- function (path = getwd(), files = NULL,
 
   # Rasters loading
   files.null = files
-  if (is.null(files)) {files.null = T} else {files.null = F}
+  if (is.null(files)) {files.null = TRUE} else {files.null = FALSE}
   resostack = c(0, 0)
   extentstack = extent(-Inf,Inf,-Inf,Inf)
   if(files.null){
@@ -64,7 +62,7 @@ load_var <- function (path = getwd(), files = NULL,
       files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
-      for (i in 1:length(files)){
+      for (i in seq_len(length(files))) {
         if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
         Raster = raster(file)
         # Extent and resolution check
@@ -89,7 +87,7 @@ load_var <- function (path = getwd(), files = NULL,
       files = list.files(path = path, pattern = paste0('.',format[j],'$'))
     }
     if (length(files) > 0) {
-      for (i in 1:length(files)){
+      for (i in seq_len(length(files))) {
         if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
         Raster = raster(file)
         Raster = readAll(Raster)
@@ -108,7 +106,7 @@ load_var <- function (path = getwd(), files = NULL,
         if(i>1 && (any(res(Raster)!=res(Env)) || extent(Raster)!=extentstack)){
           Raster = resample(Raster, Env[[1]])
         }
-        Env = stack(Env, Raster, quick = T)
+        Env = stack(Env, Raster, quick = TRUE)
         if(GUI) {incProgress((1/(length(files)*3)), detail = paste(i,'treated'))}
       }
     }
@@ -119,7 +117,7 @@ load_var <- function (path = getwd(), files = NULL,
   # Normalizing variable
   if (Norm) {
     if(verbose) {cat('   normalizing continuous variable \n\n')}
-    for (i in 1:length(Env@layers)) {
+    for (i in seq_len(length(Env@layers))) {
       #For not categorical variable
       if (!Env[[i]]@data@isfactor) {
         Env[[i]] = Env[[i]]/Env[[i]]@data@max
@@ -133,8 +131,8 @@ load_var <- function (path = getwd(), files = NULL,
   # Temporary files
   if (tmp) {
     path = get("tmpdir",envir=.PkgEnv)
-    if (!("./.rasters" %in% list.dirs())) (dir.create(paste0(path,'/.rasters')))
-    for (i in 1:length(Env@layers)) {Env[[i]] = writeRaster(Env[[i]], paste0(path,"/.rasters/", names(Env[[i]])), overwrite = T)}
+    if (!(file.path(path, '.rasters') %in% list.dirs(path))) (dir.create(paste0(path,'/.rasters')))
+    for (i in seq_len(length(Env@layers))) {Env[[i]] = writeRaster(Env[[i]], paste0(path,"/.rasters/", names(Env[[i]])), overwrite = TRUE)}
   }
 
   return(Env)

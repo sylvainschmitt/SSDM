@@ -7,11 +7,11 @@
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", rep.B = 1000,
-  range = NULL, endemism = c("WEI", "Binary"), verbose = T, GUI = F)
+  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE, GUI = FALSE)
 
 \S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "P",
   rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = T, GUI = F)
+  verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{enm, ...}{character. Ensemble SDMs to be stacked.}
@@ -78,17 +78,17 @@ SDMs for each species (see \code{\link{ensemble_modelling}}).
 # Loading data
 data(Env)
 data(Occurrences)
-Occ1 = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
-Occ2 = subset(Occurrences, Occurrences$SPECIES == 'gracilis')
+Occ1 <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+Occ2 <- subset(Occurrences, Occurrences$SPECIES == 'gracilis')
 
 # SSDM building
-ESDM1 = ensemble_modelling(c('CTA', 'SVM'), Occ1, Env, rep = 1,
+ESDM1 <- ensemble_modelling(c('CTA', 'SVM'), Occ1, Env, rep = 1,
                            Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
                            name = 'elliptica', ensemble.thresh = c(0.6))
-ESDM2 = ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
+ESDM2 <- ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
                            Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
                            name = 'gracilis', ensemble.thresh = c(0.6))
-SSDM = stacking(ESDM1, ESDM2)
+SSDM <- stacking(ESDM1, ESDM2)
 
 # Results plotting
 plot(SSDM)

@@ -15,7 +15,7 @@ server <- function(input, output, session) {
   output$menu <- renderMenu({
     sidebarMenu(
       id = 'actions',
-      menuItem('Welcome page', tabName = 'welcomepage', selected = T),
+      menuItem('Welcome page', tabName = 'welcomepage', selected = TRUE),
       menuItem('Load',
                menuSubItem('New data', tabName = 'newdata'),
                menuSubItem('Previous model', tabName = 'previousmodel')
@@ -36,7 +36,8 @@ server <- function(input, output, session) {
                  if(!is.null(data$Stack)){selectInput('enmchoice', 'Species:', data$enms, selectize = TRUE)},
                  if(!inherits(data$ENM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
         )
-      }
+      },
+      menuItem('Quit', tabName = 'quitpage')
     )
   })
 
@@ -45,32 +46,44 @@ server <- function(input, output, session) {
   ## Load new data page ##
 
   # Environmental variable loading
-  load.var <- reactiveValues(factors = c(), formats = c(), norm = T,  vars = list())
+  load.var <- reactiveValues(factors = c(), formats = c(), norm = TRUE,  vars = list())
+  working.directory <- get("working.directory", envir = .GlobalEnv)
+  example = system.file("extdata", package = "SSDM")
   if(Sys.info()[['sysname']] == 'Linux') {
     shinyFileChoose(input, 'envfiles', session=session,
-                    roots=c( wd='.', home = '/home', root = '/'),
+                    roots=c(wd = working.directory,
+                            example = example,
+                            home = '/home',
+                            root = '/'),
                     filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
   } else if (Sys.info()[['sysname']] == 'Windows') {
-    d = system('wmic logicaldisk get caption', intern = T)
+    d = system('wmic logicaldisk get caption', intern = TRUE)
     disks = c()
     for(i in 2:(length(d)-1)){
       disks = c(disks, substr(d[i],1,2))
     }
     names(disks) = disks
-    shinyFileChoose(input, 'envfiles', session=session, roots=c( wd='.', disks),
+    shinyFileChoose(input, 'envfiles', session=session,
+                    roots=c(wd = working.directory,
+                            example = example,
+                            disks),
                     filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
   } else {
-    shinyFileChoose(input, 'envfiles', session=session, roots=c( wd='.', home = '/user', root = '/'),
+    shinyFileChoose(input, 'envfiles', session=session,
+                    roots = c(wd = working.directory,
+                              example = example,
+                              home = '/user',
+                              root = '/'),
                     filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
   }
   observeEvent(input$envfiles,{
     load.var$vars = list()
-    for(i in 1:length(input$envfiles$files)){
+    for(i in seq_len(length(input$envfiles$files))) {
       load.var$vars[[i]] = as.character(input$envfiles$files[[i]][length(input$envfiles$files[[i]])])
     }
   })
   output$factors <- renderUI({
-    selectInput('factors', 'Categorical', load.var$vars, multiple = T, selectize = T)
+    selectInput('factors', 'Categorical', load.var$vars, multiple = TRUE, selectize = TRUE)
   })
   observeEvent(input$load, {
     validate(
@@ -78,14 +91,19 @@ server <- function(input, output, session) {
     )
     if(Sys.info()[['sysname']] == 'Linux') {
       path = switch(input$envfiles$root,
-                    'wd' = getwd(),
+                    'wd' = working.directory,
+                    'example' = example,
                     'home' = '/home',
                     'root' = '/')
     } else if (Sys.info()[['sysname']] == 'Windows') {
-      path = switch(input$envfiles$root, 'wd' = getwd(), input$envfiles$root)
+      path = switch(input$envfiles$root,
+                    'wd' = working.directory,
+                    'example' = example,
+                    input$envfiles$root)
     } else {
       path = switch(input$envfiles$root,
-                    'wd' = getwd(),
+                    'wd' = working.directory,
+                    'example' = example,
                     'home' = '/home',
                     'root' = '/')
     }
@@ -93,34 +111,34 @@ server <- function(input, output, session) {
       path = paste0(path, '/', input$envfiles$files[[1]][i])
     }
     load.var$formats = c()
-    for (i in 1 :length(load.var$vars)) {
-      format = paste0('.',strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][2])
+    for (i in seq_len(length(load.var$vars))) {
+      format = paste0('.',strsplit(load.var$vars[[i]], '.', fixed = TRUE)[[1]][2])
       if (!(format %in% load.var$formats)) {load.var$formats = c(load.var$formats, format)}
     }
     if('Normalization' %in% input$load.var.options) {
-      load.var$norm = T
+      load.var$norm = TRUE
     } else {
-      load.var$norm = F
+      load.var$norm = FALSE
     }
     a = try(withProgress(message = 'Variables loading',
                          load_var(path,
                                   files = unlist(load.var$vars),
                                   format = load.var$formats,
                                   Norm = load.var$norm,
-                                  tmp = F,
+                                  tmp = FALSE,
                                   categorical = load.var$factors,
-                                  verbose = F,
-                                  GUI = T)))
+                                  verbose = FALSE,
+                                  GUI = TRUE)))
     if(inherits(a, 'try-error')){
       output$Envbug <- renderUI(p('Environmental variables loading failed, please check your inputs and try again'))
     } else {
       output$Envbug <- renderUI(p())
       data$Env = a
-      for (i in 1 :length(load.var$vars)) {
-        names(data$Env)[i] = strsplit(load.var$vars[[i]], '.', fixed = T)[[1]][1]
+      for (i in seq_len(length(load.var$vars))) {
+        names(data$Env)[i] = strsplit(load.var$vars[[i]], '.', fixed = TRUE)[[1]][1]
       }
       output$layerchoice <- renderUI({
-        selectInput('layer', 'Variable', as.list(names(data$Env)), multiple = F, selectize = T)
+        selectInput('layer', 'Variable', as.list(names(data$Env)), multiple = FALSE, selectize = TRUE)
       })
       output$env <- renderPlot({
         if(!is.null(input$layer)){
@@ -144,24 +162,35 @@ server <- function(input, output, session) {
   load.occ <- reactiveValues(columns = c())
   if(Sys.info()[['sysname']] == 'Linux') {
     shinyFileChoose(input, 'Occ', session=session,
-                    roots=c( wd='.', home = '/home', root = '/'),
+                    roots = c(wd = working.directory,
+                              example = example,
+                              home = '/home',
+                              root = '/'),
                     filetypes=c('',"csv", "txt"))
   } else if (Sys.info()[['sysname']] == 'Windows') {
-    d = system('wmic logicaldisk get caption', intern = T)
+    d = system('wmic logicaldisk get caption', intern = TRUE)
     disks = c()
     for(i in 2:(length(d)-1)){
       disks = c(disks, substr(d[i],1,2))
     }
     names(disks) = disks
-    shinyFileChoose(input, 'Occ', session=session, roots=c( wd='.', disks),
+    shinyFileChoose(input, 'Occ', session=session,
+                    roots = c(wd = working.directory,
+                              example = example,
+                              disks),
                     filetypes=c('',"csv", "txt"))
   } else {
-    shinyFileChoose(input, 'Occ', session=session, roots=c( wd='.', home = '/user', root = '/'),
+    shinyFileChoose(input, 'Occ', session=session,
+                    roots = c(wd = working.directory,
+                              example = example,
+                              home = '/user',
+                              root = '/'),
                     filetypes=c('',"csv", "txt"))
   }
   observeEvent(input$Occ, {
     file = paste0(switch(input$Occ$root,
-                         'wd' = getwd(),
+                         'wd' = working.directory,
+                         'example' = example,
                          'home' = '/home',
                          'root' = '/',
                          input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
@@ -170,7 +199,8 @@ server <- function(input, output, session) {
   observeEvent(input$sep, {
     if(!is.null(input$Occ)) {
       file = paste0(switch(input$Occ$root,
-                           'wd' = getwd(),
+                           'wd' = working.directory,
+                           'example' = example,
                            'home' = '/home',
                            'root' = '/',
                            input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
@@ -180,17 +210,18 @@ server <- function(input, output, session) {
   observeEvent(input$Occ, {
     if(!is.null(input$Occ)) {
       file = paste0(switch(input$Occ$root,
-                           'wd' = getwd(),
+                           'wd' = working.directory,
+                           'example' = example,
                            'home' = '/home',
                            'root' = '/',
                            input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
       load.occ$columns = names(read.csv2(file, sep = input$sep, nrows = 0))
     }
   })
-  output$Xcol <- renderUI({selectInput('Xcol', 'X column', load.occ$columns, multiple = F)})
-  output$Ycol <- renderUI({selectInput('Ycol', 'Y column', load.occ$columns, multiple = F)})
-  output$Pcol <- renderUI({selectInput('Pcol', 'Presence (1) / absence (0) column', c('None', load.occ$columns), multiple = F)})
-  output$Spcol <- renderUI({selectInput('Spcol', 'Species column', c('None', load.occ$columns), multiple = F)})
+  output$Xcol <- renderUI({selectInput('Xcol', 'X column', load.occ$columns, multiple = FALSE)})
+  output$Ycol <- renderUI({selectInput('Ycol', 'Y column', load.occ$columns, multiple = FALSE)})
+  output$Pcol <- renderUI({selectInput('Pcol', 'Presence (1) / absence (0) column', c('None', load.occ$columns), multiple = FALSE)})
+  output$Spcol <- renderUI({selectInput('Spcol', 'Species column', c('None', load.occ$columns), multiple = FALSE)})
   output$reso <- renderUI({if(input$GeoRes){sliderInput('reso', 'Resampling grid coefficient', 1,10,1)}})
   observeEvent(input$load2, {
     validate(
@@ -201,7 +232,8 @@ server <- function(input, output, session) {
     if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
     if(is.null(input$sep)) {sep = ""} else {sep = input$sep}
     file = paste0(switch(input$Occ$root,
-                         'wd' = getwd(),
+                         'wd' = working.directory,
+                         'example' = example,
                          'home' = '/home',
                          'root' = '/',
                          input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
@@ -214,8 +246,8 @@ server <- function(input, output, session) {
                                   Spcol = Spcol,
                                   GeoRes = input$GeoRes,
                                   reso = max(res(data$Env@layers[[1]])) * as.numeric(input$reso),
-                                  verbose = F,
-                                  GUI = T,
+                                  verbose = FALSE,
+                                  GUI = TRUE,
                                   sep = sep,
                                   dec = dec)))
     if(inherits(a, 'try-error')){
@@ -229,17 +261,28 @@ server <- function(input, output, session) {
 
   ## Load previous model page ##
   if(Sys.info()[['sysname']] == 'Linux') {
-    shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
+    shinyDirChoose(input, 'prevmodel', session=session,
+                   roots = c(wd = working.directory,
+                             home = '/home',
+                             root = '/'),
+                   filetypes=c(''))
   } else if (Sys.info()[['sysname']] == 'Windows') {
-    d = system('wmic logicaldisk get caption', intern = T)
+    d = system('wmic logicaldisk get caption', intern = TRUE)
     disks = c()
     for(i in 2:(length(d)-1)){
       disks = c(disks, substr(d[i],1,2))
     }
     names(disks) = disks
-    shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', disks), filetypes=c(''))
+    shinyDirChoose(input, 'prevmodel', session=session,
+                   roots = c(wd = working.directory,
+                             disks),
+                   filetypes=c(''))
   } else {
-    shinyDirChoose(input, 'prevmodel', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
+    shinyDirChoose(input, 'prevmodel', session=session,
+                   roots = c( wd= working.directory,
+                              home = '/user',
+                              root = '/'),
+                   filetypes=c(''))
   }
   observeEvent(input$load.model, {
     validate(
@@ -247,14 +290,14 @@ server <- function(input, output, session) {
     )
     if(Sys.info()[['sysname']] == 'Linux') {
       path = switch(input$prevmodel$root,
-                    'wd' = getwd(),
+                    'wd' = working.directory,
                     'home' = '/home/',
                     'root' = '/')
     } else if (Sys.info()[['sysname']] == 'Windows') {
-      path = switch(input$prevmodel$root, 'wd' = getwd(), input$prevmodel$root)
+      path = switch(input$prevmodel$root, 'wd' = working.directory, input$prevmodel$root)
     } else {
       path = switch(input$prevmodel$root,
-                    'wd' = getwd(),
+                    'wd' = working.directory,
                     'home' = '/home',
                     'root' = '/')
     }
@@ -266,7 +309,7 @@ server <- function(input, output, session) {
       a = try(load_enm(name, path))
     }
     if (input$model.type == 'SSDM') {
-      a = try(withProgress(message = 'Model loading', load_stack(name, path, GUI = T)))
+      a = try(withProgress(message = 'Model loading', load_stack(name, path, GUI = TRUE)))
     }
     if(inherits(a, 'try-error')){
       output$prevmodelbug <- renderText('Previous model loading failed, please check your inputs and try again')
@@ -283,7 +326,7 @@ server <- function(input, output, session) {
       }
       if (input$model.type == 'SSDM') {
         data$Stack = a
-        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = T)[[i]][1]}
+        for (i in seq_len(length(names(data$Stack@enms)))) {data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
         output$model.preview <- renderPlot({spplot(data$Stack@diversity.map,
                                                    main = data$Stack@name,
                                                    xlab = 'Longitude (\u02DA)',
@@ -294,54 +337,72 @@ server <- function(input, output, session) {
   })
 
   ## Basic modelling parameters ##
-  output$specie <-renderUI({
+  output$species <-renderUI({
     if(input$modellingchoice != 'Stack modelling'){
       if (input$Spcol != 'None') {
-        selectInput('specie', 'Specie', as.list(levels(data$Occ[,which(names(data$Occ) == input$Spcol)])))
+        selectInput('species', 'Species', as.list(levels(data$Occ[,which(names(data$Occ) == input$Spcol)])))
       }
     }
   })
   output$algoUI <- renderUI({
     if(input$modellingchoice == 'Algorithm modelling'){
       title = 'Algorithm'
-      multiple = F
+      multiple = FALSE
     } else {
       title = 'Algorithms'
-      multiple = T
+      multiple = TRUE
     }
-    selectInput('algo', title, c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM'), multiple = multiple, selectize = T)})
+    selectInput('algo', title, c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM'), multiple = multiple, selectize = TRUE)})
   output$repUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){sliderInput('rep','Repetitions',1,50,10, step = 1)}})
   output$nameUI <- renderUI({textInput('name','Name')})
-  output$uncertUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('uncert', 'Uncertainty mapping', value = T)}})
+  output$uncertUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('uncert', 'Uncertainty mapping', value = TRUE)}})
   output$uncertinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Between-algorithm variance map')}})
   output$endemismUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('endemism', 'Endemism mapping', c('None', 'WEI', 'CWEI'), selected = 'WEI')}})
-  output$endemisminfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){
-    p(switch(input$endemism,
-             'None' = 'No endemism map will be built',
-             'WEI' = 'Endemism map will be built by counting all species in each cell and weighting each by the inverse of its number of occurrences',
-             'CWEI' = 'Endemism map will be built by dividing the weighted endemism index by the total count of species in the cell'))}})
-  output$endemismrangeUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){if(input$endemism != 'None'){selectInput('endemismrange', 'Range in endemism mapping', c('NbOcc', 'Binary'), selected = 'Binary')}}})
+  output$endemisminfoUI <- renderUI({
+    if(input$modellingchoice == 'Stack modelling'){
+      if(length(input$endemism) == 1) {
+        p(switch(input$endemism,
+                 'None' = 'No endemism map will be built',
+                 'WEI' = 'Endemism map will be built by counting all species in each cell and weighting each by the inverse of its number of occurrences',
+                 'CWEI' = 'Endemism map will be built by dividing the weighted endemism index by the total count of species in the cell')
+        )
+      }
+    }
+  })
+  output$endemismrangeUI <- renderUI({
+    if(input$modellingchoice == 'Stack modelling'){
+      if(length(input$endemism) == 1) {
+        if(input$endemism != 'None'){
+          selectInput('endemismrange', 'Range in endemism mapping', c('NbOcc', 'Binary'), selected = 'Binary')
+        }
+      }
+    }
+  })
   output$endemismrangeinfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){
-    p(switch(input$endemismrange,
-             'NbOcc' = 'Range in endemism index computing is the total number of occurrences.',
-             'Binary' = 'Range in endemism index comuting is the surface of the binary map species distribution.'))}})
+    if(length(input$endemismrange) == 1) {
+      p(switch(input$endemismrange,
+               'NbOcc' = 'Range in endemism index computing is the total number of occurrences.',
+               'Binary' = 'Range in endemism index comuting is the surface of the binary map species distribution.'))}}})
   output$metricUI <- renderUI({selectInput('metric', 'Evaluation metric', c('Kappa','CCR','TSS','SES','LW','ROC'), selected = 'SES')})
   output$metricinfoUI <- renderUI({
-    p(switch(input$metric,
-             'Kappa' = 'Maximizes the Kappa',
-             'CCR' = 'Maximizes the sum of sensitivity and specificity',
-             'TSS' = '(True Skill Statistic) maximizes the sum of sensitivity and specificity',
-             'SES' = 'Uses the sensitivity-specificity equality',
-             'LW' = 'Uses the lowest occurrence prediction probability',
-             'ROC' = 'Minimizes the distance between the ROC plot (receiving operating curve) and the upper left corner (1,1).'))
-  })
+    if(length(input$metric) == 1) {
+      p(switch(input$metric,
+               'Kappa' = 'Maximizes the Kappa',
+               'CCR' = 'Maximizes the sum of sensitivity and specificity',
+               'TSS' = '(True Skill Statistic) maximizes the sum of sensitivity and specificity',
+               'SES' = 'Uses the sensitivity-specificity equality',
+               'LW' = 'Uses the lowest occurrence prediction probability',
+               'ROC' = 'Minimizes the distance between the ROC plot (receiving operating curve) and the upper left corner (1,1).'))
+    }})
   output$methodUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('method', 'Diversity mapping method', c('Probability','Random Bernoulli','Threshold'), selected = 'Probability')}})
   output$methodinfoUI <- renderUI({
     if(input$modellingchoice == 'Stack modelling'){
-      p(switch(input$method,
-               'Probability' = 'Sum probabilities of habitat suitability maps',
-               'Random Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
-               'Threshold' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)'))
+      if(length(input$method) == 1) {
+        p(switch(input$method,
+                 'Probability' = 'Sum probabilities of habitat suitability maps',
+                 'Random Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
+                 'Threshold' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)'))
+      }
     }
   })
   output$repBslide <- renderUI({if(input$modellingchoice == 'Stack modelling'){if(!is.null(input$method)){if(input$method=='Random Bernoulli'){sliderInput('repB','Bernoulli repetitions',1,10000,1000, step = 1)}}}})
@@ -383,20 +444,32 @@ server <- function(input, output, session) {
                    'specificity' = 'Specificity',
                    'prop.correct' = 'Proportion of correctly predicted occurrences')))
   })
-  output$ensemblemetricUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){selectInput('ensemblemetric', 'Ensemble selection metric', c('AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'AUC', multiple = T, selectize = T)}})
+  output$ensemblemetricUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){selectInput('ensemblemetric', 'Ensemble selection metric', c('AUC','Kappa','sensitivity','specificity','prop.correct'), selected = 'AUC', multiple = TRUE, selectize = TRUE)}})
   output$ensembleinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Metric(s) and threshold(s) used to select the best SDMs that will be kept in the ensemble SDM')}})
   output$AUCUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('AUC' %in% input$ensemblemetric){sliderInput('AUC','AUC threshold',0.5,1,0.75, step = 0.05)}}})
   output$KappaUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('Kappa' %in% input$ensemblemetric){sliderInput('Kappa','Kappa threshold',0,1,0.5, step = 0.05)}}})
   output$sensitivityUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('sensitivity' %in% input$ensemblemetric){sliderInput('sensitivity','Sensitivity threshold',0.5,1,0.75, step = 0.05)}}})
   output$specificityUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('specificity' %in% input$ensemblemetric){sliderInput('specificity','Specificity threshold',0.5,1,0.75, step = 0.05)}}})
   output$propcorrectUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){if('prop.correct' %in% input$ensemblemetric){sliderInput('propcorrect','Correct proportion threshold',0.5,1,0.75, step = 0.05)}}})
-  output$weightUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('weight', 'Ensemble weighted', value = T)}})
-  output$rangeUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){checkboxInput('range', 'Range restriction', value = F)}})
-  output$rangevalUI <- renderUI({if(input$modellingchoice == 'Stack modelling' && input$range){sliderInput('rangeval', 'Range restriction value', 1,100,5, step = 1)}})
-  output$rangeinfoUI <- renderUI({if(input$modellingchoice == 'Stack modelling' && input$range){p('Set a value of range restriction (in pixels) around presence occurrences on habitat suitability maps (all further points will have a null probability)')}})
+  output$weightUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('weight', 'Ensemble weighted', value = TRUE)}})
+  output$rangeUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){checkboxInput('range', 'Range restriction', value = FALSE)}})
+  output$rangevalUI <- renderUI({
+    if(is.logical(input$range)){
+      if(input$modellingchoice == 'Stack modelling' && input$range){
+        sliderInput('rangeval', 'Range restriction value', 1,100,5, step = 1)
+      }
+    }
+  })
+  output$rangeinfoUI <- renderUI({
+    if(is.logical(input$range)){
+      if(input$modellingchoice == 'Stack modelling' && input$range){
+        p('Set a value of range restriction (in pixels) around presence occurrences on habitat suitability maps (all further points will have a null probability)')
+      }
+    }
+  })
 
   ## Advanced modelling parameters ##
-  output$tmpUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('tmp', 'Temporary files', value = F)}})
+  output$tmpUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){checkboxInput('tmp', 'Temporary files', value = FALSE)}})
   output$tmpinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Rasters are saved in temporary files to release memory')}})
   output$testUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){selectInput('test','Test (GLM/GAM)',c('AIC', 'BIC'))}})
   output$epsilonUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){sliderInput('epsilon','Epsilon (GLM/GAM/SVM) = 1e-X',1,20,8, step = 1)}})
@@ -422,8 +495,8 @@ server <- function(input, output, session) {
     if (input$Spcol == 'None') {Spcol = NULL} else {Spcol = input$Spcol}
     if (input$name == "") {name = NULL} else {name = input$name}
     algo = c()
-    for (i in 1:length(input$algo)){algo = c(algo, input$algo[i])}
-    if(!is.null(input$PA)) {PA = T}
+    for (i in seq_len(length(input$algo))) {algo = c(algo, input$algo[i])}
+    if(!is.null(input$PA)) {PA = TRUE}
     if(input$PA) {PA = NULL} else {PA = list('nb' = input$PAnb, 'strat' = input$PAstrat)}
     if(is.null(input$ensemblemetric)){
       ensemble.metric = c('AUC')
@@ -432,7 +505,7 @@ server <- function(input, output, session) {
       ensemble.metric = c()
       ensemblethresh = c(input$AUC, input$Kappa, input$sensitivity, input$specificity, input$propcorrect)
       ensemble.thresh = c()
-      for (i in 1:length(input$ensemblemetric)){
+      for (i in seq_len(length(input$ensemblemetric))) {
         ensemble.metric = c(ensemble.metric, input$ensemblemetric[i])
         ensemble.thresh = c(ensemble.thresh, as.numeric(ensemblethresh[i]))
       }
@@ -455,11 +528,11 @@ server <- function(input, output, session) {
     if(is.null(input$repB)) {rep.B = 1000} else {rep.B = as.numeric(input$repB)}
     if(is.null(input$cval)) {cval = 'holdout'} else {cval = input$cval}
     if(length(c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))) < 2) {cv.param = c(0.7, 1)} else {cv.param = c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))}
-    if(!inherits(input$tmp,'logical')) {tmp = F} else {tmp = input$tmp}
-    if(!inherits(input$weight,'logical')) {weight = T} else {weight = input$weight}
+    if(!inherits(input$tmp,'logical')) {tmp = FALSE} else {tmp = input$tmp}
+    if(!inherits(input$weight,'logical')) {weight = TRUE} else {weight = input$weight}
     if(input$modellingchoice == 'Algorithm modelling'){
       if (input$Spcol != 'None') {
-        Occ = data$Occ[which(data$Occ[,which(names(data$Occ) == input$Spcol)] == input$specie),]
+        Occ = data$Occ[which(data$Occ[,which(names(data$Occ) == input$Spcol)] == input$species),]
       } else {
         Occ = data$Occ
       }
@@ -470,7 +543,7 @@ server <- function(input, output, session) {
                                         Ycol = input$Ycol,
                                         Pcol = Pcol,
                                         name = name,
-                                        save = F,
+                                        save = FALSE,
                                         path = 'nowhere',
                                         PA = PA,
                                         cv = cval,
@@ -479,10 +552,10 @@ server <- function(input, output, session) {
                                         axes.metric = input$axesmetric,
                                         select.metric = c('AUC'),
                                         select.thresh = c(0),
-                                        select = F,
+                                        select = FALSE,
                                         metric = input$metric,
-                                        verbose = F,
-                                        GUI = T,
+                                        verbose = FALSE,
+                                        GUI = TRUE,
                                         test = algoparam$test,
                                         maxit = algoparam$maxit,
                                         epsilon = algoparam$epsilon,
@@ -498,10 +571,10 @@ server <- function(input, output, session) {
                                            col.regions = rev(terrain.colors(10000))))
       result$ENM = data$ENM
     }
-    if(!inherits(input$uncert,'logical')) {uncert = T} else {uncert = input$uncert}
+    if(!inherits(input$uncert,'logical')) {uncert = TRUE} else {uncert = input$uncert}
     if(input$modellingchoice == 'Ensemble modelling'){
       if (input$Spcol != 'None') {
-        Occ = data$Occ[which(data$Occ[,which(names(data$Occ) == input$Spcol)] == input$specie),]
+        Occ = data$Occ[which(data$Occ[,which(names(data$Occ) == input$Spcol)] == input$species),]
       } else {
         Occ = data$Occ
       }
@@ -513,7 +586,7 @@ server <- function(input, output, session) {
                                                  Pcol = Pcol,
                                                  rep = as.numeric(input$rep),
                                                  name = name,
-                                                 save = F,
+                                                 save = FALSE,
                                                  path = 'nowhere',
                                                  PA = PA,
                                                  cv = cval,
@@ -526,8 +599,8 @@ server <- function(input, output, session) {
                                                  ensemble.thresh = ensemble.thresh,
                                                  weight = weight,
                                                  metric = input$metric,
-                                                 verbose = F,
-                                                 GUI = T,
+                                                 verbose = FALSE,
+                                                 GUI = TRUE,
                                                  test = algoparam$test,
                                                  maxit = algoparam$maxit,
                                                  epsilon = algoparam$epsilon,
@@ -562,7 +635,7 @@ server <- function(input, output, session) {
                                                 Spcol = Spcol,
                                                 rep = as.numeric(input$rep),
                                                 name = name,
-                                                save = F,
+                                                save = FALSE,
                                                 path = 'nowhere',
                                                 PA = PA,
                                                 cv = cval,
@@ -579,8 +652,9 @@ server <- function(input, output, session) {
                                                 rep.B =  rep.B,
                                                 range = range,
                                                 endemism = endemism,
-                                                verbose = T,
-                                                GUI = T,
+                                                verbose = FALSE,
+                                                GUI = TRUE,
+                                                cores = 0,
                                                 test = algoparam$test,
                                                 maxit = algoparam$maxit,
                                                 epsilon = algoparam$epsilon,
@@ -595,7 +669,7 @@ server <- function(input, output, session) {
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
-        for (i in 1:length(names(data$Stack@enms))){data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = T)[[i]][1]}
+        for (i in seq_len(length(names(data$Stack@enms)))) {data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
       } else {
         output$modelfailed = renderText('You have less than two remaining ensemble SDMs, maybe you should try lower ensemble threshold(s) ?')
       }
@@ -622,8 +696,8 @@ server <- function(input, output, session) {
   })
   output$Diversity <- renderPlot({
     eval = 'Mean'
-    ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1]
-    for (i in 1:length(ensemble.metric)) {
+    ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]
+    for (i in seq_len(length(ensemble.metric))) {
       eval = paste(eval, paste(ensemble.metric[i],':',round(data$Stack@evaluation[1,which(names(data$Stack@evaluation) == ensemble.metric[i])], digits = 3)))
       if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
     }
@@ -651,25 +725,31 @@ server <- function(input, output, session) {
   # Evaluation
   output$evaluation.barplot <- renderPlot({
     evaluation = data$Stack@algorithm.evaluation
-    evaluation$kept.model = evaluation$kept.model / as.numeric(data$Stack@parameters$rep)
-    metrics = '% kept.model'
-    metrics.nb = c(which(names(evaluation) == 'kept.model'))
-    for (i in 1:length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
-      metrics = c(metrics, strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i])
-      metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i]))
+    if(!(0 %in% dim(evaluation))){
+      evaluation$kept.model = evaluation$kept.model / as.numeric(data$Stack@parameters$rep)
+      metrics = '% kept.model'
+      metrics.nb = c(which(names(evaluation) == 'kept.model'))
+      for (i in seq_len(length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
+        metrics = c(metrics, strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i])
+        metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i]))
+      }
+      table <- t(evaluation[metrics.nb])
+      barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
+      legend('bottomright', metrics, fill = rainbow(length(metrics)))
     }
-    table <- t(evaluation[metrics.nb])
-    barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
-    legend('bottomright', metrics, fill = rainbow(length(metrics)))
   })
-  output$evaluation.table <- renderTable({data$Stack@algorithm.evaluation[c(2,4:8)]})
+  output$evaluation.table <- renderTable({
+    if(!(0 %in% dim(data$Stack@algorithm.evaluation))){
+      data$Stack@algorithm.evaluation[c(2,4:8)]
+    }
+  })
   # Algorithms correlation
   output$algo.corr.table <- renderTable({data$Stack@algorithm.correlation})
   output$algo.corr.heatmap <- renderPlot({
     m <- as.matrix(data$Stack@algorithm.correlation)
     heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
               cellnote = round(m,2), notecol = "black", notecex = 2,
-              trace = "none", key = FALSE, margins = c(7, 11), na.rm = T,
+              trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
               col = rev(heat.colors(1000)))
   })
   # Variable importance
@@ -690,19 +770,19 @@ server <- function(input, output, session) {
     row.names(summary) = c('Occurrences type', 'Final number of species', 'Original algorithms', 'Number of repetitions',
                            'Pseudo-absences selection', 'Cross-validation method', 'Cross-validation parameters')
     algo.info = character()
-    for (i in 1:length(strsplit(data$Stack@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
-      algo.info = paste(algo.info, strsplit(data$Stack@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+    for (i in seq_len(length(strsplit(data$Stack@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
+      algo.info = paste(algo.info, strsplit(data$Stack@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
     }
     if (data$Stack@parameters$PA) {PA = 'default'}
     if(data$Stack@parameters$cv == 'LOO') {cv.param = 'None'}
     if(data$Stack@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                                strsplit(data$Stack@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                                strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                 'rep =',
-                                                                strsplit(data$Stack@parameters$cv.param, '|', fixed = T)[[1]][3])}
+                                                                strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
     if(data$Stack@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                               strsplit(data$Stack@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                               strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                'rep =',
-                                                               strsplit(data$Stack@parameters$cv.param, '|', fixed = T)[[1]][3])}
+                                                               strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
     summary$Summary = c(data$Stack@parameters$data, length(data$Stack@enms), algo.info, data$Stack@parameters$rep, PA, data$Stack@parameters$cv, cv.param)
     if(!is.null(data$Stack@parameters$sp.nb.origin)) {
       summary = rbind(summary,
@@ -735,13 +815,13 @@ server <- function(input, output, session) {
   })
   output$evaluation.info <- renderText({
     evaluation.info = 'Evaluation of models with'
-    for (i in 1:length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+    for (i in seq_len(length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
       if (i == 1) {
-        evaluation.info = paste0(evaluation.info, ' ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        evaluation.info = paste0(evaluation.info, ' ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
       } else if (i == length(data$Stack@parameters$axes.metric) && i != 1) {
-        evaluation.info = paste0(evaluation.info, ' and ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+        evaluation.info = paste0(evaluation.info, ' and ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
       } else {
-        evaluation.info = paste0(evaluation.info, ', ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        evaluation.info = paste0(evaluation.info, ', ', strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(data$Stack@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
       }
     }
     evaluation.info
@@ -750,8 +830,8 @@ server <- function(input, output, session) {
   ## ENM Stack Result ##
   observeEvent(input$enmchoice, {
     if(!is.null(data$Stack)){
-      print(data$enms)
-      print(input$enmchoice)
+      # print(data$enms)
+      # print(input$enmchoice)
       if(length(data$enms) > 0){result$ENM = data$Stack@enms[[which(data$enms == input$enmchoice)]]}
     }
   })
@@ -797,39 +877,44 @@ server <- function(input, output, session) {
   # Evaluation
   output$enm.evaluation.barplot <- renderPlot({
     evaluation = result$ENM@algorithm.evaluation
-    for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(evaluation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
-    for (i in 1:length(row.names(evaluation))) {row.names(evaluation)[i] = tail(strsplit(as.character(row.names(evaluation)[i]), '.', fixed = T)[[1]], n = 1)}
-    evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
-    table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
-    barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
-    legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
+    if(!(0 %in% dim(evaluation))){
+      for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(evaluation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in seq_len(length(row.names(evaluation)))) {row.names(evaluation)[i] = tail(strsplit(as.character(row.names(evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
+      evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
+      table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
+      barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
+      legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
+    }
   })
   output$enm.evaluation.table <- renderTable({
     algo.eval = result$ENM@algorithm.evaluation
-    for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
-    for (i in 1:length(row.names(result$ENM@algorithm.evaluation))) {row.names(algo.eval)[i] = tail(strsplit(as.character(row.names(algo.eval)[i]), '.', fixed = T)[[1]], n = 1)}
-    algo.eval[c(2,4:8)]
+    if(!(0 %in% dim(algo.eval))){
+      for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(algo.eval)[i] = tail(strsplit(as.character(row.names(algo.eval)[i]), '.', fixed = TRUE)[[1]], n = 1)}
+      algo.eval[c(2,4:8)]
+    }
   })
+
   # Algorithms correlation
   output$enm.algo.corr.table <- renderTable({
     correlation = result$ENM@algorithm.correlation
-    for (i in 1:length(row.names(result$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+    for (i in seq_len(length(row.names(result$ENM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
     names(correlation) = row.names(correlation)
     if (length(correlation) > 0) {
-      correlation[upper.tri(correlation, diag = T)] = NA
+      correlation[upper.tri(correlation, diag = TRUE)] = NA
       correlation
     }
   })
   output$enm.algo.corr.heatmap <- renderPlot({
     correlation = result$ENM@algorithm.correlation
-    for (i in 1:length(row.names(result$ENM@algorithm.correlation))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+    for (i in seq_len(length(row.names(result$ENM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
     names(correlation) = row.names(correlation)
     if (length(correlation) > 0) {
-      correlation[upper.tri(correlation, diag = T)] = NA
+      correlation[upper.tri(correlation, diag = TRUE)] = NA
       m <- as.matrix(correlation)
       heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
                 cellnote = round(m,3), notecol = "black", notecex = 2,
-                trace = "none", key = FALSE, margins = c(7, 11), na.rm = T,
+                trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
                 col = rev(heat.colors(1000)))
     }
   })
@@ -867,8 +952,8 @@ server <- function(input, output, session) {
       row.names(summary) = c('Type of occurrences', 'Number of occurrences', 'Originally selected algorithms', 'Number of repetitions',
                              'Pseudo-absence selection method', 'Cross-validation method', 'Cross-validation parameters')
       algo.info = character()
-      for (i in 1:length(strsplit(result$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1])) {
-        algo.info = paste(algo.info, strsplit(result$ENM@parameters$algorithms, '.', fixed = T)[[1]][-1][i])
+      for (i in seq_len(length(strsplit(result$ENM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
+        algo.info = paste(algo.info, strsplit(result$ENM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
       }
       if (result$ENM@parameters$PA) {PA = 'default'}
       if (result$ENM@parameters$data == "presence-only data set") {
@@ -878,13 +963,13 @@ server <- function(input, output, session) {
       }
       if(result$ENM@parameters$cv == 'LOO') {cv.param = 'None'}
       if(result$ENM@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                   'rep =',
-                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
+                                                                  strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
       if(result$ENM@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][2],
+                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                  'rep =',
-                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = T)[[1]][3])}
+                                                                 strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
       summary$Summary = c(result$ENM@parameters$data, nb.occ, algo.info, result$ENM@parameters$rep, PA, result$ENM@parameters$cv, cv.param)
       if(!is.null(result$ENM@parameters$sp.nb.origin)) {
         summary = rbind(summary,
@@ -910,7 +995,7 @@ server <- function(input, output, session) {
   })
   output$enm.varimp.info <- renderText({
     varimp.info = 'Variable relative contribution evaluated with '
-    for (i in 1:length(result$ENM@parameters$axes.metric)) {
+    for (i in seq_len(length(result$ENM@parameters$axes.metric))) {
       if (i == 1) {
         varimp.info = paste(varimp.info, result$ENM@parameters$axes.metric[i])
       } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
@@ -923,13 +1008,13 @@ server <- function(input, output, session) {
   })
   output$enm.evaluation.info <- renderText({
     evaluation.info = 'Models evaluated with'
-    for (i in 1:length(strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1])) {
+    for (i in seq_len(length(strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
       if (i == 1) {
-        evaluation.info = paste0(evaluation.info, ' ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        evaluation.info = paste0(evaluation.info, ' ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
       } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
-        evaluation.info = paste0(evaluation.info, ' and ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')','.')
+        evaluation.info = paste0(evaluation.info, ' and ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
       } else {
-        evaluation.info = paste0(evaluation.info, ' , ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = T)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1][i],')')
+        evaluation.info = paste0(evaluation.info, ' , ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
       }
     }
     if (result$ENM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
@@ -942,7 +1027,7 @@ server <- function(input, output, session) {
   if(Sys.info()[['sysname']] == 'Linux') {
     shinyDirChoose(input, 'save', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
   } else if (Sys.info()[['sysname']] == 'Windows') {
-    d = system('wmic logicaldisk get caption', intern = T)
+    d = system('wmic logicaldisk get caption', intern = TRUE)
     disks = c()
     for(i in 2:(length(d)-1)){
       disks = c(disks, substr(d[i],1,2))
@@ -954,14 +1039,21 @@ server <- function(input, output, session) {
   }
   observeEvent(input$savemodel, {
     path = switch(input$save$root,
-                  'wd' = getwd(),
+                  'wd' = working.directory,
                   'home' = '/home',
                   'root' = '/',
                   input$save$root)
     for(i in 2:length(input$save$path)){
       path = paste0(path, '/', input$save$path[[i]][1])
     }
-    if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = data$ENM@name, path, verbose = F, GUI = T)}
-    if(!is.null(data$Stack)) {save.stack(data$Stack, name = data$Stack@name, path, verbose = F, GUI = T)}
+    if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = data$ENM@name, path, verbose = FALSE, GUI = TRUE)}
+    if(!is.null(data$Stack)) {save.stack(data$Stack, name = data$Stack@name, path, verbose = FALSE, GUI = TRUE)}
+  })
+
+  ### Quit Menu ###
+
+  ## quitl page ##
+  observeEvent(input$quitgui, {
+    stopApp()
   })
 }

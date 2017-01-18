@@ -58,9 +58,9 @@ setMethod('update', 'Stacked.SDM',
                    # Occurrences reading
                    Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL, Spname = NULL,
                    # Model creation
-                   name = stack@name, save = F, path = getwd(), thresh = 1001, tmp = F,
+                   name = stack@name, save = FALSE, path = getwd(), thresh = 1001, tmp = FALSE,
                    # Verbose
-                   verbose = T, GUI = F,
+                   verbose = TRUE, GUI = FALSE,
                    # Modelling parameters
                    ...) {
             # Check arguments
@@ -73,20 +73,20 @@ setMethod('update', 'Stacked.SDM',
             if(stack@parameters$PA == 'default') {
               PA = NULL
             } else {
-              PA = list('nb'  = strsplit(stack@parameters$PA, '.', fixed = T)[[1]][1],
-                        'strat' = strsplit(stack@parameters$PA, '.', fixed = T)[[1]][2])
+              PA = list('nb'  = strsplit(stack@parameters$PA, '.', fixed = TRUE)[[1]][1],
+                        'strat' = strsplit(stack@parameters$PA, '.', fixed = TRUE)[[1]][2])
             }
             if(!is.null(Spname)) {enm.name = Spname} else {enm.name = 'new_Specie'}
-            ENM = ensemble_modelling(strsplit(stack@parameters$algorithms, '.', fixed = T)[[1]][-1],
+            ENM = ensemble_modelling(strsplit(stack@parameters$algorithms, '.', fixed = TRUE)[[1]][-1],
                                      Occurrences, Env, Xcol, Ycol, Pcol,
                                      rep = as.numeric(stack@parameters$rep), enm.name,
-                                     save = F, path = getwd(), PA, cv = stack@parameters$cv,
-                                     cv.param = as.numeric(strsplit(stack@parameters$cv.param, '|', fixed = T)[[1]][-1]),
+                                     save = FALSE, path = getwd(), PA, cv = stack@parameters$cv,
+                                     cv.param = as.numeric(strsplit(stack@parameters$cv.param, '|', fixed = TRUE)[[1]][-1]),
                                      thresh = thresh, metric = stack@parameters$metric,
                                      axes.metric = stack@parameters$axes.metric,
                                      uncertainity = stack@uncertainity@data@haveminmax, tmp = tmp,
-                                     ensemble.metric = strsplit(stack@parameters$ensemble.metric, '.', fixed = T)[[1]][-1],
-                                     ensemble.thresh = as.numeric(strsplit(stack@parameters$ensemble.thresh, '|', fixed = T)[[1]][-1]),
+                                     ensemble.metric = strsplit(stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1],
+                                     ensemble.thresh = as.numeric(strsplit(stack@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1]),
                                      weight = as.logical(stack@parameters$weight), ...)
             if(verbose) {cat('   done.\n')}
 
@@ -108,7 +108,7 @@ setMethod('update', 'Stacked.SDM',
             # New stacking
             if(verbose){cat('New stacking...\n')}
             enms = list()
-            for(i in 1:length(stack@enms)) {enms[[i]] = stack@enms[[i]]}
+            for(i in seq_len(stack@enms)) {enms[[i]] = stack@enms[[i]]}
             enms['method'] = stack@parameters$method
             enms['endemism'] = strsplit(stack@parameters$endemism, '|', fixed = 'T')[[1]]
             enms['rep.B'] = stack@parameters$rep.B

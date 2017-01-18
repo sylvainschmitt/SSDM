@@ -24,5 +24,8 @@ gui = function (port = getOption("shiny.port"), host = getOption("shiny.host", "
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `mypackage`.", call. = FALSE)
   }
+  assign("working.directory", getwd(), envir = .GlobalEnv)
   shiny::runApp(appDir, display.mode = "normal", port = port, host = host)
+  ls()
+  rm(working.directory, envir = .GlobalEnv)
 }

@@ -60,17 +60,17 @@ NULL
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
-#' Occ1 = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
-#' Occ2 = subset(Occurrences, Occurrences$SPECIES == 'gracilis')
+#' Occ1 <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#' Occ2 <- subset(Occurrences, Occurrences$SPECIES == 'gracilis')
 #'
 #' # SSDM building
-#' ESDM1 = ensemble_modelling(c('CTA', 'SVM'), Occ1, Env, rep = 1,
+#' ESDM1 <- ensemble_modelling(c('CTA', 'SVM'), Occ1, Env, rep = 1,
 #'                            Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
 #'                            name = 'elliptica', ensemble.thresh = c(0.6))
-#' ESDM2 = ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
+#' ESDM2 <- ensemble_modelling(c('CTA', 'SVM'), Occ2, Env, rep = 1,
 #'                            Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
 #'                            name = 'gracilis', ensemble.thresh = c(0.6))
-#' SSDM = stacking(ESDM1, ESDM2)
+#' SSDM <- stacking(ESDM1, ESDM2)
 #'
 #' # Results plotting
 #' plot(SSDM)
@@ -140,13 +140,13 @@ NULL
 #'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = c('WEI','Binary'), verbose = T, GUI = F) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P', rep.B = 1000,
                                                range = NULL, endemism = c('WEI','Binary'),
-                                               verbose = T, GUI = F) {
+                                               verbose = TRUE, GUI = FALSE) {
 
   # Check arguments
   .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range, endemism= endemism,
@@ -155,28 +155,28 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   enms = list(enm, ...)
   if (length(enms) < 2) {stop('You neeed more than one ensemble SDM to do stackings')}
   names = c()
-  for (i in 1:length(enms)) {if(enms[[i]]@name %in% names) {stop('Ensemble models can\'t have the same name, you need to rename one of ',enms[[i]]@name)} else {names = c(names, enms[[i]]@name)}}
-  cat('Stack creation... \n')
+  for (i in seq_len(length(enms))) {if(enms[[i]]@name %in% names) {stop('Ensemble models can\'t have the same name, you need to rename one of ',enms[[i]]@name)} else {names = c(names, enms[[i]]@name)}}
+  if(verbose) {cat('Stack creation... \n')}
   stack = Stacked.SDM(diversity.map = reclassify(enm@projection[[1]], c(-Inf,Inf,0)),
                       endemism.map = reclassify(enm@projection[[1]], c(-Inf,Inf,0)),
                       uncertainty = reclassify(enm@uncertainty, c(-Inf,Inf,NA)),
                       parameters = enm@parameters)
 
   # Name
-  cat('   naming...')
+  if(verbose) {cat('   naming...')}
   if (is.null(name)) {name = 'Species'}
   stack@name = paste0(name,'.SSDM')
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # Range restriction
-  cat('   range restriction...')
+  if(verbose) {cat('   range restriction...')}
   if(!is.null(range)) {
-    for(j in 1:length(enms)) {
+    for(j in seq_len(length(enms))) {
       nbocc = length(as.factor(enms[[j]]@data$Presence[enms[[j]]@data$Presence==1])) / sum(enms[[j]]@algorithm.evaluation$kept.model)
       occ = enms[[j]]@data[1:nbocc,]
       occ = occ[which(occ$Presence == 1),1:2]
       circles = list()
-      for (i in 1:length(occ[,1])) {
+      for (i in seq_len(length(occ[,1]))) {
         x = occ$X[i]
         y = occ$Y[i]
         pts = seq(0, 2 * pi, length.out = 100)
@@ -192,76 +192,76 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
 #       enms[[j]]@projection = reclassify(enms[[j]]@projection, c(-Inf,thresh,0, thresh,Inf,1))
     }
   }
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # Diversity map
-  cat('   diversity mapping...')
+  if(verbose) {cat('   diversity mapping...')}
   # Useless datacheck to prevent bugs to remove after debugging
-  for (i in 1:length(enms)) {
+  for (i in seq_len(length(enms))) {
     if(!inherits(enms[[i]]@projection, 'RasterLayer')){
-      cat('Error', enms[[i]]@name, 'is not a raster but a', class(enms[[i]]@projection)[1], '.\nIt will be removed for the stacking')
+      if(verbose) {cat('Error', enms[[i]]@name, 'is not a raster but a', class(enms[[i]]@projection)[1], '.\nIt will be removed for the stacking')}
       enms[[i]] = NULL
     }
   }
   if (method == 'P') {
-    cat('\n Local species richness coomputed by summing individual probabilities. \n')
-    for (i in 1:length(enms)) {stack@diversity.map = stack@diversity.map + enms[[i]]@projection}
+    if(verbose) {cat('\n Local species richness coomputed by summing individual probabilities. \n')}
+    for (i in seq_len(length(enms))) {stack@diversity.map = stack@diversity.map + enms[[i]]@projection}
   }
   if (method == 'T') {
-    cat('\n Local species richness coomputed by thresholding and then summing. \n')
-    for (i in 1:length(enms)) {
+    if(verbose) {cat('\n Local species richness coomputed by thresholding and then summing. \n')}
+    for (i in seq_len(length(enms))) {
       stack@diversity.map = stack@diversity.map +
         reclassify(enms[[i]]@projection,
                    c(-Inf,enms[[1]]@evaluation$threshold,0, enms[[i]]@evaluation$threshold,Inf,1))}
   }
   if (method == 'B') {
-    cat('\n Local species richness coomputed by drawing repeatedly from a Bernoulli distribution. \n')
+    if(verbose) {cat('\n Local species richness coomputed by drawing repeatedly from a Bernoulli distribution. \n')}
     proba = stack()
-    for (i in 1:length(enms)) {proba = stack(proba, enms[[i]]@projection)}
+    for (i in seq_len(length(enms))) {proba = stack(proba, enms[[i]]@projection)}
     diversity.map = calc(proba, fun = function(...) {
       x = c(...)
       x[is.na(x)] = 0
       return(rbinom(lengths(x), rep.B, x))},
-      forcefun = T)
+      forcefun = TRUE)
     stack@diversity.map = sum(diversity.map) / length(enms) / rep.B
   }
   names(stack@diversity.map) = 'diversity'
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # uncertainty map
-  cat('   uncertainty mapping...')
+  if(verbose) {cat('   uncertainty mapping...')}
   uncertainities = stack()
-  for (i in 1:length(enms)) {
+  for (i in seq_len(length(enms))) {
     a = try(enms[[i]]@uncertainty)
     if (inherits(a, 'try-error')) {
-      cat('Ensemble model',enms[[i]]@name,'uncertinity map not computed')
+      if(verbose) {cat('Ensemble model',enms[[i]]@name,'uncertinity map not computed')}
     } else {
         b = try(stack(uncertainities, a))
         if(inherits(b, 'try-error')) {
-          cat('Ensemble model', enms[[i]]@name, ':', b)
+          if(verbose) {cat('Ensemble model', enms[[i]]@name, ':', b)}
           } else {
             uncertainities = b
           }
         }
   }
   a = try(calc(uncertainities, mean))
-  if (inherits(a, 'try-error')) {cat('No uncertainty map to do uncertainty mapping')
+  if (inherits(a, 'try-error')) {if(verbose) {cat('No uncertainty map to do uncertainty mapping')}
   } else {
     stack@uncertainty = a
     names(stack@uncertainty) = 'uncertainty'
   }
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # endemism map
-  cat('   endemism mapping...')
+  if(verbose) {cat('   endemism mapping...')}
   if(is.null(endemism)) {
     'unactivated'
   } else {
-    for (i in 1:length(enms)) {
+    for (i in seq_len(length(enms))) {
       if(endemism[2] == 'NbOcc'){
         endweight = length(as.factor(enms[[i]]@data$Presence[enms[[i]]@data$Presence==1])) / sum(enms[[i]]@algorithm.evaluation$kept.model)
       } else if(endemism[2] == 'Binary') {
-        endweight = sum(values(reclassify(enms[[i]]@projection, c(-Inf,enms[[i]]@evaluation$threshold,0,enms[[i]]@evaluation$threshold,Inf,1))), na.rm = T)
+        endweight = sum(values(reclassify(enms[[i]]@projection, c(-Inf,enms[[i]]@evaluation$threshold,0,enms[[i]]@evaluation$threshold,Inf,1))), na.rm = TRUE)
       }
       if(endemism[1] == 'WEI') {
         stack@endemism.map = stack@endemism.map + enms[[i]]@projection / endweight
@@ -275,20 +275,20 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     }
     stack@endemism.map = stack@endemism.map / stack@endemism.map@data@max
   }
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # Evaluation
-  cat('   evaluating...')
+  if(verbose) {cat('   evaluating...')}
   stack@evaluation = enm@evaluation
   for (i in 2:length(enms)) {stack@evaluation = rbind(stack@evaluation, enms[[i]]@evaluation)}
   a = stack@evaluation[1:2,]
   row.names(a) = c('Mean', 'SD')
-  for (i in 1:length(stack@evaluation)) {a[i] = c(mean(stack@evaluation[,i], na.rm = T), sd(stack@evaluation[,i], na.rm = T))}
+  for (i in seq_len(length(stack@evaluation))) {a[i] = c(mean(stack@evaluation[,i], na.rm = TRUE), sd(stack@evaluation[,i], na.rm = TRUE))}
   stack@evaluation = a
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # variable Importance
-  cat('   comparing variable importnace...')
+  if(verbose) {cat('   comparing variable importnace...')}
   stack@variable.importance = enm@variable.importance
   for (i in 2:length(enms)) {
     a  = try(rbind(stack@variable.importance, enms[[i]]@variable.importance))
@@ -296,19 +296,19 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   }
   a = stack@variable.importance[1:2,]
   row.names(a) = c('Mean', 'SD')
-  for (i in 1:length(stack@variable.importance)) {a[i] = c(mean(stack@variable.importance[,i]), sd(stack@variable.importance[,i]))}
+  for (i in seq_len(length(stack@variable.importance))) {a[i] = c(mean(stack@variable.importance[,i]), sd(stack@variable.importance[,i]))}
   stack@variable.importance = a
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # Algorithm Correlation
-  cat('   comparing algorithms correlation...')
+  if(verbose) {cat('   comparing algorithms correlation...')}
   algo = c() # Listing all algorithms presents in enms and renaming enms row and columns
-  for (i in 1:length(enms)) {
-    if(length(enms[[i]]@algorithm.correlation) == 0) {cat('\n', enms[[i]]@name,'algorithms correlation has not been computed. \n')} else {
-      for (j in 1:length(enms[[i]]@algorithm.correlation)) {
-        if (length(strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = T)[[1]]) > 1){
-          a = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.SDM', fixed = T)[[1]][1]
-          a = tail(strsplit(a, '.', fixed = T)[[1]], n = 1)
+  for (i in seq_len(length(enms))) {
+    if(length(enms[[i]]@algorithm.correlation) == 0) {if(verbose) {cat('\n', enms[[i]]@name,'algorithms correlation has not been computed. \n')}} else {
+      for (j in seq_len(length(enms[[i]]@algorithm.correlation))) {
+        if (length(strsplit(names(enms[[i]]@algorithm.correlation)[j], '.', fixed = TRUE)[[1]]) > 1){
+          a = strsplit(row.names(enms[[i]]@algorithm.correlation)[j], '.SDM', fixed = TRUE)[[1]][1]
+          a = tail(strsplit(a, '.', fixed = TRUE)[[1]], n = 1)
           names(enms[[i]]@algorithm.correlation)[j] = a
           row.names(enms[[i]]@algorithm.correlation)[j] = a
         }
@@ -320,39 +320,42 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   names(mcorr) = algo
   row.names(mcorr) = algo
   if(length(algo) > 0) {
-    for (i in 1:length(algo)) {
-      for (j in 1:length(algo)) {
+    for (i in seq_len(length(algo))) {
+      for (j in seq_len(length(algo))) {
         if(i > j) {
           corr = c()
-          for (k in 1:length(enms)) {
+          for (k in seq_len(length(enms))) {
             if(length(enms[[k]]@algorithm.correlation) != 0) {
               row = which(row.names(enms[[k]]@algorithm.correlation) == row.names(mcorr)[j])
               col = which(names(enms[[k]]@algorithm.correlation) == names(mcorr)[i])
               if(length(row) > 0 && length(col) > 0) {corr = c(corr, enms[[k]]@algorithm.correlation[row,col])}
             }
-            mcorr[i,j] = mean(corr, na.rm = T)
+            mcorr[i,j] = mean(corr, na.rm = TRUE)
           }
         }
       }
     }
   }
   stack@algorithm.correlation = mcorr
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # Algorithm Evaluation
-  cat('   comparing algorithms evaluation')
+  if(verbose) {cat('   comparing algorithms evaluation')}
   stack@algorithm.evaluation = enm@algorithm.evaluation
   for (i in 2:length(enms)) {stack@algorithm.evaluation = rbind(stack@algorithm.evaluation, enms[[i]]@algorithm.evaluation)}
   stack@algorithm.evaluation$algo = 'algo'
-  for (i in 1:length(row.names(stack@algorithm.evaluation))) {stack@algorithm.evaluation$algo[i] = strsplit(row.names(stack@algorithm.evaluation),'.', fixed = T)[[i]][2]}
-  stack@algorithm.evaluation = aggregate.data.frame(stack@algorithm.evaluation, by = list(stack@algorithm.evaluation[,which(names(stack@algorithm.evaluation) == 'algo')]), FUN = mean)
+  for (i in seq_len(length(row.names(stack@algorithm.evaluation)))) {stack@algorithm.evaluation$algo[i] = strsplit(row.names(stack@algorithm.evaluation),'.', fixed = TRUE)[[i]][2]}
+  stack@algorithm.evaluation = aggregate.data.frame(
+    stack@algorithm.evaluation[-9],
+    by = list(stack@algorithm.evaluation[,which(names(stack@algorithm.evaluation) == 'algo')]),
+    FUN = mean)
   row.names(stack@algorithm.evaluation) = stack@algorithm.evaluation$Group.1
   stack@algorithm.evaluation = stack@algorithm.evaluation[-1]
   stack@algorithm.evaluation = stack@algorithm.evaluation[-which(names(stack@algorithm.evaluation) == 'algo')]
-  cat(' done. \n')
+  if(verbose) {cat(' done. \n')}
 
   # ENMS
-  for (i in 1:length(enms)) {stack@enms[enms[[i]]@name] = enms[[i]]}
+  for (i in seq_len(length(enms))) {suppressWarnings({stack@enms[enms[[i]]@name] = enms[[i]]})}
 
   # Parameters
   stack@parameters$method = method

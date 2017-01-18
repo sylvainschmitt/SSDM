@@ -8,16 +8,16 @@
 \title{Methods to assemble multiple algorithms in an ensemble SDM}
 \usage{
 ensemble(x, ..., name = NULL, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = T, thresh = 1001, uncertainty = T,
-  verbose = T, GUI = F)
+  ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
+  verbose = TRUE, GUI = FALSE)
 
 \S4method{ensemble}{Algorithm.SDM}(x, ..., name = NULL,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = T,
-  thresh = 1001, uncertainty = T, verbose = T, GUI = F)
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
+  thresh = 1001, uncertainty = TRUE, verbose = TRUE, GUI = FALSE)
 
 \S4method{sum}{Algorithm.SDM}(x, ..., name = NULL,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = T,
-  thresh = 1001, format = T, verbose = T, na.rm = F)
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
+  thresh = 1001, format = TRUE, verbose = TRUE, na.rm = TRUE)
 }
 \arguments{
 \item{x, ...}{SDMs. SDMs to be assembled.}
@@ -75,12 +75,12 @@ ensemble.metric (metric(s) used to select the best SDMs that will be
 # Loading data
 data(Env)
 data(Occurrences)
-Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
 
 # ensemble SDM building
-CTA = modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
-SVM = modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
-ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
+CTA <- modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+SVM <- modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+ESDM <- ensemble(CTA, SVM, ensemble.thresh = c(0.6))
 
 # Results plotting
 plot(ESDM)

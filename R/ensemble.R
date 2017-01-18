@@ -48,12 +48,12 @@ NULL
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
-#' Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#' Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
 #'
 #' # ensemble SDM building
-#' CTA = modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
-#' SVM = modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
-#' ESDM = ensemble(CTA, SVM, ensemble.thresh = c(0.6))
+#' CTA <- modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' SVM <- modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' ESDM <- ensemble(CTA, SVM, ensemble.thresh = c(0.6))
 #'
 #' # Results plotting
 #' plot(ESDM)
@@ -67,164 +67,164 @@ NULL
 #'@export
 setGeneric('ensemble',
            function(x, ..., name = NULL,ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
-                    weight = T, thresh = 1001, uncertainty = T, verbose = T, GUI = F) {return(standardGeneric('ensemble'))})
+                    weight = TRUE, thresh = 1001, uncertainty = TRUE, verbose = TRUE, GUI = FALSE) {return(standardGeneric('ensemble'))})
 
 #' @rdname ensemble
 #' @export
 setMethod('ensemble', 'Algorithm.SDM',
           function(x, ..., name = NULL, ensemble.metric = c('AUC'), ensemble.thresh = c(0.75),
-                   weight = T, thresh = 1001, uncertainty = T, verbose = T, GUI = F) {
-  # Check agruments
-  .checkargs(name = name, ensemble.metric =ensemble.metric, ensemble.thresh = ensemble.thresh,
-             weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose, GUI = GUI)
+                   weight = TRUE, thresh = 1001, uncertainty = TRUE, verbose = TRUE, GUI = FALSE) {
+            # Check agruments
+            .checkargs(name = name, ensemble.metric =ensemble.metric, ensemble.thresh = ensemble.thresh,
+                       weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose, GUI = GUI)
 
-  models = list(x, ...)
-  enm = Ensemble.SDM()
+            models = list(x, ...)
+            enm = Ensemble.SDM()
 
-  # Algorithm ensemble model creation
-  cat('Creation of one ensemble niche model by algorithm...')
-  algo.ensemble = list()
-  while(length(models) > 0) {
-    type.model = list()
-    type = class(models[[1]])[[1]]
-    rm = {}
-    for (i in 1:length(models)) {
-      if (inherits(models[[i]], type)) {
-        type.model[(length(type.model)+1)] = models[[i]]
-        rm = c(rm, i)
-      }
-    }
-    if (length(rm) > 0) {
-      for (i in 1:length(rm)) {
-        models[[rm[i]]] = NULL
-        rm = rm - 1
-      }
-    }
-    type.model['name'] = name
-    type.model[['ensemble.metric']] = ensemble.metric
-    type.model[['ensemble.thresh']] = ensemble.thresh
-    type.model['weight'] = weight
-    type.model['thresh'] = thresh
-    type.model['format'] = T
-    type.model['verbose'] = F
-    algo.ensemble[type] = do.call(sum, type.model)
-  }
-  cat('   done. \n')
+            # Algorithm ensemble model creation
+            if(verbose) {cat('Creation of one ensemble niche model by algorithm...')}
+            algo.ensemble = list()
+            while(length(models) > 0) {
+              type.model = list()
+              type = class(models[[1]])[[1]]
+              rm = {}
+              for (i in seq_len(length(models))) {
+                if (inherits(models[[i]], type)) {
+                  suppressWarnings({type.model[(length(type.model)+1)] = models[[i]]})
+                  rm = c(rm, i)
+                }
+              }
+              if (length(rm) > 0) {
+                for (i in seq_len(length(rm))) {
+                  models[[rm[i]]] = NULL
+                  rm = rm - 1
+                }
+              }
+              type.model['name'] = name
+              type.model[['ensemble.metric']] = ensemble.metric
+              type.model[['ensemble.thresh']] = ensemble.thresh
+              type.model['weight'] = weight
+              type.model['thresh'] = thresh
+              type.model['format'] = TRUE
+              type.model['verbose'] = FALSE
+              suppressWarnings({algo.ensemble[type] = do.call(sum, type.model)})
+            }
+            if(verbose) {cat('   done. \n')}
 
-  if (length(algo.ensemble) < 1) {
-    cat('No model were kept with this threshold, Null is returned. \n')
-    return(NULL)
-  } else {
+            if (length(algo.ensemble) < 1) {
+              if(verbose) {cat('No model were kept with this threshold, Null is returned. \n')}
+              return(NULL)
+            } else {
 
-    # Sum of algorithm ensemble
-    cat('Projection, evaluation and variable importance computing...')
-    algo.list = list()
-    for (i in 1:length(algo.ensemble)) {algo.list[[i]] = algo.ensemble[[i]]}
-    algo.list['name'] = 'sum'
-    algo.list[['ensemble.metric']] = ensemble.metric
-    algo.list[['ensemble.thresh']] = ensemble.thresh
-    algo.list['weight'] = weight
-    algo.list['thresh'] = thresh
-    algo.list['format'] = F
-    sum.algo.ensemble = do.call(sum, algo.list)
-    if (length(sum.algo.ensemble) < 1) {
-      return(NULL)
-    } else {
+              # Sum of algorithm ensemble
+              if(verbose) {cat('Projection, evaluation and variable importance computing...')}
+              algo.list = list()
+              for (i in seq_len(length(algo.ensemble))) {algo.list[[i]] = algo.ensemble[[i]]}
+              algo.list['name'] = 'sum'
+              algo.list[['ensemble.metric']] = ensemble.metric
+              algo.list[['ensemble.thresh']] = ensemble.thresh
+              algo.list['weight'] = weight
+              algo.list['thresh'] = thresh
+              algo.list['format'] = FALSE
+              sum.algo.ensemble = do.call(sum, algo.list)
+              if (length(sum.algo.ensemble) < 1) {
+                return(NULL)
+              } else {
 
-      # Name
-      if (!is.null(name)) {name = paste0(name,'.')} else {name = 'Specie.'}
-      enm@name = paste0(name,'Ensemble.SDM')
+                # Name
+                if (!is.null(name)) {name = paste0(name,'.')} else {name = 'Specie.'}
+                enm@name = paste0(name,'Ensemble.SDM')
 
-      # Projection
-      enm@projection = sum.algo.ensemble@projection
-      cat('   done \n')
+                # Projection
+                enm@projection = sum.algo.ensemble@projection
+                if(verbose) {cat('   done \n')}
 
-      # Data
-      enm@data = algo.ensemble[[1]]@data
-      if (length(algo.ensemble) > 1) {
-        for (i in 2:length(algo.ensemble)) {
-          enm@data = rbind(enm@data, algo.ensemble[[i]]@data)
-        }
-      }
+                # Data
+                enm@data = algo.ensemble[[1]]@data
+                if (length(algo.ensemble) > 1) {
+                  for (i in 2:length(algo.ensemble)) {
+                    enm@data = rbind(enm@data, algo.ensemble[[i]]@data)
+                  }
+                }
 
-      # Evaluation
-      cat('Model evaluation...')
-      enm@evaluation = sum.algo.ensemble@evaluation
-      cat('   done \n')
+                # Evaluation
+                if(verbose) {cat('Model evaluation...')}
+                enm@evaluation = sum.algo.ensemble@evaluation
+                if(verbose) {cat('   done \n')}
 
-      # Axes evaluation
-      cat('Axes evaluation...')
-      enm@variable.importance = sum.algo.ensemble@variable.importance
-      cat('   done \n')
+                # Axes evaluation
+                if(verbose) {cat('Axes evaluation...')}
+                enm@variable.importance = sum.algo.ensemble@variable.importance
+                if(verbose) {cat('   done \n')}
 
-      # Projections stack
-      projections = stack()
-      for (i in 1:length(algo.ensemble)) {
-        projections = stack(projections, algo.ensemble[[i]]@projection)
-        names(projections[[i]]) = algo.ensemble[[i]]@name
-      }
+                # Projections stack
+                projections = stack()
+                for (i in seq_len(length(algo.ensemble))) {
+                  projections = stack(projections, algo.ensemble[[i]]@projection)
+                  names(projections[[i]]) = algo.ensemble[[i]]@name
+                }
 
-      # Algorithms Correlation
-      if (!(uncertainty)) {cat('Algorithm correlation computing is unactivated \n')}
-      if (uncertainty && length(projections@layers) > 1) {
-        cat('Algorithms correlation...')
-        enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = T)$`pearson correlation coefficient`)
-        cat('   done \n')
-      }
+                # Algorithms Correlation
+                if (!(uncertainty)) {if(verbose) {cat('Algorithm correlation computing is unactivated \n')}}
+                if (uncertainty && length(projections@layers) > 1) {
+                  if(verbose) {cat('Algorithms correlation...')}
+                  enm@algorithm.correlation = as.data.frame(layerStats(projections, 'pearson', na.rm = TRUE)$`pearson correlation coefficient`)
+                  if(verbose) {cat('   done \n')}
+                }
 
-      # uncertainty map
-      if (!(uncertainty)) {cat('Uncertainty mapping is unactivated \n')}
-      if (uncertainty && length(projections@layers) > 1) {
-        cat('uncertainty mapping...')
-        enm@uncertainty = calc(projections, var)
-        names(enm@uncertainty) = 'uncertainty map'
-        cat('   done \n')
-      }
+                # uncertainty map
+                if (!(uncertainty)) {if(verbose) {cat('Uncertainty mapping is unactivated \n')}}
+                if (uncertainty && length(projections@layers) > 1) {
+                  if(verbose) {cat('uncertainty mapping...')}
+                  enm@uncertainty = calc(projections, var)
+                  names(enm@uncertainty) = 'uncertainty map'
+                  if(verbose) {cat('   done \n')}
+                }
 
-      # Algorithms Evaluation
-      cat('Algorithms evaluation...')
-      enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
-      row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
-      if (length(algo.ensemble) > 1) {
-        for (i in 2:length(algo.ensemble)) {
-          enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
-          row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
-        }
-      }
-      enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
-      if (length(algo.ensemble) > 1) {
-        for (i in 2:length(algo.ensemble)) {
-          enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
-        }
+                # Algorithms Evaluation
+                if(verbose) {cat('Algorithms evaluation...')}
+                enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
+                row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
+                if (length(algo.ensemble) > 1) {
+                  for (i in 2:length(algo.ensemble)) {
+                    enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
+                    row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
+                  }
+                }
+                enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
+                if (length(algo.ensemble) > 1) {
+                  for (i in 2:length(algo.ensemble)) {
+                    enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
+                  }
 
-      }
+                }
 
-      # Parameters
-      enm@parameters = algo.ensemble[[1]]@parameters
-      text.ensemble.metric = character()
-      text.ensemble.thresh = character()
-      for (i in 1:length(ensemble.metric)) {
-        text.ensemble.metric = paste0(text.ensemble.metric,'.',ensemble.metric[i])
-        text.ensemble.thresh = paste0(text.ensemble.thresh,'|',ensemble.thresh[i])
-      }
-      enm@parameters$ensemble.metric = text.ensemble.metric
-      enm@parameters$ensemble.thresh = text.ensemble.thresh
-      enm@parameters$weight = weight
-    }
+                # Parameters
+                enm@parameters = algo.ensemble[[1]]@parameters
+                text.ensemble.metric = character()
+                text.ensemble.thresh = character()
+                for (i in seq_len(length(ensemble.metric))) {
+                  text.ensemble.metric = paste0(text.ensemble.metric,'.',ensemble.metric[i])
+                  text.ensemble.thresh = paste0(text.ensemble.thresh,'|',ensemble.thresh[i])
+                }
+                enm@parameters$ensemble.metric = text.ensemble.metric
+                enm@parameters$ensemble.thresh = text.ensemble.thresh
+                enm@parameters$weight = weight
+              }
 
-    cat('   done \n')
+              if(verbose) {cat('   done \n')}
 
-    return(enm)}})
+              return(enm)}})
 
 #' @rdname ensemble
 #' @export
 setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric = c('AUC'),
-                                                   ensemble.thresh = c(0.75), weight = T,
-                                                   thresh = 1001, format = T, verbose = T, na.rm = F) {
+                                                   ensemble.thresh = c(0.75), weight = TRUE,
+                                                   thresh = 1001, format = TRUE, verbose = TRUE, na.rm = TRUE) {
   models = list(x, ...)
   if (length(ensemble.metric) != length(ensemble.thresh)) {stop('You must have the same number of metrics and associated thresholds in models assembling step (see ensemble.metric and ensemble.thresh)')}
   if(format) {
-    for(i in 1:length(models)) {
+    for(i in seq_len(length(models))) {
       if(!inherits(models[[i]], class(x)[[1]])) {
         stop('You can only sum models from the same algorithm')
       }
@@ -247,13 +247,13 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
   # Datas, Projections, Evaluation and variable importance fusion
   sweight = 0
   kept.model = 0
-  for (i in 1:length(models)) {
+  for (i in seq_len(length(models))) {
     # Assembling selection test depending on parameters
-    test = T
+    test = TRUE
     weight.value = c()
-    for (j in 1:length(ensemble.metric)) {
+    for (j in seq_len(length(ensemble.metric))) {
       if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
-        test = F
+        test = FALSE
       }
       weight.value = c(weight.value, models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])])
     }
@@ -296,8 +296,8 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
           smodel@variable.importance[1,] = (100/length(smodel@variable.importance))
         } else {
           if (sum(smodel@variable.importance) == 0) {
-            all.null = T
-            for(i in 1:length(smodel@variable.importance)) {if(smodel@variable.importance[1,i] != 0) {all.null = F}}
+            all.null = TRUE
+            for(i in seq_len(length(smodel@variable.importance))) {if(smodel@variable.importance[1,i] != 0) {all.null = FALSE}}
             if(all.null) {smodel@variable.importance[1,] = (100/length(smodel@variable.importance))} else {smodel@variable.importance = smodel@variable.importance * 100}
           }
           else {smodel@variable.importance = smodel@variable.importance / sum(smodel@variable.importance) * 100}

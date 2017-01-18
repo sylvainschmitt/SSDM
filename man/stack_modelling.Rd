@@ -6,12 +6,12 @@
 \usage{
 stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
-  name = NULL, save = F, path = getwd(), PA = NULL, cv = "holdout",
+  name = NULL, save = FALSE, path = getwd(), PA = NULL, cv = "holdout",
   cv.param = c(0.7, 1), thresh = 1001, axes.metric = "Pearson",
-  uncertainty = T, tmp = F, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = T, method = "P", metric = "SES",
+  uncertainty = TRUE, tmp = FALSE, ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75), weight = TRUE, method = "P", metric = "SES",
   rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = T, GUI = F, cores = 1, ...)
+  verbose = TRUE, GUI = FALSE, cores = 1, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -288,7 +288,7 @@ data(Env)
 data(Occurrences)
 
 # SSDM building
-SSDM = stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
+SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
                        Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
                        Spcol = 'SPECIES')
 

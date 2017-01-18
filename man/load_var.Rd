@@ -6,7 +6,7 @@
 \usage{
 load_var(path = getwd(), files = NULL, format = c(".grd", ".tif", ".asc",
   ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
-  Norm = T, tmp = T, verbose = T, GUI = F)
+  Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{path}{character. Path to the directory that contains the environmental variables
@@ -43,9 +43,7 @@ Function to load environmental variables in the form of rasters to perform
 \code{\link{stack_modelling}}.
 }
 \examples{
-\dontrun{
-load.var(path)
-}
+load_var(system.file("extdata",  package = 'SSDM'))
 
 }
 \seealso{

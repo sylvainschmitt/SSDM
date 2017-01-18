@@ -4,7 +4,7 @@
                       Spcol = 'SpeciesID',
                       name = NULL,
                       Spname = NULL,
-                      save = F,
+                      save = FALSE,
                       path = getwd(),
                       PA = NULL,
                       rep = 1,
@@ -13,25 +13,25 @@
                       thresh = 1001,
                       metric = 'SES',
                       axes.metric = 'Pearson',
-                      select = F,
+                      select = FALSE,
                       select.metric = c('AUC'),
                       select.thresh = c(0.75),
-                      verbose = T,
-                      GUI = F,
-                      uncertainty = T,
-                      tmp = F,
+                      verbose = TRUE,
+                      GUI = FALSE,
+                      uncertainty = TRUE,
+                      tmp = FALSE,
                       ensemble.metric = c('AUC'),
                       ensemble.thresh = c(0.75),
-                      weight = T,
+                      weight = TRUE,
                       method = 'P',
                       rep.B = 1000,
-                      GeoRes = T,
+                      GeoRes = TRUE,
                       reso = 1,
                       file = NULL,
                       files = NULL,
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       categorical = NULL,
-                      Norm = T,
+                      Norm = TRUE,
                       enm = Ensemble.SDM(),
                       stack = Stacked.SDM(),
                       range = NULL,
@@ -44,7 +44,7 @@
   if(!inherits(Xcol, 'character')){stop('Xcol parameter should be a character (column name).')}
   if(!inherits(Ycol, 'character')){stop('Ycol parameter should be a character (column name).')}
   if(!inherits(Pcol, 'character') && !is.null(Pcol)){stop('Pcol parameter should be a character (column name), or NULL if no presence column.')}
-  if(!inherits(Spcol, 'character') && !is.null(Pcol)){stop('Spcol parameter should be a character (column name), or NULL if no species column..')}
+  if(!inherits(Spcol, 'character') && !is.null(Spcol)){stop('Spcol parameter should be a character (column name), or NULL if no species column..')}
 
   # Name and Spname
   if(!inherits(name, 'character') && !is.null(name)){stop('name parameter should be a character, or NULL to be automatically defined.')}
@@ -80,12 +80,12 @@
   # select
   if(!inherits(select,'logical')){stop('select parameter should be a logical (True or False).')}
   if(!inherits(select.metric,'character')){stop('select.metric parameter should be a character.')} else {
-    for (i in 1:length(select.metric)){
+    for (i in seq_len(length(select.metric))) {
       if(!(select.metric[i] %in% c('AUC','Kappa','sensitivity','specificity','prop.correct'))){stop(paste('select.metric',i,'parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help).'))}
     }
   }
   if(!inherits(select.thresh,'numeric')){stop('select.thresh parameter should be a numeric.')} else {
-    for (i in 1:length(select.thresh)){
+    for (i in seq_len(length(select.thresh))) {
       if(select.thresh[i]<0 || select.thresh[i]>1){stop(paste('select.thresh',i,'parameter should be a float between 0 and 1.'))}
     }
   }
@@ -102,12 +102,12 @@
   # Ensemble
   if(!inherits(weight,'logical')){stop('weight parameter should be a logical (True or False).')}
   if(!inherits(ensemble.metric,'character')){stop('ensemble.metric parameter should be a character.')} else {
-    for (i in 1:length(ensemble.metric)){
+    for (i in seq_len(length(ensemble.metric))) {
       if(!(ensemble.metric[i] %in% c('AUC','Kappa','sensitivity','specificity','prop.correct'))){stop(paste('ensemble.metric',i,'parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help).'))}
     }
   }
   if(!inherits(ensemble.thresh,'numeric')){stop('ensemble.thresh parameter should be a numeric.')} else {
-    for (i in 1:length(ensemble.thresh)){
+    for (i in seq_len(length(ensemble.thresh))) {
       if(ensemble.thresh[i]<0 || ensemble.thresh[i]>1){stop(paste('ensemble.thresh',i,'parameter should be a float between 0 and 1.'))}
     }
   }
@@ -140,7 +140,7 @@
     }
   }
   if(!is.null(range)){
-    if(!inherits(range,'numeric') && range < 0){
+    if(!inherits(range,'numeric') || range < 0){
       stop('range parameter should be numeric and > 0 (see help).')
     }
   }

@@ -5,11 +5,11 @@
 \title{Build an ensemble SDM that assembles multiple algorithms}
 \usage{
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL, save = F,
+  Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL, save = FALSE,
   path = getwd(), PA = NULL, cv = "holdout", cv.param = c(0.7, 1),
   thresh = 1001, metric = "SES", axes.metric = "Pearson",
-  uncertainty = T, tmp = F, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = T, verbose = T, GUI = F, ...)
+  uncertainty = TRUE, tmp = FALSE, ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE, GUI = FALSE, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -247,10 +247,10 @@ correlation matrix and variable importance).
 # Loading data
 data(Env)
 data(Occurrences)
-Occurrences = subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
 
 # ensemble SDM building
-ESDM = ensemble_modelling(c('CTA', 'MARS'), Occurrences, Env, rep = 1,
+ESDM <- ensemble_modelling(c('CTA', 'MARS'), Occurrences, Env, rep = 1,
                           Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
                           ensemble.thresh = c(0.6))
 
