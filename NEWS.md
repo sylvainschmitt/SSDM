@@ -1,8 +1,15 @@
 NEWS
 ================
 
+SSDM 0.1.9031
+=============
+
+-   `rgdal`issue on travis due to `test_load_vocc`
+
 SSDM 0.1.9030
 =============
+
+-   `rgdal`issue on travis due to `load_var`
 
 SSDM 0.1.9029
 =============
