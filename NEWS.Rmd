@@ -2,6 +2,9 @@
 title: "NEWS"
 output: github_document
 ---
+# SSDM 0.1.9028
+- Travis test
+
 # SSDM 0.1.9027
 - formal testing with `testthat` (39%)
 - `quit` button in gui
