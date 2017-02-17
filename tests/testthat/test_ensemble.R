@@ -1,4 +1,4 @@
-test_that('ensemble function works', {
+test_that('ensemble function', {
   data(Env)
   data(Occurrences)
   Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')

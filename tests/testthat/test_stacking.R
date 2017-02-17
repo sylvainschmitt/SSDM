@@ -1,4 +1,4 @@
-test_that('stacking function is correctly working', {
+test_that('stacking function', {
   data(Env)
   data(Occurrences)
   Occ1 <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')

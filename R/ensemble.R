@@ -182,21 +182,24 @@ setMethod('ensemble', 'Algorithm.SDM',
                 }
 
                 # Algorithms Evaluation
-                if(verbose) {cat('Algorithms evaluation...')}
-                enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
-                row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
-                if (length(algo.ensemble) > 1) {
-                  for (i in 2:length(algo.ensemble)) {
-                    enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
-                    row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
+                if(all(x@data$Presence %in% c(0,1))){ # SDMs
+                  if(verbose) {cat('Algorithms evaluation...')}
+                  enm@algorithm.evaluation = algo.ensemble[[1]]@evaluation
+                  row.names(enm@algorithm.evaluation)[1] = algo.ensemble[[1]]@name
+                  if (length(algo.ensemble) > 1) {
+                    for (i in 2:length(algo.ensemble)) {
+                      enm@algorithm.evaluation = rbind(enm@algorithm.evaluation, algo.ensemble[[i]]@evaluation)
+                      row.names(enm@algorithm.evaluation)[i] = algo.ensemble[[i]]@name
+                    }
                   }
-                }
-                enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
-                if (length(algo.ensemble) > 1) {
-                  for (i in 2:length(algo.ensemble)) {
-                    enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
+                  enm@algorithm.evaluation$kept.model = algo.ensemble[[1]]@parameters$kept.model
+                  if (length(algo.ensemble) > 1) {
+                    for (i in 2:length(algo.ensemble)) {
+                      enm@algorithm.evaluation$kept.model[[i]] = algo.ensemble[[i]]@parameters$kept.model
+                    }
                   }
-
+                } else { # MEMs
+                  warning('ALgorithms evaluation is not yet iplemented for MEMs !')
                 }
 
                 # Parameters
@@ -219,8 +222,9 @@ setMethod('ensemble', 'Algorithm.SDM',
 #' @rdname ensemble
 #' @export
 setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric = c('AUC'),
-                                                   ensemble.thresh = c(0.75), weight = TRUE,
-                                                   thresh = 1001, format = TRUE, verbose = TRUE, na.rm = TRUE) {
+                                           ensemble.thresh = c(0.75), weight = TRUE,
+                                           thresh = 1001, format = TRUE, verbose = TRUE,
+                                           na.rm = TRUE) {
   models = list(x, ...)
   if (length(ensemble.metric) != length(ensemble.thresh)) {stop('You must have the same number of metrics and associated thresholds in models assembling step (see ensemble.metric and ensemble.thresh)')}
   if(format) {
@@ -248,32 +252,45 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
   sweight = 0
   kept.model = 0
   for (i in seq_len(length(models))) {
-    # Assembling selection test depending on parameters
-    test = TRUE
-    weight.value = c()
-    for (j in seq_len(length(ensemble.metric))) {
-      if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
-        test = FALSE
+    if(all(x@data$Presence %in% c(0,1))){ # SDMs
+      # Assembling selection test depending on parameters
+      test = TRUE
+      weight.value = c()
+      for (j in seq_len(length(ensemble.metric))) {
+        if(models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])] < ensemble.thresh[j]) {
+          test = FALSE
+          weight.value = c(weight.value, models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])])
+        } else {
+          weight.value <- 1
+          test = TRUE
+        }
       }
-      weight.value = c(weight.value, models[[i]]@evaluation[,which(names(models[[i]]@evaluation) == ensemble.metric[j])])
-    }
-    weight.value = mean(weight.value)
-    if (test) {
-      if (weight) {
-        smodel@projection = smodel@projection + models[[i]]@projection * weight.value
-        smodel@variable.importance = smodel@variable.importance + models[[i]]@variable.importance * weight.value
-        smodel@evaluation = smodel@evaluation + models[[i]]@evaluation * weight.value
-        sweight = sweight + weight.value
-      } else {
-        smodel@projection = smodel@projection + models[[i]]@projection
-        smodel@variable.importance = smodel@variable.importance + models[[i]]@variable.importance
-        smodel@evaluation = smodel@evaluation + models[[i]]@evaluation
-        sweight = sweight + 1
+      weight.value = mean(weight.value)
+      if (test) {
+        if (weight) {
+          smodel@projection = smodel@projection + models[[i]]@projection * weight.value
+          smodel@variable.importance = smodel@variable.importance + models[[i]]@variable.importance * weight.value
+          smodel@evaluation = smodel@evaluation + models[[i]]@evaluation * weight.value
+          sweight = sweight + weight.value
+        } else {
+          smodel@projection = smodel@projection + models[[i]]@projection
+          smodel@variable.importance = smodel@variable.importance + models[[i]]@variable.importance
+          smodel@evaluation = smodel@evaluation + models[[i]]@evaluation
+          sweight = sweight + 1
+        }
+        smodel@data = rbind(smodel@data, models[[i]]@data)
+        kept.model = kept.model + 1
       }
+    } else { # MEMs
+      warning('Datas, Projections, Evaluation and variable importance fusion is currently simplified with MEMs')
+      smodel@projection = smodel@projection + models[[i]]@projection
+      smodel@variable.importance = smodel@variable.importance + models[[i]]@variable.importance
+      sweight = sweight + 1
       smodel@data = rbind(smodel@data, models[[i]]@data)
       kept.model = kept.model + 1
     }
   }
+
 
   # Return NULL if any model is kept
   if( kept.model == 0) {
@@ -282,14 +299,18 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
 
       smodel@projection = smodel@projection / sweight
       names(smodel@projection) = 'Probability'
-      smodel@evaluation = smodel@evaluation / sweight
+      if(all(x@data$Presence %in% c(0,1))){ # SDMs
+        smodel@evaluation = smodel@evaluation / sweight
+      } else { # MEMs
+        warning('Ensemble model evaluation is not yet implemented with MEMs')
+      }
 
       # variable importance
       if (!is.numeric(sum(smodel@variable.importance))) {
         cat('Error variable importance is not numeric : \n')
         print(smodel@variable.importance)
         smodel@variable.importance = x@variable.importance
-        smoadel@variable.importance[1,] = 0
+        smodel@variable.importance[1,] = 0
       } else {
         if(is.nan(sum(smodel@variable.importance))) {
           cat('Error variable importance is NaN')

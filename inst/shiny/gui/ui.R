@@ -227,7 +227,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                         tabItem('quitpage',
                                 fluidPage(
                                   fluidRow(
-                                    box(title = 'Are you sur you want to quit ?',
+                                    box(title = 'Are you sure you want to quit ?',
                                         actionButton('quitgui', 'Quit')
                                     )
                                   )

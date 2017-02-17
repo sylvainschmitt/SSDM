@@ -25,6 +25,7 @@
                       weight = TRUE,
                       method = 'P',
                       rep.B = 1000,
+                      richness = NULL,
                       GeoRes = TRUE,
                       reso = 1,
                       file = NULL,
@@ -36,7 +37,8 @@
                       stack = Stacked.SDM(),
                       range = NULL,
                       endemism = 'WEI',
-                      cores = 1){
+                      cores = 1,
+                      MEM = FALSE){
   ## Argument checking function ##
   # Occurrences, Environment, and part of X, Y, Pcol are directly defined in functions
 
@@ -91,13 +93,14 @@
   }
   if(length(select.thresh) != length(select.metric)){stop('select.thresh and select.metric parameters should have the same length to correspond (see help).')}
 
-  # Verbose, GUI, uncertainty, tmp and save
+  # Verbose, GUI, uncertainty, tmp, MEM and save
   if(!inherits(verbose,'logical')){stop('verbose parameter should be a logical (True or False).')}
   if(!inherits(GUI,'logical')){stop('GUI parameter should be a logical (True or False).')}
   if(!inherits(uncertainty,'logical')){stop('uncertainty parameter should be a logical (True or False).')}
   if(!inherits(tmp,'logical')){stop('tmp parameter should be a logical (True or False).')}
   if(!inherits(save,'logical')){stop('save parameter should be a logical (True or False).')}
   if(!inherits(path, 'character')  && !is.null(path)){stop('path parameter should be a character.')}
+  if(!inherits(MEM,'logical')){stop('save parameter should be a logical (True or False).')}
 
   # Ensemble
   if(!inherits(weight,'logical')){stop('weight parameter should be a logical (True or False).')}
@@ -114,8 +117,9 @@
   if(length(ensemble.thresh) != length(ensemble.metric)){stop('select.thresh and select.metric parameters should have the same length to correspond (see help).')}
 
   # Stacking
-  if(!inherits(method,'character') || !(method %in% c('P','B','T'))){stop('method parameter should be P, B, or T (see help).')}
+  if(!inherits(method,'character') || !(method %in% c('P','B','T','LH','PR','TR','CB'))){stop('method parameter should be P, B, T, LH, PR, TR or CB (see help).')}
   if(method == 'B' && !inherits(rep.B,'numeric') && abs(rep.B-round(rep.B)) != 0 && rep.B < 1){stop('rep.B parameter should be an integer > 1 (see help).')}
+  if(!is.null(richness)){warning('Richness check arg to implement !')}
 
   # load.occ and load.var
   if(!inherits(GeoRes,'logical')){stop('GeoRes parameter should be a logical (True or False).')}

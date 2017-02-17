@@ -69,6 +69,11 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
+#'@param richness df. If the method used to create the local species richness is
+#'  among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
+#'  trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
+#'  parameter allow to input an observed richness data frame. Default is null
+#'  implying a richness computed from occurence data.
 #'@param range integer. Set a value of range restriction (in pixels) around
 #'  presences occurrences on habitat suitability maps (all further points will
 #'  have a null probability, see Crisp et al (2011) in references). If NULL, no
@@ -133,18 +138,21 @@ NULL
 #'  reference below): \strong{P} (Probablity) sum probabilities of habitat
 #'  suitability maps, \strong{B} (Random Bernoulli) drawing repeatedly from a
 #'  Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
-#'  with the thresholding (depending on the metric, see metric parameter).}
-#'  \item{endemism}{Choice of the method used to compute the endemism map (see
-#'  Crisp et al. (2001) for more information, see reference below):
-#'  \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
-#'  Endemism map built by counting all species in each cell and weighting each
-#'  by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
-#'  Index) Endemism map built by dividing the weighted endemism index by the
-#'  total count of species in the cell. First string of the character is the
-#'  method either WEI or CWEI, and in those cases second string of the vector is
-#'  used to precise range calculation, whether the total number of occurrences
-#'  \strong{'NbOcc'} whether the surface of the binary map species distribution
-#'  \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
+#'  with the thresholding (depending on the metric, see metric parameter),
+#'  \strong{ML}(Maximum likelyhood) To describe, \strong{PR}(Probability
+#'  ranking) To describe, \strong{TR}(Trait range) To describe, \strong{CB}
+#'  (Checkerboard) To describe.} \item{endemism}{Choice of the method used to
+#'  compute the endemism map (see Crisp et al. (2001) for more information, see
+#'  reference below): \strong{NULL} No endemism map, \strong{WEI} (Weighted
+#'  Endemism Index) Endemism map built by counting all species in each cell and
+#'  weighting each by the inverse of its range, \strong{CWEI} (Corrected
+#'  Weighted Endemism Index) Endemism map built by dividing the weighted
+#'  endemism index by the total count of species in the cell. First string of
+#'  the character is the method either WEI or CWEI, and in those cases second
+#'  string of the vector is used to precise range calculation, whether the total
+#'  number of occurrences \strong{'NbOcc'} whether the surface of the binary map
+#'  species distribution \strong{'Binary'}.} \item{...}{See algorithm in detail
+#'  section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
 #'  function from the package 'stats', you can set the following parameters (see
@@ -263,10 +271,12 @@ NULL
 #'
 #'
 #'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
 #'
 #'
 #'
@@ -302,9 +312,11 @@ NULL
 #'
 #'
 #'
+#'
 #'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
 #'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
 #'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+#'
 #'
 #'
 #'
@@ -335,7 +347,7 @@ stack_modelling = function(algorithms,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
-                           method = 'P', metric = 'SES', rep.B = 1000,
+                           method = 'P', metric = 'SES', rep.B = 1000, richness = NULL,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
@@ -347,8 +359,8 @@ stack_modelling = function(algorithms,
              save = save, path = path,  PA = PA,  cv = cv, cv.param = cv.param,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, weight = weight,
-             method = method, metric = metric, rep.B = rep.B, range = range, endemism = endemism,
-             verbose = verbose, GUI = GUI, cores = cores)
+             method = method, metric = metric, rep.B = rep.B, richness = richness, range = range,
+             endemism = endemism, verbose = verbose, GUI = GUI, cores = cores)
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
@@ -438,6 +450,8 @@ stack_modelling = function(algorithms,
     if (!is.null(name)) {enms['name'] = name}
     enms['method'] = method
     enms['rep.B'] = rep.B
+    enms['richness'] = richness
+    if(method %in% c('PR', 'TR', 'CB')){enms['Env'] <- Env}
     if (!is.null(range)) {enms['range'] = range}
     enms$endemism = endemism
     enms['verbose'] = verbose

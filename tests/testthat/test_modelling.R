@@ -1,4 +1,4 @@
-test_that('modelling function is correctly working', {
+test_that('modelling function', {
   data(Env)
   data(Occurrences)
   Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')

@@ -227,17 +227,19 @@ modelling = function(algorithm,
                      # Pseudo-absences definition
                      PA = NULL,
                      # Evaluation parameters
-                     cv = 'holdout', cv.param = c(0.7,2), thresh = 1001, metric = 'SES', axes.metric = 'Pearson',
+                     cv = 'holdout', cv.param = c(0.7,2),
+                     thresh = 1001, metric = 'SES', axes.metric = 'Pearson',
                      # Selection parameters
                      select = FALSE, select.metric = c('AUC'), select.thresh = c(0.75),
                      # Informations parameters
-                     verbose = TRUE, GUI = FALSE,
+                     verbose = TRUE, GUI = FALSE, MEM = FALSE,
                      # Modelling parameters
                      ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = name, PA = PA, cv = cv, cv.param = cv.param,
              thresh = thresh, metric = metric, axes.metric = axes.metric, select = select,
-             select.metric = select.metric, select.thresh = select.thresh, verbose = verbose, GUI = GUI)
+             select.metric = select.metric, select.thresh = select.thresh,
+             verbose = verbose, GUI = GUI)
 
   # Test if algorithm is available
   available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')

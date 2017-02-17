@@ -1,6 +1,6 @@
 #' @include Ensemble.SDM.R checkargs.R
-#' @importFrom sp Polygon Polygons SpatialPolygons bbox
-#' @importFrom raster raster stack reclassify mask calc overlay values
+#' @importFrom sp Polygon Polygons SpatialPolygons SpatialPoints bbox
+#' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints
 NULL
 
 #'Stack different ensemble SDMs in an SSDM
@@ -22,6 +22,15 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
+#'@param richness df. If the method used to create the local species richness is
+#'  among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
+#'  trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
+#'  parameter allow to input an observed richness data frame. Default is null
+#'  implying a richness computed from occurence data.
+#'@param Env raster object. Stacked raster object of environmental variables
+#'  (can be processed first by \code{\link{load_var}}). Needed only for stacking
+#'  method using SESAM framework: probability ranking (\strong{PR}), trait range
+#'  (\strong{TR}), or checkerboard (\strong{CB}).
 #'@param range integer. Set a value of range restriction (in pixels) around
 #'  presences occurrences on habitat suitability maps (all further points will
 #'  have a null probability, see Crisp et al (2011) in references). If NULL, no
@@ -41,7 +50,10 @@ NULL
 #'  reference below): \describe{\item{P}{(Probablity) sum probabilities of
 #'  habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
 #'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
-#'  the thresholding (depending on the metric, see metric parameter).}}
+#'  the thresholding (depending on the metric, see metric
+#'  parameter).}\item{ML}{(Maximum likelyhood) To
+#'  describe}\item{PR}{(Probability ranking) To describe}\item{TR}{(Trait range)
+#'  To describe}\item{CB}{(Checkerboard) To describe}}
 #'
 #'  \strong{Endemism:} Choice of the method used to compute the endemism map
 #'  (see Crisp et al. (2001) for more information, see reference below):
@@ -108,10 +120,18 @@ NULL
 #'
 #'
 #'
+#'
+#'
+#'
+#'
 #'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
 #'  species distribution  models  and  adjusting  bias  by linking them to
 #'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
 #'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+#'
+#'
+#'
+#'
 #'
 #'
 #'
@@ -138,18 +158,23 @@ NULL
 #'
 #'
 #'
+#'
+#'
+#'
+#'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, richness = NULL, Env = NULL, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P', rep.B = 1000,
+                                               richness = NULL, Env = NULL,
                                                range = NULL, endemism = c('WEI','Binary'),
                                                verbose = TRUE, GUI = FALSE) {
 
   # Check arguments
-  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range, endemism= endemism,
+  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, richness = richness, range = range, endemism= endemism,
              verbose = verbose, GUI = GUI)
 
   enms = list(enm, ...)
@@ -203,18 +228,18 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
       enms[[i]] = NULL
     }
   }
-  if (method == 'P') {
+  if (method == 'P') { # Individual probabilities sum (Calabrese et al, 2014)
     if(verbose) {cat('\n Local species richness coomputed by summing individual probabilities. \n')}
     for (i in seq_len(length(enms))) {stack@diversity.map = stack@diversity.map + enms[[i]]@projection}
   }
-  if (method == 'T') {
+  if (method == 'T') { # Threshold and sum (Calabrese et al, 2014)
     if(verbose) {cat('\n Local species richness coomputed by thresholding and then summing. \n')}
     for (i in seq_len(length(enms))) {
       stack@diversity.map = stack@diversity.map +
         reclassify(enms[[i]]@projection,
                    c(-Inf,enms[[1]]@evaluation$threshold,0, enms[[i]]@evaluation$threshold,Inf,1))}
   }
-  if (method == 'B') {
+  if (method == 'B') { # Random Bernoulli distribution (Calabrese et al, 2014)
     if(verbose) {cat('\n Local species richness coomputed by drawing repeatedly from a Bernoulli distribution. \n')}
     proba = stack()
     for (i in seq_len(length(enms))) {proba = stack(proba, enms[[i]]@projection)}
@@ -225,6 +250,68 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
       forcefun = TRUE)
     stack@diversity.map = sum(diversity.map) / length(enms) / rep.B
   }
+
+  ##NEW STACKING METHODS IN DEVELOPMENT##
+  if(method %in% c('LH','PR','TR','CB')){ # Richness map needed
+
+    if(is.null(richness)){
+      Richness <- reclassify(enm@projection, c(-Inf,Inf,0))
+      for (i in seq_len(length(enms))) {
+        Richness <- rasterize(SpatialPoints(enms[[i]]@data[1:2]), Richness, field = enms[[i]]@data$Presence, update = TRUE)
+        Richness <- reclassify(Richness, c(-Inf,0,NA))
+      }
+    } else {
+      stop('Richness external input is not yet implemented !')
+    }
+    # Some case can't be fitted !
+    if(all(values(Richness) %in% c(0, 1, NA))){
+      stop('Observed Richness is always equal to 1, modelled richness can\'t be adjusted !')
+    }
+
+    if(method == 'LH'){ # Maximum likelyhood (Calabrese et al, 2014)
+      # stop("Maximum likelyhood stacking method from Calabrese et al, 2014 is not yet implemented in this version of the pacakge.")
+      for (i in seq_len(length(enms))) {stack@diversity.map = stack@diversity.map + enms[[i]]@projection}
+      SSDM_Richness <- values(mask(stack@diversity.map, Richness))
+      SSDM_Richness <- SSDM_Richness[-which(is.na(SSDM_Richness))]
+      Richness <- values(Richness)
+      Richness <- Richness[-which(is.na(Richness))]
+      fit <- lm(Richness ~ SSDM_Richness)
+      a <- fit$coefficients[1]
+      b <- fit$coefficients[2]
+      stack@diversity.map <- a + b * stack@diversity.map
+    }
+
+    if(method %in% c('PR', 'TR', 'CB')){ # MEM needed
+
+      # Compute the MEM ith same ensemble than the ESDMs
+      Richness <- data.frame(rasterToPoints(Richness, fun = function(x){x>0}))
+      MEM <- ensemble_modelling(algorithms = unlist(strsplit(enm@parameters$algorithms, '.', fixed = TRUE))[-1],
+                                Occurrences = Richness, Env = Env, Xcol = 'x', Ycol = 'y', Pcol = 'layer',
+                                rep = enm@parameters$rep, name = 'MEM', cv = enm@parameters$cv,
+                                cv.param = as.numeric(unlist(strsplit(enm@parameters$cv.param, '|', fixed = TRUE))[-1]),
+                                metric = enm@parameters$metric, axes.metric = enm@parameters$axes.metric,
+                                ensemble.metric = unlist(strsplit(enm@parameters$ensemble.metric, '.', fixed = TRUE))[-1],
+                                ensemble.thresh = as.numeric(unlist(strsplit(enm@parameters$ensemble.thresh, '|', fixed = TRUE))[-1]),
+                                uncertainty = FALSE, weight = as.logical(enm@parameters$weight), verbose = FALSE)
+
+      if(method == 'PR'){ # Probability ranking (SESAM, D'Amen et al, 2015)
+        # stop("Probability ranking stacking method from Calabrese et al, 2014 is not yet implemented in this version of the pacakge.")
+        # Rank the species by probability
+        # Sum species probability while Richness < RichnessMEM
+        stack@diversity.map <- MEM@projection
+      }
+
+      if(method == 'TR'){ # Trait range (SESAM, D'Amen et al, 2015)
+        stop("Trait range stacking method from D'Amen et al, 2015 is not yet implemented in this version of the pacakge.")
+      }
+
+      if(method == 'CB'){ # TChecerboard (SESAM, D'Amen et al, 2015)
+        stop("Checkerboard stacking method from D'amen et al, 2015 is not yet implemented in this version of the pacakge.")
+      }
+    }
+  }
+  ##NEW STACKING METHODS IN DEVELOPMENT##
+
   names(stack@diversity.map) = 'diversity'
   if(verbose) {cat(' done. \n')}
 

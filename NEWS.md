@@ -1,6 +1,30 @@
 NEWS
 ================
 
+TO DO
+=====
+
+-   possibility to add external richness data
+-   adjust binary with the probability ranking stacking method
+-   develop doc about new stacking methods (including literature)
+-   add evaluation for MEMs
+-   add ensemble method for MEMs
+-   add community evaluations for SESAM stacking methods (*see Pottier et al*)
+-   implement trait range stacking method
+-   implement checkerboard stacking method
+
+SSDM 0.1.9033
+=============
+
+-   richness input in function stacking
+-   MEM computing in function stacking
+-   backbone to implement all new stacking functions (warning implemented everywhere to alert not implemented parts)
+-   update in doc
+-   update in check args
+
+SSDM 0.1.9032
+=============
+
 SSDM 0.1.9031
 =============
 

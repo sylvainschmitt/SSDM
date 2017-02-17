@@ -1,4 +1,4 @@
-test_that('stack modelling function is correctly working', {
+test_that('stack modelling function', {
   data(Env)
   data(Occurrences)
   SSDM = stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
