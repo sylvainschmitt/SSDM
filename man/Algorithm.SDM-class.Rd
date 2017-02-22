@@ -30,8 +30,8 @@ each variable in the SDM.}
 
 \item{\code{parameters}}{data frame. Parameters used to build the SDM.}
 }}
+
 \seealso{
 \linkS4class{Ensemble.SDM} an S4 class for ensemble SDMs,
  and \linkS4class{Stacked.SDM} an S4 class for SSDMs.
 }
-

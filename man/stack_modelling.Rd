@@ -6,12 +6,13 @@
 \usage{
 stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
-  name = NULL, save = FALSE, path = getwd(), PA = NULL, cv = "holdout",
-  cv.param = c(0.7, 1), thresh = 1001, axes.metric = "Pearson",
-  uncertainty = TRUE, tmp = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, method = "P", metric = "SES",
-  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = TRUE, GUI = FALSE, cores = 1, ...)
+  name = NULL, save = FALSE, path = getwd(), PA = NULL,
+  cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
+  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
+  method = "P", metric = "SES", rep.B = 1000, richness = NULL,
+  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE,
+  GUI = FALSE, cores = 1, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -90,6 +91,12 @@ details below.)}
 \item{rep.B}{integer. If the method used to create the local species richness
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
+
+\item{richness}{df. If the method used to create the local species richness is
+among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
+trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
+parameter allow to input an observed richness data frame. Default is null
+implying a richness computed from occurence data.}
 
 \item{range}{integer. Set a value of range restriction (in pixels) around
 presences occurrences on habitat suitability maps (all further points will
@@ -173,18 +180,21 @@ variable importance), and a list of ensemble SDMs for each species (see
  reference below): \strong{P} (Probablity) sum probabilities of habitat
  suitability maps, \strong{B} (Random Bernoulli) drawing repeatedly from a
  Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
- with the thresholding (depending on the metric, see metric parameter).}
- \item{endemism}{Choice of the method used to compute the endemism map (see
- Crisp et al. (2001) for more information, see reference below):
- \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
- Endemism map built by counting all species in each cell and weighting each
- by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
- Index) Endemism map built by dividing the weighted endemism index by the
- total count of species in the cell. First string of the character is the
- method either WEI or CWEI, and in those cases second string of the vector is
- used to precise range calculation, whether the total number of occurrences
- \strong{'NbOcc'} whether the surface of the binary map species distribution
- \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
+ with the thresholding (depending on the metric, see metric parameter),
+ \strong{ML}(Maximum likelyhood) To describe, \strong{PR}(Probability
+ ranking) To describe, \strong{TR}(Trait range) To describe, \strong{CB}
+ (Checkerboard) To describe.} \item{endemism}{Choice of the method used to
+ compute the endemism map (see Crisp et al. (2001) for more information, see
+ reference below): \strong{NULL} No endemism map, \strong{WEI} (Weighted
+ Endemism Index) Endemism map built by counting all species in each cell and
+ weighting each by the inverse of its range, \strong{CWEI} (Corrected
+ Weighted Endemism Index) Endemism map built by dividing the weighted
+ endemism index by the total count of species in the cell. First string of
+ the character is the method either WEI or CWEI, and in those cases second
+ string of the vector is used to precise range calculation, whether the total
+ number of occurrences \strong{'NbOcc'} whether the surface of the binary map
+ species distribution \strong{'Binary'}.} \item{...}{See algorithm in detail
+ section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -281,6 +291,7 @@ variable importance), and a list of ensemble SDMs for each species (see
  Depending on the raster object resolution the process can
  be more or less time- and memory-consuming.
 }
+
 \examples{
 \dontrun{
 # Loading data
@@ -302,6 +313,7 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
  "Selecting pseudo-absences for species distribution models: how, where and
  how many?" \emph{Methods Ecology and Evolution} 3:327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
+
 
 
 
@@ -346,10 +358,12 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
 
 
 
@@ -368,4 +382,3 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 \seealso{
 \code{\link{modelling}} to build simple SDMs.
 }
-

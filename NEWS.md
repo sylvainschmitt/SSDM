@@ -14,6 +14,11 @@ TO DO
 -   implement checkerboard stacking method
 -   add finer tests
 
+SSDM 0.1.9034
+=============
+
+-   `spThin` package responsible for the doc issue, not fixed but currently just commenting the pacakge to unactivate it in waiting. thread open on `Roxygen2` development repository: <https://github.com/klutometis/roxygen/issues/597>.
+
 SSDM 0.1.9033
 =============
 

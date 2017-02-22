@@ -27,4 +27,3 @@ R.J. Hijmans, C.H. &  Graham (2006) "The  ability  of climate
   Nouvelle-Caledonie, Marseille.} 73-76
 }
 \keyword{datasets}
-

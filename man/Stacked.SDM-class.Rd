@@ -41,6 +41,7 @@ the SSDM.}
 the metrics of all SDMs (AUC, Kappa, omission rate, sensitivity,
 specificity, proportion of correctly predicted occurrences).}
 }}
+
 \references{
 M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001)
  "Endemism in the Australian flora"  \emph{Journal of Biogeography}
@@ -51,4 +52,3 @@ M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001)
 \linkS4class{Ensemble.SDM} an S4 class to represent ensemble SDMs,
  and \linkS4class{Algorithm.SDM} an S4 class to represent SDMs.
 }
-

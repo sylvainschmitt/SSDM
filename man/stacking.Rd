@@ -7,11 +7,12 @@
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "P", rep.B = 1000,
-  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE, GUI = FALSE)
+  richness = NULL, Env = NULL, range = NULL, endemism = c("WEI",
+  "Binary"), verbose = TRUE, GUI = FALSE)
 
 \S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "P",
-  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = TRUE, GUI = FALSE)
+  rep.B = 1000, richness = NULL, Env = NULL, range = NULL,
+  endemism = c("WEI", "Binary"), verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{enm, ...}{character. Ensemble SDMs to be stacked.}
@@ -25,6 +26,17 @@ richness map (see details below).}
 \item{rep.B}{integer. If the method used to create the local species richness
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
+
+\item{richness}{df. If the method used to create the local species richness is
+among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
+trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
+parameter allow to input an observed richness data frame. Default is null
+implying a richness computed from occurence data.}
+
+\item{Env}{raster object. Stacked raster object of environmental variables
+(can be processed first by \code{\link{load_var}}). Needed only for stacking
+method using SESAM framework: probability ranking (\strong{PR}), trait range
+(\strong{TR}), or checkerboard (\strong{CB}).}
 
 \item{range}{integer. Set a value of range restriction (in pixels) around
 presences occurrences on habitat suitability maps (all further points will
@@ -49,7 +61,10 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
  reference below): \describe{\item{P}{(Probablity) sum probabilities of
  habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
- the thresholding (depending on the metric, see metric parameter).}}
+ the thresholding (depending on the metric, see metric
+ parameter).}\item{ML}{(Maximum likelyhood) To
+ describe}\item{PR}{(Probability ranking) To describe}\item{TR}{(Trait range)
+ To describe}\item{CB}{(Checkerboard) To describe}}
 
  \strong{Endemism:} Choice of the method used to compute the endemism map
  (see Crisp et al. (2001) for more information, see reference below):
@@ -126,10 +141,18 @@ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
 
 
 
+
+
+
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+
+
+
+
 
 
 
@@ -146,4 +169,3 @@ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
 \seealso{
 \code{\link{stack_modelling}} to build SSDMs.
 }
-

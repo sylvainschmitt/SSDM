@@ -2,9 +2,9 @@
 % Please edit documentation in R/plot.model.R
 \docType{methods}
 \name{plot.model}
-\alias{plot,SDM,ANY-method}
-\alias{plot,Stacked.SDM,ANY-method}
 \alias{plot.model}
+\alias{plot,Stacked.SDM,ANY-method}
+\alias{plot,SDM,ANY-method}
 \title{Plot SDMs, ensemble SDMs, and SSDMs}
 \usage{
 \S4method{plot}{Stacked.SDM,ANY}(x, y, ...)
@@ -28,4 +28,3 @@ Open a window with a shiny app rendering all the results (habitat
 Allows to plot S4 \linkS4class{Algorithm.SDM}, \linkS4class{Ensemble.SDM} and
 \linkS4class{Stacked.SDM} class objects.
 }
-

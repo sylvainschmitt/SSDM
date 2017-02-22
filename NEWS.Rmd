@@ -12,6 +12,10 @@ output: github_document
 - implement trait range stacking method
 - implement checkerboard stacking method
 - add finer tests
+- document all S4 class and methods
+
+# SSDM 0.1.9034
+- `spThin` package responsible for the doc issue, not fixed but currently just commenting the pacakge to unactivate it in waiting. thread open on `Roxygen2` development repository: https://github.com/klutometis/roxygen/issues/597.
 
 # SSDM 0.1.9033
 - Algortihm.SDM.R file splitted in multiple files (searching for doc issue)

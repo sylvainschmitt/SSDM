@@ -50,11 +50,10 @@ Function to load occurrence data from a table to perform \code{\link{modelling}}
 }
 \examples{
 load_occ(path = system.file("extdata",  package = 'SSDM'), Env,
-        Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-        file = 'Occurences.txt', sep = ',')
+         Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+         file = 'Occurences.txt', sep = ',')
 
 }
 \seealso{
 \code{\link{load_var}} to load environmental variables.
 }
-

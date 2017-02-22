@@ -30,4 +30,3 @@ objects saved with their respective save function.
 \seealso{
 \code{\link{save.model}}
 }
-

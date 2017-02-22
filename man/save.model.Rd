@@ -2,9 +2,9 @@
 % Please edit documentation in R/save.model.R
 \docType{methods}
 \name{save.model}
+\alias{save.model}
 \alias{save.enm}
 \alias{save.enm,Ensemble.SDM-method}
-\alias{save.model}
 \alias{save.stack}
 \alias{save.stack,Stacked.SDM-method}
 \title{Save ensemble SDMs and SSDMs}
@@ -16,7 +16,8 @@ save.enm(enm, name = strsplit(enm@name, ".", fixed = TRUE)[[1]][1],
   ".Ensemble.SDM", fixed = TRUE)[[1]][1], path = getwd(), verbose = TRUE,
   GUI = FALSE)
 
-save.stack(stack, name = "Stack", path = getwd(), verbose = TRUE, GUI = FALSE)
+save.stack(stack, name = "Stack", path = getwd(), verbose = TRUE,
+  GUI = FALSE)
 
 \S4method{save.stack}{Stacked.SDM}(stack, name = "Stack", path = getwd(),
   verbose = TRUE, GUI = FALSE)
@@ -48,4 +49,3 @@ class objects.
 \seealso{
 \code{\link{load.model}}
 }
-

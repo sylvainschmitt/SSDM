@@ -8,17 +8,17 @@ setMethod('get_PA', "Algorithm.SDM", function(obj) {return(obj)})
 
 setMethod('get_PA', "GLM.SDM",
           function(obj) {
-            PA = list(nb = 100, strat = 'random')
+            PA = list(nb = 1000, strat = 'random')
             return(PA)})
 
 setMethod('get_PA', "GAM.SDM",
           function(obj) {
-            PA = list(nb = 100, strat = 'random')
+            PA = list(nb = 1000, strat = 'random')
             return(PA)})
 
 setMethod('get_PA', "MARS.SDM",
           function(obj) {
-            PA = list(nb = 100, strat = 'random')
+            PA = list(nb = 1000, strat = 'random')
             return(PA)})
 
 setMethod('get_PA', "CTA.SDM",

@@ -8,8 +8,8 @@
 \title{Methods to assemble multiple algorithms in an ensemble SDM}
 \usage{
 ensemble(x, ..., name = NULL, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
-  verbose = TRUE, GUI = FALSE)
+  ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001,
+  uncertainty = TRUE, verbose = TRUE, GUI = FALSE)
 
 \S4method{ensemble}{Algorithm.SDM}(x, ..., name = NULL,
   ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
@@ -91,4 +91,3 @@ plot(ESDM)
 \code{\link{ensemble_modelling}} to build an ensemble SDM from
  multiple algorithms.
 }
-

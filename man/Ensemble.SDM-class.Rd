@@ -24,8 +24,8 @@ metrics include AUC, Kappa, sensitivity, specificity and proportion of
 correctly predicted occurrences) and identification of the optimal threshold
 to convert the habitat suitability map into a binary presence/absence map.}
 }}
+
 \seealso{
 \linkS4class{Algorithm.SDM} an S4 class to represent an SDM based on
  a single algorithm, and \linkS4class{Stacked.SDM} an S4 class for SSDMs.
 }
-

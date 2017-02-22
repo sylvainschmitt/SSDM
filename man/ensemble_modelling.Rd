@@ -9,7 +9,8 @@ ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   path = getwd(), PA = NULL, cv = "holdout", cv.param = c(0.7, 1),
   thresh = 1001, metric = "SES", axes.metric = "Pearson",
   uncertainty = TRUE, tmp = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE, GUI = FALSE, ...)
+  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE, GUI = FALSE,
+  ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -242,6 +243,7 @@ correlation matrix and variable importance).
  Depending on the raster object resolution the process can
  be more or less time- and memory-consuming.
 }
+
 \examples{
 \dontrun{
 # Loading data
@@ -302,4 +304,3 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 \code{\link{modelling}} to build SDMs with a single algorithm,
  \code{\link{stack_modelling}} to build SSDMs.
 }
-
