@@ -37,26 +37,35 @@ Imports:
     shinyFiles (>= 0.6.0)
 Depends:
     R (>= 3.2.2)
-Collate:
+Collate: 
+    'SDM.R'
     'Algorithm.SDM.R'
     'Ensemble.SDM.R'
     'Env.R'
     'Occurrences.R'
+    'PA.select.R'
     'SSDM.R'
     'Stacked.SDM.R'
     'checkargs.R'
+    'data.values.R'
     'ensemble.R'
     'modelling.R'
     'ensemble_modelling.R'
+    'evaluate.R'
+    'evaluate.axes.R'
+    'get_PA.R'
+    'get_model.R'
     'gui.R'
     'load_model.R'
     'load_occ.R'
     'load_var.R'
     'plot.model.R'
+    'project.R'
     'save.model.R'
     'stack_modelling.R'
     'stacking.R'
     'update.stack.R'
     'zzz.R'
-RoxygenNote: 5.0.1
-Suggests: testthat
+Suggests:
+    testthat
+RoxygenNote: 6.0.1

@@ -12,8 +12,14 @@ TO DO
 -   add community evaluations for SESAM stacking methods (*see Pottier et al*)
 -   implement trait range stacking method
 -   implement checkerboard stacking method
+-   add finer tests
 
 SSDM 0.1.9033
+=============
+
+-   Algortihm.SDM.R file splitted in multiple files (searching for doc issue)
+
+SSDM 0.1.9032
 =============
 
 -   richness input in function stacking
@@ -21,9 +27,6 @@ SSDM 0.1.9033
 -   backbone to implement all new stacking functions (warning implemented everywhere to alert not implemented parts)
 -   update in doc
 -   update in check args
-
-SSDM 0.1.9032
-=============
 
 SSDM 0.1.9031
 =============
