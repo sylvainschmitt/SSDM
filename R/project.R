@@ -26,6 +26,7 @@ setMethod('project', "Algorithm.SDM",  function(obj, Env, ...) {
     proj = proj / proj@data@max
   names(proj) = "Projection"
   obj@projection = proj
+  obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0, obj@evaluation$threshold,Inf,1))
   return(obj)})
 
 setMethod('project', "MAXENT.SDM",  function(obj, Env, ...) {
@@ -48,4 +49,5 @@ setMethod('project', "MAXENT.SDM",  function(obj, Env, ...) {
     proj = proj / proj@data@max
   names(proj) = "Projection"
   obj@projection = proj
+  obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0, obj@evaluation$threshold,Inf,1))
   return(obj)})

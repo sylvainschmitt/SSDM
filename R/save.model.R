@@ -49,6 +49,7 @@ setMethod('save.enm', 'Ensemble.SDM', function (enm,
   # Raster saving
   if(verbose){cat('   rasters ...')}
   writeRaster(enm@projection[[1]], paste0(path, "/", name, '/Rasters/Probability'), 'GTiff', overwrite = TRUE)
+  writeRaster(enm@binary[[1]], paste0(path, "/", name, '/Rasters/Binary'), 'GTiff', overwrite = TRUE)
   writeRaster(enm@uncertainty, paste0(path, "/", name, '/Rasters/uncertainty'), 'GTiff', overwrite = TRUE)
   if(verbose){cat('saved \n')}
 

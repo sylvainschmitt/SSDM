@@ -319,7 +319,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                           pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
-      niche.map = reclassify(x@enms[[which(choices == input$enmchoice)]]@projection, c(-Inf,x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,0, x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold,Inf,1))
+      niche.map = x@enms[[which(choices == input$enmchoice)]]@binary
       if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
       spplot(niche.map,
            main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
@@ -538,7 +538,7 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     })
     output$niche <- renderPlot({
       if (!is.null(ranges$x)) {
-        niche.map = crop(reclassify(x@projection, c(-Inf,x@evaluation$threshold,0, x@evaluation$threshold,Inf,1)), c(ranges$x, ranges$y))
+        niche.map = x@binary
       } else {niche.map = reclassify(x@projection, c(-Inf,x@evaluation$threshold,0, x@evaluation$threshold,Inf,1))}
       spplot(niche.map,
            main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),

@@ -1,6 +1,7 @@
 #' @include Ensemble.SDM.R checkargs.R
 #' @importFrom sp Polygon Polygons SpatialPolygons SpatialPoints bbox
-#' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints
+#' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<-
+#' @importFrom stats lm
 NULL
 
 #'Stack different ensemble SDMs in an SSDM
@@ -295,10 +296,42 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
                                 uncertainty = FALSE, weight = as.logical(enm@parameters$weight), verbose = FALSE)
 
       if(method == 'PR'){ # Probability ranking (SESAM, D'Amen et al, 2015)
-        # stop("Probability ranking stacking method from Calabrese et al, 2014 is not yet implemented in this version of the pacakge.")
-        # Rank the species by probability
-        # Sum species probability while Richness < RichnessMEM
         stack@diversity.map <- MEM@projection
+        # Readjust each enm binary map
+        richnesses <- values(Richness)
+        names(richnesses) <- 1:length(richnesses)
+        richnesses <- as.list(richnesses)
+        probabilities <- lapply(lapply(stack@enms, FUN = slot, name = 'projection'), values)
+        probabilities <- lapply(probabilities, function(x){names(x) <- rep(1:length(probabilities[[1]])) ; return(x)})
+        probabilities <- lapply(probabilities, `[`, names(probabilities[[1]]))
+        probabilities <- apply(do.call(rbind, probabilities), 2, as.list)
+        binaries <- lapply(lapply(stack@enms, FUN = slot, name = 'binary'), values)
+        binaries <- lapply(binaries, function(x){names(x) <- rep(1:length(binaries[[1]])) ; return(x)})
+        binaries <- lapply(binaries, `[`, names(binaries[[1]]))
+        binaries <- apply(do.call(rbind, binaries), 2, as.list)
+        binaries <- mapply(function(richness, probability, binary){
+          if(!is.na(richness)){
+            ord <- order(unlist(probability))
+            binary <- unlist(binary)
+            if(length(ord) <= richness){
+              binary[ord] <- 1
+            } else {
+              binary[ord[1:richness]] <- 1
+              binary[ord[richness+1:length(ord)]] <- 0
+            }
+            binary <- as.list(binary)
+          }
+          return(binary)
+        }, richness = richnesses, probability = probabilities, binary = binaries, SIMPLIFY = FALSE)
+        binaries <- lapply(binaries, `[`, names(binaries[[1]]))
+        binaries <- apply(do.call(rbind, binaries), 2, as.list)
+        binaries <- lapply(binaries, unlist)
+        binaries <- lapply(binaries, unname)
+
+        stack@enms <- mapply(function(enm, binary){
+          values(enm@binary) <- binary
+          return(enm)
+        }, enm = stack@enms, binary = binaries, SIMPLIFY = FALSE)
       }
 
       if(method == 'TR'){ # Trait range (SESAM, D'Amen et al, 2015)

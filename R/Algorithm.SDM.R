@@ -12,6 +12,7 @@ NULL
 #'
 #' @slot name character. Name of the SDM (by default Species.SDM).
 #' @slot projection raster. Habitat suitability map produced by the SDM.
+#' @slot binary raster. Presence/Absence binary map produced by the SDM.
 #' @slot evaluation data frame. Evaluation of the SDM (available metrics include
 #'  AUC, Kappa, sensitivity, specificity and proportion of correctly predicted
 #'  occurrences) and identification of the optimal threshold to convert the
@@ -30,14 +31,22 @@ setClass('Algorithm.SDM',
 
 # Class generator
 Algorithm.SDM <- function(algorithm = 'Algorithm',
-                                  name = character(),
-                                  projection = raster(),
-                                  evaluation = data.frame(),
-                                  variable.importance = data.frame(),
-                                  data = data.frame(),
-                                  parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
+                          name = character(),
+                          projection = raster(),
+                          binary = raster(),
+                          evaluation = data.frame(),
+                          variable.importance = data.frame(),
+                          data = data.frame(),
+                          parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
   object.class = paste0(algorithm,'.SDM')
-  return(new(object.class, name = name, projection = projection, evaluation = evaluation, variable.importance = variable.importance, data = data, parameters = parameters))
+  return(new(object.class,
+             name = name,
+             binary = binary,
+             projection = projection,
+             evaluation = evaluation,
+             variable.importance = variable.importance,
+             data = data,
+             parameters = parameters))
 }
 
 setClass('GLM.SDM',

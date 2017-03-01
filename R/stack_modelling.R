@@ -401,6 +401,7 @@ stack_modelling = function(algorithms,
                                  } else {
                                    if (tmp && !is.null(enm)) {
                                      enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = TRUE)
+                                     enm@binary = writeRaster(enm@binary[[1]], paste0(tmppath, '/.enms/bin',enm.name), overwrite = TRUE)
                                      enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = TRUE)
                                    }
                                    if(verbose){cat('\n\n')}

@@ -18,6 +18,8 @@ machines). This S4 class is obtained with \code{\link{modelling}}.
 
 \item{\code{projection}}{raster. Habitat suitability map produced by the SDM.}
 
+\item{\code{binary}}{raster. Presence/Absence binary map produced by the SDM.}
+
 \item{\code{evaluation}}{data frame. Evaluation of the SDM (available metrics include
 AUC, Kappa, sensitivity, specificity and proportion of correctly predicted
 occurrences) and identification of the optimal threshold to convert the

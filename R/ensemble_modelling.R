@@ -331,7 +331,10 @@ ensemble_modelling = function(algorithms,
       if(GUI) {incProgress(1/(length(algorithms)+1),
                            detail = paste(algorithms[i],'SDM built'))}
       if (inherits(model, "try-error")) {if(verbose){cat(model)}} else {
-        if (tmp) {model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/',j,model.name), overwrite = TRUE)}
+        if (tmp) {
+          model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/proba',j,model.name), overwrite = TRUE)
+          model@binary = writeRaster(model@binary, paste0(tmppath,'/.models/bin',j,model.name), overwrite = TRUE)
+        }
         suppressWarnings({models[model.name] = model})
       }
       if(verbose){cat(sprintf('%s done for %s %s \n\n', model.name, spname, format(Sys.time(), '%Y-%m-%d %T')))}

@@ -137,6 +137,7 @@ setMethod('ensemble', 'Algorithm.SDM',
 
                 # Projection
                 enm@projection = sum.algo.ensemble@projection
+                enm@binary = sum.algo.ensemble@binary
                 if(verbose) {cat('   done \n')}
 
                 # Data
@@ -301,6 +302,7 @@ setMethod('sum', 'Algorithm.SDM', function(x, ..., name = NULL, ensemble.metric 
       names(smodel@projection) = 'Probability'
       if(all(x@data$Presence %in% c(0,1))){ # SDMs
         smodel@evaluation = smodel@evaluation / sweight
+        smodel@binary = reclassify(smodel@projection, c(-Inf,smodel@evaluation$threshold,0, smodel@evaluation$threshold,Inf,1))
       } else { # MEMs
         warning('Ensemble model evaluation is not yet implemented with MEMs')
       }

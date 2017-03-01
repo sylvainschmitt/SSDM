@@ -232,7 +232,7 @@ modelling = function(algorithm,
                      # Selection parameters
                      select = FALSE, select.metric = c('AUC'), select.thresh = c(0.75),
                      # Informations parameters
-                     verbose = TRUE, GUI = FALSE, MEM = FALSE,
+                     verbose = TRUE, GUI = FALSE,
                      # Modelling parameters
                      ...) {
   # Check arguments

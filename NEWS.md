@@ -5,7 +5,7 @@ TO DO
 =====
 
 -   possibility to add external richness data
--   adjust binary with the probability ranking stacking method
+-   further testing of probability ranking stacking method with real data
 -   develop doc about new stacking methods (including literature)
 -   add evaluation for MEMs
 -   add ensemble method for MEMs
@@ -13,6 +13,19 @@ TO DO
 -   implement trait range stacking method
 -   implement checkerboard stacking method
 -   add finer tests
+-   document all S4 class and methods
+
+SSDM 0.1.9035
+=============
+
+-   Adjusted binaries with probability ranking method
+-   Add binary raster slot in SDM, ESDM and SSDM methods
+-   Add binary computation in modelling, ensemble, stacking
+-   Add binary tmp save in ensemble and stack modelling
+-   Save binary in save function
+-   Load binary in load function
+-   Create binary if not in file with load function (for backward compatibility)
+-   Adapt plot methods to new binary slot
 
 SSDM 0.1.9034
 =============
