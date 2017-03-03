@@ -258,8 +258,10 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     if(is.null(richness)){
       Richness <- reclassify(enm@projection, c(-Inf,Inf,0))
       for (i in seq_len(length(enms))) {
-        Richness <- rasterize(SpatialPoints(enms[[i]]@data[1:2]), Richness, field = enms[[i]]@data$Presence, update = TRUE)
-        Richness <- reclassify(Richness, c(-Inf,0,NA))
+        Richness <- Richness +
+          rasterize(SpatialPoints(enms[[i]]@data[1:2]),
+                    Richness, field = enms[[i]]@data$Presence,
+                    background = 0)
       }
     } else {
       stop('Richness external input is not yet implemented !')
@@ -285,9 +287,9 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     if(method %in% c('PR', 'TR', 'CB')){ # MEM needed
 
       # Compute the MEM ith same ensemble than the ESDMs
-      Richness <- data.frame(rasterToPoints(Richness, fun = function(x){x>0}))
+      occ <- data.frame(rasterToPoints(Richness, fun = function(x){x>0}))
       MEM <- ensemble_modelling(algorithms = unlist(strsplit(enm@parameters$algorithms, '.', fixed = TRUE))[-1],
-                                Occurrences = Richness, Env = Env, Xcol = 'x', Ycol = 'y', Pcol = 'layer',
+                                Occurrences = occ, Env = Env, Xcol = 'x', Ycol = 'y', Pcol = 'layer',
                                 rep = enm@parameters$rep, name = 'MEM', cv = enm@parameters$cv,
                                 cv.param = as.numeric(unlist(strsplit(enm@parameters$cv.param, '|', fixed = TRUE))[-1]),
                                 metric = enm@parameters$metric, axes.metric = enm@parameters$axes.metric,
@@ -301,28 +303,28 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
         richnesses <- values(Richness)
         names(richnesses) <- 1:length(richnesses)
         richnesses <- as.list(richnesses)
-        probabilities <- lapply(lapply(stack@enms, FUN = slot, name = 'projection'), values)
+        probabilities <- lapply(lapply(enms, FUN = slot, name = 'projection'), values)
         probabilities <- lapply(probabilities, function(x){names(x) <- rep(1:length(probabilities[[1]])) ; return(x)})
         probabilities <- lapply(probabilities, `[`, names(probabilities[[1]]))
         probabilities <- apply(do.call(rbind, probabilities), 2, as.list)
-        binaries <- lapply(lapply(stack@enms, FUN = slot, name = 'binary'), values)
+        binaries <- lapply(lapply(enms, FUN = slot, name = 'binary'), values)
         binaries <- lapply(binaries, function(x){names(x) <- rep(1:length(binaries[[1]])) ; return(x)})
         binaries <- lapply(binaries, `[`, names(binaries[[1]]))
         binaries <- apply(do.call(rbind, binaries), 2, as.list)
-        binaries <- mapply(function(richness, probability, binary){
-          if(!is.na(richness)){
-            ord <- order(unlist(probability))
+        binaries <- mapply(function(rich, probability, binary){
+          if(!is.na(rich)){
+            ord <- order(unlist(probability), decreasing = TRUE)
             binary <- unlist(binary)
-            if(length(ord) <= richness){
+            if(length(ord) <= rich){
               binary[ord] <- 1
             } else {
-              binary[ord[1:richness]] <- 1
-              binary[ord[richness+1:length(ord)]] <- 0
+              binary[ord[1:rich]] <- 1
+              binary[ord[rich+1:length(ord)]] <- 0
             }
             binary <- as.list(binary)
           }
           return(binary)
-        }, richness = richnesses, probability = probabilities, binary = binaries, SIMPLIFY = FALSE)
+        }, rich = richnesses, probability = probabilities, binary = binaries, SIMPLIFY = FALSE)
         binaries <- lapply(binaries, `[`, names(binaries[[1]]))
         binaries <- apply(do.call(rbind, binaries), 2, as.list)
         binaries <- lapply(binaries, unlist)

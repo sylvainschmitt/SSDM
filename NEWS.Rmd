@@ -4,7 +4,6 @@ output: github_document
 ---
 # TO DO
 - possibility to add external richness data
-- further testing of probability ranking stacking method with real data
 - develop doc about new stacking methods (including literature)
 - add evaluation for MEMs
 - add ensemble method for MEMs
@@ -13,6 +12,12 @@ output: github_document
 - implement checkerboard stacking method
 - add finer tests
 - document all S4 class and methods
+
+# SSDM 0.1.9036
+- further testing of probability ranking stacking method with real data
+- `project.R` with MEM bug fixed
+- `stacking.R` with MEM bug fixed
+- Travis-CI note removed with .Rbuildignore
 
 # SSDM 0.1.9035
 - Adjusted binaries with probability ranking method

@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.cran-comment
+^\.travis\.yml$
+NEWS.Rmd
+README.Rmd
+examples
+cran-comment.md
