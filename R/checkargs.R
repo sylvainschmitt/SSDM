@@ -117,7 +117,7 @@
   if(length(ensemble.thresh) != length(ensemble.metric)){stop('select.thresh and select.metric parameters should have the same length to correspond (see help).')}
 
   # Stacking
-  if(!inherits(method,'character') || !(method %in% c('P','B','T','LH','PR','TR','CB'))){stop('method parameter should be P, B, T, LH, PR, TR or CB (see help).')}
+  if(!inherits(method,'character') || !(method %in% c('P','B','T','ML','PR','TR','CB'))){stop('method parameter should be P, B, T, LH, PR, TR or CB (see help).')}
   if(method == 'B' && !inherits(rep.B,'numeric') && abs(rep.B-round(rep.B)) != 0 && rep.B < 1){stop('rep.B parameter should be an integer > 1 (see help).')}
   if(!is.null(richness)){warning('Richness check arg to implement !')}
 

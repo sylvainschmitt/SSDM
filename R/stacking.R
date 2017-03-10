@@ -47,14 +47,17 @@ NULL
 #'  \code{\link{plot.model}} function.
 #'
 #'  \strong{Methods:} Choice of the method used to compute the local species
-#'  richness map (see Calabrez et al. (2014) for more informations, see
-#'  reference below): \describe{\item{P}{(Probablity) sum probabilities of
-#'  habitat suitability maps }\item{B}{(Random bernoulli) draw repeatedly from a
-#'  Bernoulli distribution}\item{T}{(Threshold) sum the binary map obtained with
-#'  the thresholding (depending on the metric, see metric
-#'  parameter).}\item{ML}{(Maximum likelyhood) To
-#'  describe}\item{PR}{(Probability ranking) To describe}\item{TR}{(Trait range)
-#'  To describe}\item{CB}{(Checkerboard) To describe}}
+#'  richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for more
+#'  informations, see reference below): \describe{\item{P}{(Probablity) sum
+#'  probabilities of habitat suitability maps }\item{B}{(Random bernoulli) draw
+#'  repeatedly from a Bernoulli distribution}\item{T}{(Threshold) sum the binary
+#'  map obtained with the thresholding (depending on the metric, see metric
+#'  parameter).}\item{ML}{(Maximum likelyhood) adjust species richness of the
+#'  model by linear regression}\item{PR}{(Probability ranking) model richness
+#'  with a macroecological model (MEM) and adjust each ESDM binary map by
+#'  ranking habitat suitability and keeping as much as predicted richness of the
+#'  MEM}\item{TR}{(Trait range) To be implemented in next
+#'  versions}\item{CB}{(Checkerboard) To be implemented in next versions}}
 #'
 #'  \strong{Endemism:} Choice of the method used to compute the endemism map
 #'  (see Crisp et al. (2001) for more information, see reference below):
@@ -91,77 +94,25 @@ NULL
 #'
 #'@seealso \code{\link{stack_modelling}} to build SSDMs.
 #'
-#'@references C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005)
-#'  "Selecting thresholds of occurrence in the prediction of species
-#'  distributions." \emph{Ecography} 28:85-393
-#'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
+#'@references M. D'Amen, A. Dubuis, R. F. Fernandes, J. Pottier, L. Pelissier, &
+#'  A Guisan (2015) "Using species richness and functional traits prediction to
+#'  constrain assemblage predicitions from stacked species distribution models"
+#'  \emph{Journal of Biogeography} 42(7):1255-1266
+#'  \url{http://doc.rero.ch/record/235561/files/pel_usr.pdf}
 #'
 #'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
 #'  species distribution  models  and  adjusting  bias  by linking them to
 #'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
 #'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
 #'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
 #'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
 #'  Australian flora"  \emph{Journal of Biogeography} 28:183-198
 #'  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
 #'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
+#'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
+#'  thresholds of occurrence in the prediction of species distributions."
+#'  \emph{Ecography} 28:85-393
+#'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 #'
 #'@rdname stacking
 #'@export
@@ -253,7 +204,7 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   }
 
   ##NEW STACKING METHODS IN DEVELOPMENT##
-  if(method %in% c('LH','PR','TR','CB')){ # Richness map needed
+  if(method %in% c('ML','PR','TR','CB')){ # Richness map needed
 
     if(is.null(richness)){
       Richness <- reclassify(enm@projection, c(-Inf,Inf,0))
@@ -271,7 +222,7 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
       stop('Observed Richness is always equal to 1, modelled richness can\'t be adjusted !')
     }
 
-    if(method == 'LH'){ # Maximum likelyhood (Calabrese et al, 2014)
+    if(method == 'ML'){ # Maximum likelyhood (Calabrese et al, 2014)
       # stop("Maximum likelyhood stacking method from Calabrese et al, 2014 is not yet implemented in this version of the pacakge.")
       for (i in seq_len(length(enms))) {stack@diversity.map = stack@diversity.map + enms[[i]]@projection}
       SSDM_Richness <- values(mask(stack@diversity.map, Richness))

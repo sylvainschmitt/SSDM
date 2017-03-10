@@ -176,25 +176,28 @@ variable importance), and a list of ensemble SDMs for each species (see
  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
  \strong{prop.correct} (proportion of correctly predicted occurrences).}
  \item{method}{Choice of the method used to compute the local species
- richness map (see Calabrez et al. (2014) for more informations, see
- reference below): \strong{P} (Probablity) sum probabilities of habitat
- suitability maps, \strong{B} (Random Bernoulli) drawing repeatedly from a
- Bernoulli distribution, \strong{T} (Threshold) sum the binary map obtained
- with the thresholding (depending on the metric, see metric parameter),
- \strong{ML}(Maximum likelyhood) To describe, \strong{PR}(Probability
- ranking) To describe, \strong{TR}(Trait range) To describe, \strong{CB}
- (Checkerboard) To describe.} \item{endemism}{Choice of the method used to
- compute the endemism map (see Crisp et al. (2001) for more information, see
- reference below): \strong{NULL} No endemism map, \strong{WEI} (Weighted
- Endemism Index) Endemism map built by counting all species in each cell and
- weighting each by the inverse of its range, \strong{CWEI} (Corrected
- Weighted Endemism Index) Endemism map built by dividing the weighted
- endemism index by the total count of species in the cell. First string of
- the character is the method either WEI or CWEI, and in those cases second
- string of the vector is used to precise range calculation, whether the total
- number of occurrences \strong{'NbOcc'} whether the surface of the binary map
- species distribution \strong{'Binary'}.} \item{...}{See algorithm in detail
- section} }
+ richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for more
+ informations, see reference below): \strong{P} (Probablity) sum
+ probabilities of habitat suitability maps, \strong{B} (Random Bernoulli)
+ drawing repeatedly from a Bernoulli distribution, \strong{T} (Threshold) sum
+ the binary map obtained with the thresholding (depending on the metric, see
+ metric parameter), \strong{ML}(Maximum likelyhood) adjust species richness
+ of the model by linear regression, \strong{PR}(Probability ranking) model
+ richness with a macroecological model (MEM) and adjust each ESDM binary map
+ by ranking habitat suitability and keeping as much as predicted richness of
+ the MEM, \strong{TR}(Trait range) To be implemented in next versions,
+ \strong{CB} (Checkerboard) To be implemented in next versions.}
+ \item{endemism}{Choice of the method used to compute the endemism map (see
+ Crisp et al. (2001) for more information, see reference below):
+ \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
+ Endemism map built by counting all species in each cell and weighting each
+ by the inverse of its range, \strong{CWEI} (Corrected Weighted Endemism
+ Index) Endemism map built by dividing the weighted endemism index by the
+ total count of species in the cell. First string of the character is the
+ method either WEI or CWEI, and in those cases second string of the vector is
+ used to precise range calculation, whether the total number of occurrences
+ \strong{'NbOcc'} whether the surface of the binary map species distribution
+ \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -309,54 +312,16 @@ plot(SSDM)
 
 }
 \references{
-M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
- "Selecting pseudo-absences for species distribution models: how, where and
- how many?" \emph{Methods Ecology and Evolution} 3:327-338
+M. D'Amen, A. Dubuis, R. F. Fernandes, J. Pottier, L. Pelissier, &
+ A Guisan (2015) "Using species richness and functional traits prediction to
+ constrain assemblage predicitions from stacked species distribution models"
+ \emph{Journal of Biogeography} 42(7):1255-1266
+ \url{http://doc.rero.ch/record/235561/files/pel_usr.pdf}
+
+ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012) "Selecting
+ pseudo-absences for species distribution models: how, where and how many?"
+ \emph{Methods Ecology and Evolution} 3:327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
- thresholds of occurrence in the prediction of species distributions."
- \emph{Ecography} 28:85-393
- \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
@@ -365,19 +330,15 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
 
 
-
-
-
-
-
-
-
-
-
-
  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
  Australian flora"  \emph{Journal of Biogeography} 28:183-198
  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+
+
+ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
+ thresholds of occurrence in the prediction of species distributions."
+ \emph{Ecography} 28:85-393
+ \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 }
 \seealso{
 \code{\link{modelling}} to build simple SDMs.

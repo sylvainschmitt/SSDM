@@ -394,14 +394,22 @@ server <- function(input, output, session) {
                'LW' = 'Uses the lowest occurrence prediction probability',
                'ROC' = 'Minimizes the distance between the ROC plot (receiving operating curve) and the upper left corner (1,1).'))
     }})
-  output$methodUI <- renderUI({if(input$modellingchoice == 'Stack modelling'){selectInput('method', 'Diversity mapping method', c('Probability','Random Bernoulli','Threshold'), selected = 'Probability')}})
+  output$methodUI <- renderUI({
+    if(input$modellingchoice == 'Stack modelling'){
+      selectInput('method', 'Diversity mapping method',
+                  c('Probability','Random Bernoulli','Threshold','Maximum likelyhood','Probability Ranking'),
+                  selected = 'Probability')
+      }
+    })
   output$methodinfoUI <- renderUI({
     if(input$modellingchoice == 'Stack modelling'){
       if(length(input$method) == 1) {
         p(switch(input$method,
                  'Probability' = 'Sum probabilities of habitat suitability maps',
                  'Random Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
-                 'Threshold' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)'))
+                 'Threshold' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)',
+                 'Maximum likelyhood' = 'Adjust species richness of the model by linear regression',
+                 'Probability Ranking' = 'Model richness with a macroecological model (MEM) and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the MEM'))
       }
     }
   })
@@ -524,7 +532,9 @@ server <- function(input, output, session) {
     method = switch(input$method,
                     'Probability' = 'P',
                     'Random Bernoulli' = 'B',
-                    'Threshold' = 'T')
+                    'Threshold' = 'T',
+                    'Maximum likelyhood' = 'ML',
+                    'Probability Ranking' = 'PR')
     if(is.null(input$repB)) {rep.B = 1000} else {rep.B = as.numeric(input$repB)}
     if(is.null(input$cval)) {cval = 'holdout'} else {cval = input$cval}
     if(length(c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))) < 2) {cv.param = c(0.7, 1)} else {cv.param = c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))}

@@ -4,9 +4,8 @@ NEWS
 TO DO
 =====
 
+-   add community evaluations
 -   possibility to add external richness data
--   further testing of probability ranking stacking method with real data
--   develop doc about new stacking methods (including literature)
 -   add evaluation for MEMs
 -   add ensemble method for MEMs
 -   add community evaluations for SESAM stacking methods (*see Pottier et al*)
@@ -14,6 +13,20 @@ TO DO
 -   implement checkerboard stacking method
 -   add finer tests
 -   document all S4 class and methods
+
+SSDM 0.1.9036
+=============
+
+-   doc about new stacking methods (including literature)
+-   include new stacking method in GUI
+
+SSDM 0.1.9036
+=============
+
+-   further testing of probability ranking stacking method with real data
+-   `project.R` with MEM bug fixed
+-   `stacking.R` with MEM bug fixed
+-   Travis-CI note removed with .Rbuildignore
 
 SSDM 0.1.9035
 =============
