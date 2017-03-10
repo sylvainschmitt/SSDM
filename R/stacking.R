@@ -23,11 +23,6 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
-#'@param richness df. If the method used to create the local species richness is
-#'  among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
-#'  trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
-#'  parameter allow to input an observed richness data frame. Default is null
-#'  implying a richness computed from occurence data.
 #'@param Env raster object. Stacked raster object of environmental variables
 #'  (can be processed first by \code{\link{load_var}}). Needed only for stacking
 #'  method using SESAM framework: probability ranking (\strong{PR}), trait range
@@ -121,8 +116,7 @@ setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 100
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'P', rep.B = 1000,
-                                               richness = NULL, Env = NULL,
-                                               range = NULL, endemism = c('WEI','Binary'),
+                                               Env = NULL, range = NULL, endemism = c('WEI','Binary'),
                                                verbose = TRUE, GUI = FALSE) {
 
   # Check arguments
@@ -206,17 +200,14 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   ##NEW STACKING METHODS IN DEVELOPMENT##
   if(method %in% c('ML','PR','TR','CB')){ # Richness map needed
 
-    if(is.null(richness)){
-      Richness <- reclassify(enm@projection, c(-Inf,Inf,0))
-      for (i in seq_len(length(enms))) {
-        Richness <- Richness +
-          rasterize(SpatialPoints(enms[[i]]@data[1:2]),
-                    Richness, field = enms[[i]]@data$Presence,
-                    background = 0)
-      }
-    } else {
-      stop('Richness external input is not yet implemented !')
+    Richness <- reclassify(enm@projection, c(-Inf,Inf,0))
+    for (i in seq_len(length(enms))) {
+      Richness <- Richness +
+        rasterize(SpatialPoints(enms[[i]]@data[1:2]),
+                  Richness, field = enms[[i]]@data$Presence,
+                  background = 0)
     }
+
     # Some case can't be fitted !
     if(all(values(Richness) %in% c(0, 1, NA))){
       stop('Observed Richness is always equal to 1, modelled richness can\'t be adjusted !')
@@ -350,16 +341,6 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   }
   if(verbose) {cat(' done. \n')}
 
-  # Evaluation
-  if(verbose) {cat('   evaluating...')}
-  stack@evaluation = enm@evaluation
-  for (i in 2:length(enms)) {stack@evaluation = rbind(stack@evaluation, enms[[i]]@evaluation)}
-  a = stack@evaluation[1:2,]
-  row.names(a) = c('Mean', 'SD')
-  for (i in seq_len(length(stack@evaluation))) {a[i] = c(mean(stack@evaluation[,i], na.rm = TRUE), sd(stack@evaluation[,i], na.rm = TRUE))}
-  stack@evaluation = a
-  if(verbose) {cat(' done. \n')}
-
   # variable Importance
   if(verbose) {cat('   comparing variable importnace...')}
   stack@variable.importance = enm@variable.importance
@@ -429,6 +410,10 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
 
   # ENMS
   for (i in seq_len(length(enms))) {suppressWarnings({stack@enms[enms[[i]]@name] = enms[[i]]})}
+
+  # Evaluation
+  if(verbose) {cat('   evaluating...')}
+  stack@evaluation = evaluate(stack)
 
   # Parameters
   stack@parameters$method = method

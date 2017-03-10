@@ -147,16 +147,10 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       ranges$x <- NULL
       ranges$y <- NULL
     })
-    eval = 'Mean'
-    ensemble.metric = strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]
-    for (i in seq_len(length(ensemble.metric))) {
-      eval = paste(eval, paste(ensemble.metric[i],':',round(x@evaluation[1,which(names(x@evaluation) == ensemble.metric[i])], digits = 3)))
-      if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
-    }
     output$Diversity <- renderPlot({
       if (!is.null(ranges$x)) {diversity = crop(x@diversity.map, c(ranges$x, ranges$y))} else {diversity = x@diversity.map}
       spplot(diversity,
-           main = eval,
+           main = paste('Mean species richness error:', round(x@evaluation['mean','species.richness.error'], 3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)))
@@ -176,25 +170,16 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
              col.regions = rev(terrain.colors(10000)))
       })
     # Evaluation
-    if(0 %in% dim(x@algorithm.evaluation)){
-      output$evaluation.barplot <- renderText('Algorithm evaluation unavailable.')
-      output$evaluation.table <- renderText('Algorithm evaluation unavailable.')
-    } else {
-      output$evaluation.barplot <- renderPlot({
-        evaluation = x@algorithm.evaluation
-        evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
-        metrics = '% kept.model'
-        metrics.nb = c(which(names(evaluation) == 'kept.model'))
-        for (i in seq_len(length(strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
-          metrics = c(metrics, strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i])
-          metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i]))
-        }
-        table <- t(evaluation[metrics.nb])
-        barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
-        legend('bottomright', metrics, fill = rainbow(length(metrics)))
-      })
-      output$evaluation.table <- renderTable({x@algorithm.evaluation[c(2,4:8)]})
-    }
+    output$evaluation.barplot <- renderPlot({
+      evaluation <- as.matrix(x@evaluation['mean',])
+      colnames(evaluation)[1:2] <- c('richness', 'success')
+      barplot(evaluation, col = rainbow(length(evaluation)), beside=TRUE)
+    })
+    output$evaluation.table <- renderTable({
+      evaluation <- x@evaluation
+      names(evaluation)[1:2] <- c('richness', 'success')
+      evaluation
+    })
 
     # Algorithms correlation
     if (length(x@algorithm.correlation) > 0) {

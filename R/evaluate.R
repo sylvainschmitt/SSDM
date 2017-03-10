@@ -5,7 +5,7 @@
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 NULL
 
-setGeneric('evaluate', function(obj, cv = 'holdout', cv.param = c(0.7, 2), thresh = 1001, metric = 'SES', Env, ...) {return(standardGeneric('evaluate'))})
+setGeneric('evaluate', function(obj, ...) {return(standardGeneric('evaluate'))})
 
 setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env, ...) {
   # Parameters

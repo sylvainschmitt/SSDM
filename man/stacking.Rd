@@ -27,12 +27,6 @@ richness map (see details below).}
 is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
-\item{richness}{df. If the method used to create the local species richness is
-among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
-trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
-parameter allow to input an observed richness data frame. Default is null
-implying a richness computed from occurence data.}
-
 \item{Env}{raster object. Stacked raster object of environmental variables
 (can be processed first by \code{\link{load_var}}). Needed only for stacking
 method using SESAM framework: probability ranking (\strong{PR}), trait range

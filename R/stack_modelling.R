@@ -69,11 +69,6 @@ NULL
 #'@param rep.B integer. If the method used to create the local species richness
 #'  is the random bernoulli (\strong{B}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
-#'@param richness df. If the method used to create the local species richness is
-#'  among maximum likelyhood (\strong{ML}), probability ranking (\strong{PR}),
-#'  trait range (\strong{TR}), or checkerboard (\strong{CB}) , richness
-#'  parameter allow to input an observed richness data frame. Default is null
-#'  implying a richness computed from occurence data.
 #'@param range integer. Set a value of range restriction (in pixels) around
 #'  presences occurrences on habitat suitability maps (all further points will
 #'  have a null probability, see Crisp et al (2011) in references). If NULL, no
@@ -399,7 +394,6 @@ stack_modelling = function(algorithms,
     if (!is.null(name)) {enms['name'] = name}
     enms['method'] = method
     enms['rep.B'] = rep.B
-    enms['richness'] = richness
     if(method %in% c('PR', 'TR', 'CB')){enms['Env'] <- Env}
     if (!is.null(range)) {enms['range'] = range}
     enms$endemism = endemism

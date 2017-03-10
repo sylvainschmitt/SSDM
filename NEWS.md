@@ -4,15 +4,19 @@ NEWS
 TO DO
 =====
 
--   add community evaluations
 -   possibility to add external richness data
 -   add evaluation for MEMs
 -   add ensemble method for MEMs
--   add community evaluations for SESAM stacking methods (*see Pottier et al*)
 -   implement trait range stacking method
 -   implement checkerboard stacking method
 -   add finer tests
 -   document all S4 class and methods
+
+SSDM 0.1.9037
+=============
+
+-   community evaluations for SSDM (*see Pottier et al*) in `evaluate.Stack.SDM`
+-   SSDM evaluation in doc, plot and gui
 
 SSDM 0.1.9036
 =============

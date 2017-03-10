@@ -705,15 +705,9 @@ server <- function(input, output, session) {
     ranges$y <- NULL
   })
   output$Diversity <- renderPlot({
-    eval = 'Mean'
-    ensemble.metric = strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]
-    for (i in seq_len(length(ensemble.metric))) {
-      eval = paste(eval, paste(ensemble.metric[i],':',round(data$Stack@evaluation[1,which(names(data$Stack@evaluation) == ensemble.metric[i])], digits = 3)))
-      if (i < length(ensemble.metric)) {eval = paste(eval, ',')}
-    }
     if (!is.null(ranges$x)) {diversity = crop(data$Stack@diversity.map, c(ranges$x, ranges$y))} else {diversity = data$Stack@diversity.map}
     spplot(diversity,
-           main = eval,
+           main = paste('Mean species richness error:', round(data$Stack@evaluation['mean','species.richness.error'], 3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)))
@@ -734,24 +728,14 @@ server <- function(input, output, session) {
   })
   # Evaluation
   output$evaluation.barplot <- renderPlot({
-    evaluation = data$Stack@algorithm.evaluation
-    if(!(0 %in% dim(evaluation))){
-      evaluation$kept.model = evaluation$kept.model / as.numeric(data$Stack@parameters$rep)
-      metrics = '% kept.model'
-      metrics.nb = c(which(names(evaluation) == 'kept.model'))
-      for (i in seq_len(length(strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
-        metrics = c(metrics, strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i])
-        metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(data$Stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i]))
-      }
-      table <- t(evaluation[metrics.nb])
-      barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
-      legend('bottomright', metrics, fill = rainbow(length(metrics)))
-    }
+    evaluation <- as.matrix(data$Stack@evaluation['mean',])
+    colnames(evaluation)[1:2] <- c('richness', 'success')
+    barplot(evaluation, col = rainbow(length(evaluation)), beside=TRUE)
   })
   output$evaluation.table <- renderTable({
-    if(!(0 %in% dim(data$Stack@algorithm.evaluation))){
-      data$Stack@algorithm.evaluation[c(2,4:8)]
-    }
+    evaluation <- data$Stack@evaluation
+    names(evaluation)[1:2] <- c('richness', 'success')
+    evaluation
   })
   # Algorithms correlation
   output$algo.corr.table <- renderTable({data$Stack@algorithm.correlation})
