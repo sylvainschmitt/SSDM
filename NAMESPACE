@@ -2,6 +2,7 @@
 
 export(ensemble)
 export(ensemble_modelling)
+export(evaluate)
 export(gui)
 export(load_enm)
 export(load_occ)

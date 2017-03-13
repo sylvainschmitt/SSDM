@@ -11,6 +11,10 @@ output: github_document
 - add finer tests
 - document all S4 class and methods
 
+# SSDM 0.1.9038
+- Travis-CI 0.1.9037 fixed
+- Pre formatR test
+
 # SSDM 0.1.9037
 - community evaluations for SSDM (*see Pottier et al*) in `evaluate.Stack.SDM`
 - SSDM evaluation in doc, plot and gui

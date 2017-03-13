@@ -111,7 +111,7 @@ NULL
 #'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, richness = NULL, Env = NULL, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'P', rep.B = 1000, Env = NULL, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
@@ -120,7 +120,7 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
                                                verbose = TRUE, GUI = FALSE) {
 
   # Check arguments
-  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, richness = richness, range = range, endemism= endemism,
+  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range, endemism= endemism,
              verbose = verbose, GUI = GUI)
 
   enms = list(enm, ...)

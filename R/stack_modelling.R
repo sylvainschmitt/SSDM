@@ -290,7 +290,7 @@ stack_modelling = function(algorithms,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
-                           method = 'P', metric = 'SES', rep.B = 1000, richness = NULL,
+                           method = 'P', metric = 'SES', rep.B = 1000,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
@@ -302,7 +302,7 @@ stack_modelling = function(algorithms,
              save = save, path = path,  PA = PA,  cv = cv, cv.param = cv.param,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, weight = weight,
-             method = method, metric = metric, rep.B = rep.B, richness = richness, range = range,
+             method = method, metric = metric, rep.B = rep.B, range = range,
              endemism = endemism, verbose = verbose, GUI = GUI, cores = cores)
 
   # Test if algorithm is available
