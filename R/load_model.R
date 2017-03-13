@@ -25,58 +25,62 @@ NULL
 
 #' @rdname load.model
 #' @export
-load_enm = function (name, path = getwd()) {
-  path = paste0(path, '/', name)
-  a = try(read.csv(paste0(path,'/Tables/AlgoCorr.csv'), row.names = 1))
-  if (inherits(a, 'try-error')) {
-    cat('Algorithm correlation table empty ! \n')
-    a = data.frame()
+load_enm <- function(name, path = getwd()) {
+  path <- paste0(path, "/", name)
+  a <- try(read.csv(paste0(path, "/Tables/AlgoCorr.csv"), row.names = 1))
+  if (inherits(a, "try-error")) {
+    cat("Algorithm correlation table empty ! \n")
+    a <- data.frame()
   }
-  b = try(raster(paste0(path,'/Rasters/Probability.tif')))
-  if (inherits(b, 'try-error')) {
-    projection = raster(paste0(path,'/Rasters/Probability.tif'))
-    evaluation = read.csv(paste0(path,'/Tables/ENMeval.csv'), row.names = 1)
-    b = reclassify(projection, c(-Inf,evaluation$threshold,0, evaluation$threshold,Inf,1))
+  b <- try(raster(paste0(path, "/Rasters/Probability.tif")))
+  if (inherits(b, "try-error")) {
+    projection <- raster(paste0(path, "/Rasters/Probability.tif"))
+    evaluation <- read.csv(paste0(path, "/Tables/ENMeval.csv"), row.names = 1)
+    b <- reclassify(projection, c(-Inf, evaluation$threshold, 0, evaluation$threshold,
+                                  Inf, 1))
   }
-  enm = Ensemble.SDM(name = as.character(read.csv(paste0(path,'/Tables/Name.csv'))[1,2]),
-                     projection = raster(paste0(path,'/Rasters/Probability.tif')),
-                     # Add binary if file open it if not create it for compatibility
-                     uncertainty = try(raster(paste0(path,'/Rasters/uncertainty.tif'))),
-                     evaluation = read.csv(paste0(path,'/Tables/ENMeval.csv'), row.names = 1),
-                     algorithm.evaluation  = read.csv(paste0(path,'/Tables/AlgoEval.csv'), row.names = 1),
-                     algorithm.correlation = a,
-                     data = read.csv(paste0(path,'/Tables/Data.csv'), row.names = 1),
-                     variable.importance = read.csv(paste0(path,'/Tables/VarImp.csv'), row.names = 1),
-                     parameters = read.csv(paste0(path,'/Tables/Parameters.csv'), row.names = 1, colClasses = "character"))
+  enm <- Ensemble.SDM(name = as.character(read.csv(paste0(path, "/Tables/Name.csv"))[1,
+                                                                                     2]), projection = raster(paste0(path, "/Rasters/Probability.tif")),
+                      uncertainty = try(raster(paste0(path, "/Rasters/uncertainty.tif"))),
+                      evaluation = read.csv(paste0(path, "/Tables/ENMeval.csv"), row.names = 1),
+                      algorithm.evaluation = read.csv(paste0(path, "/Tables/AlgoEval.csv"),
+                                                      row.names = 1), algorithm.correlation = a, data = read.csv(paste0(path,
+                                                                                                                        "/Tables/Data.csv"), row.names = 1), variable.importance = read.csv(paste0(path,
+                                                                                                                                                                                                   "/Tables/VarImp.csv"), row.names = 1), parameters = read.csv(paste0(path,
+                                                                                                                                                                                                                                                                       "/Tables/Parameters.csv"), row.names = 1, colClasses = "character"))
   return(enm)
 }
 
 #' @rdname load.model
 #' @export
-load_stack = function (name = 'Stack', path = getwd(), GUI = FALSE) {
-  path = paste0(path, '/', name)
-  a = try(read.csv(paste0(path,'/Stack/Tables/AlgoCorr.csv'), row.names = 1))
-  if (inherits(a, 'try-error')) {
-    cat('Algorithm correlation table empty ! \n')
-    a = data.frame()
+load_stack <- function(name = "Stack", path = getwd(), GUI = FALSE) {
+  path <- paste0(path, "/", name)
+  a <- try(read.csv(paste0(path, "/Stack/Tables/AlgoCorr.csv"), row.names = 1))
+  if (inherits(a, "try-error")) {
+    cat("Algorithm correlation table empty ! \n")
+    a <- data.frame()
   }
-  stack = Stacked.SDM(name = as.character(read.csv(paste0(path,'/Stack/Tables/Name.csv'))[1,2]),
-                      diversity.map = raster(paste0(path,'/Stack/Rasters/Diversity.tif')),
-                      endemism.map = raster(paste0(path,'/Stack/Rasters/Endemism.tif')),
-                      uncertainty = raster(paste0(path,'/Stack/Rasters/uncertainty.tif')),
-                      evaluation = read.csv(paste0(path,'/Stack/Tables/StackEval.csv'), row.names = 1),
-                      variable.importance = read.csv(paste0(path,'/Stack/Tables/VarImp.csv'), row.names = 1),
-                      algorithm.correlation = a,
-                      algorithm.evaluation = read.csv(paste0(path,'/Stack/Tables/AlgoEval.csv'), row.names = 1),
-                      enms = list(),
-                      parameters = read.csv(paste0(path,'/Stack/Tables/Parameters.csv'), row.names = 1, colClasses = "character"))
-  enms = list.dirs(paste0(path, '/Species'), recursive = FALSE, full.names = FALSE)
-  if(GUI) {incProgress(1/(length(enms)+1), detail = 'stack main results')}
+  stack <- Stacked.SDM(name = as.character(read.csv(paste0(path, "/Stack/Tables/Name.csv"))[1,
+                                                                                            2]), diversity.map = raster(paste0(path, "/Stack/Rasters/Diversity.tif")),
+                       endemism.map = raster(paste0(path, "/Stack/Rasters/Endemism.tif")),
+                       uncertainty = raster(paste0(path, "/Stack/Rasters/uncertainty.tif")),
+                       evaluation = read.csv(paste0(path, "/Stack/Tables/StackEval.csv"),
+                                             row.names = 1), variable.importance = read.csv(paste0(path,
+                                                                                                   "/Stack/Tables/VarImp.csv"), row.names = 1), algorithm.correlation = a,
+                       algorithm.evaluation = read.csv(paste0(path, "/Stack/Tables/AlgoEval.csv"),
+                                                       row.names = 1), enms = list(), parameters = read.csv(paste0(path,
+                                                                                                                   "/Stack/Tables/Parameters.csv"), row.names = 1, colClasses = "character"))
+  enms <- list.dirs(paste0(path, "/Species"), recursive = FALSE, full.names = FALSE)
+  if (GUI) {
+    incProgress(1/(length(enms) + 1), detail = "stack main results")
+  }
   for (i in seq_len(length(enms))) {
     cat(enms[i])
-    enm = load_enm(enms[i], path = paste0(path, '/Species'))
-    stack@enms[[enm@name]] = enm
-    if(GUI) {incProgress(1/(length(enms)+1), detail = enm@name)}
+    enm <- load_enm(enms[i], path = paste0(path, "/Species"))
+    stack@enms[[enm@name]] <- enm
+    if (GUI) {
+      incProgress(1/(length(enms) + 1), detail = enm@name)
     }
+  }
   return(stack)
 }

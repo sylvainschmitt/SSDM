@@ -38,7 +38,7 @@ Algorithm.SDM <- function(algorithm = 'Algorithm',
                           variable.importance = data.frame(),
                           data = data.frame(),
                           parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
-  object.class = paste0(algorithm,'.SDM')
+  object.class <- paste0(algorithm,'.SDM')
   return(new(object.class,
              name = name,
              binary = binary,

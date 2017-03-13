@@ -275,7 +275,7 @@ NULL
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 #'
 #'@export
-stack_modelling = function(algorithms,
+stack_modelling <- function(algorithms,
                            # Modelling data input
                            Occurrences, Env,
                            # Occurrences reading
@@ -298,119 +298,178 @@ stack_modelling = function(algorithms,
                            # Modelling parameters
                            ...) {
   # Check arguments
-  .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spcol = Spcol, rep = rep, name = name,
-             save = save, path = path,  PA = PA,  cv = cv, cv.param = cv.param,
-             thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-             ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh, weight = weight,
-             method = method, metric = metric, rep.B = rep.B, range = range,
+  .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spcol = Spcol, rep = rep,
+             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param,
+             thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty,
+             tmp = tmp, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+             weight = weight, method = method, metric = metric, rep.B = rep.B, range = range,
              endemism = endemism, verbose = verbose, GUI = GUI, cores = cores)
 
   # Test if algorithm is available
-  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
-  if ('all' %in% algorithms) {algorithms = available.algo}
+  available.algo <- c("GLM", "GAM", "MARS", "GBM", "CTA", "RF", "MAXENT",
+                      "ANN", "SVM")
+  if ("all" %in% algorithms) {
+    algorithms <- available.algo
+  }
   for (i in seq_len(length(algorithms))) {
-    if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
-  if (tmp) {
-    tmppath = get("tmpdir",envir=.PkgEnv)
-    if (!("/.enms" %in% list.dirs(tmppath))) (dir.create(paste0(tmppath,'/.enms')))
+    if (!(algorithms[[i]] %in% available.algo)) {
+      stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
     }
+  }
+  if (tmp) {
+    tmppath <- get("tmpdir", envir = .PkgEnv)
+    if (!("/.enms" %in% list.dirs(tmppath)))
+      (dir.create(paste0(tmppath, "/.enms")))
+  }
 
   # Ensemble models creation
-  if(verbose){cat('#### Ensemble models creation ##### \n\n')}
-  species = levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)]))
+  if (verbose) {
+    cat("#### Ensemble models creation ##### \n\n")
+  }
+  species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
 
-  if(cores > 0 && requireNamespace("parallel", quietly = TRUE)){
-    if(verbose){cat('Opening clusters,', cores, 'cores \n')}
-    if((parallel::detectCores()-1) < cores){warning('It seems you attributed more cores than your CPU have !')}
-    cl = parallel::makeCluster(cores, outfile = "")
-    if(verbose){cat('Exporting environment to clusters \n')}
-    parallel::clusterExport(cl, varlist=c(lsf.str(envir = globalenv()), ls(envir = environment())), envir = environment())
-    enms = parallel::parLapply(cl, species,
-                               function(species){
-                                 enm.name = species
-                                 Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
-                                 if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
-                                 enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                                              Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
-                                                              PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                                              axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                                              ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                              weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1, ...))
-                                 if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
-                                                      detail = paste(species,' ensemble SDM built'))}
-                                 if (inherits(enm, "try-error")) {
-                                   if(verbose){cat(enm)}
-                                   enm = NULL
-                                 } else {
-                                   if (tmp && !is.null(enm)) {
-                                     enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = TRUE)
-                                     enm@binary = writeRaster(enm@binary[[1]], paste0(tmppath, '/.enms/bin',enm.name), overwrite = TRUE)
-                                     enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = TRUE)
-                                   }
-                                   if(verbose){cat('\n\n')}
-                                 }
-                                 return(enm)
-                               }
-    )
-    if(verbose){cat('Closing clusters \n')}
+  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    if (verbose) {
+      cat("Opening clusters,", cores, "cores \n")
+    }
+    if ((parallel::detectCores() - 1) < cores) {
+      warning("It seems you attributed more cores than your CPU have !")
+    }
+    cl <- parallel::makeCluster(cores, outfile = "")
+    if (verbose) {
+      cat("Exporting environment to clusters \n")
+    }
+    parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
+                                            ls(envir = environment())), envir = environment())
+    enms <- parallel::parLapply(cl, species, function(species) {
+      enm.name <- species
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
+                                                               Spcol)] == species)
+      if (verbose) {
+        cat("Ensemble modelling :", enm.name, "\n\n")
+      }
+      enm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+                                    Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
+                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                    ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                    weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1,
+                                    ...))
+      if (GUI) {
+        incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
+                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+      }
+      if (inherits(enm, "try-error")) {
+        if (verbose) {
+          cat(enm)
+        }
+        enm <- NULL
+      } else {
+        if (tmp && !is.null(enm)) {
+          enm@projection <- writeRaster(enm@projection[[1]], paste0(tmppath,
+                                                                    "/.enms/proba", enm.name), overwrite = TRUE)
+          enm@binary <- writeRaster(enm@binary[[1]], paste0(tmppath,
+                                                            "/.enms/bin", enm.name), overwrite = TRUE)
+          enm@uncertainty <- writeRaster(enm@uncertainty, paste0(tmppath,
+                                                                 "/.enms/uncert", enm.name), overwrite = TRUE)
+        }
+        if (verbose) {
+          cat("\n\n")
+        }
+      }
+      return(enm)
+    })
+    if (verbose) {
+      cat("Closing clusters \n")
+    }
     parallel::stopCluster(cl)
 
   } else {
-    enms = lapply(species,
-                  function(species){
-                    enm.name = species
-                    Spoccurrences = subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species)
-                    if(verbose){cat('Ensemble modelling :', enm.name, '\n\n')}
-                    enm = try(ensemble_modelling(algorithms, Spoccurrences, Env,
-                                                 Xcol, Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
-                                                 PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                                 axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                                 ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                                 weight = weight, verbose = verbose, GUI = FALSE, ...))
-                    if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))+1),
-                                         detail = paste(species,' ensemble SDM built'))}
-                    if (inherits(enm, "try-error")) {
-                      if(verbose){cat(enm)}
-                      enm = NULL
-                    } else {
-                      if (tmp && !is.null(enm)) {
-                        enm@projection = writeRaster(enm@projection[[1]], paste0(tmppath, '/.enms/proba',enm.name), overwrite = TRUE)
-                        enm@uncertainty = writeRaster(enm@uncertainty, paste0(tmppath, '/.enms/uncert',enm.name), overwrite = TRUE)
-                      }
-                      if(verbose){cat('\n\n')}
-                    }
-                    return(enm)
-                  }
-    )
+    enms <- lapply(species, function(species) {
+      enm.name <- species
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
+                                                               Spcol)] == species)
+      if (verbose) {
+        cat("Ensemble modelling :", enm.name, "\n\n")
+      }
+      enm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+                                    Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
+                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                    ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                    weight = weight, verbose = verbose, GUI = FALSE, ...))
+      if (GUI) {
+        incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
+                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+      }
+      if (inherits(enm, "try-error")) {
+        if (verbose) {
+          cat(enm)
+        }
+        enm <- NULL
+      } else {
+        if (tmp && !is.null(enm)) {
+          enm@projection <- writeRaster(enm@projection[[1]], paste0(tmppath,
+                                                                    "/.enms/proba", enm.name), overwrite = TRUE)
+          enm@uncertainty <- writeRaster(enm@uncertainty, paste0(tmppath,
+                                                                 "/.enms/uncert", enm.name), overwrite = TRUE)
+        }
+        if (verbose) {
+          cat("\n\n")
+        }
+      }
+      return(enm)
+    })
   }
 
-  enms = enms[!sapply(enms,is.null)]
+  enms <- enms[!sapply(enms, is.null)]
 
   # Species stacking
   if (length(enms) < 2) {
-    if(verbose){stop('You have less than two remaining specie ensemble models, maybe you should try an easier thresholding ?')} else {return(NULL)}
+    if (verbose) {
+      stop("You have less than two remaining specie ensemble models, maybe you should try an easier thresholding ?")
+    } else {
+      return(NULL)
+    }
   } else {
-    if(verbose){cat('#### Species stacking with ensemble models ##### \n\n')}
-    if (!is.null(name)) {enms['name'] = name}
-    enms['method'] = method
-    enms['rep.B'] = rep.B
-    if(method %in% c('PR', 'TR', 'CB')){enms['Env'] <- Env}
-    if (!is.null(range)) {enms['range'] = range}
-    enms$endemism = endemism
-    enms['verbose'] = verbose
-    stack = do.call(stacking, enms)
+    if (verbose) {
+      cat("#### Species stacking with ensemble models ##### \n\n")
+    }
+    if (!is.null(name)) {
+      enms["name"] <- name
+    }
+    enms["method"] <- method
+    enms["rep.B"] <- rep.B
+    if (method %in% c("PR", "TR", "CB")) {
+      enms["Env"] <- Env
+    }
+    if (!is.null(range)) {
+      enms["range"] <- range
+    }
+    enms$endemism <- endemism
+    enms["verbose"] <- verbose
+    stack <- do.call(stacking, enms)
   }
 
-  if(!is.null(stack)) {
+  if (!is.null(stack)) {
     # Paremeters
-    stack@parameters$sp.nb.origin = length(levels(as.factor(Occurrences[,which(names(Occurrences) == Spcol)])))
-    if(GUI) {incProgress(1/(length(levels(as.factor(Occurrences[,which(names(Occurrences)==Spcol)])))+1), detail = 'SSDM built')}
+    stack@parameters$sp.nb.origin <- length(levels(as.factor(Occurrences[,
+                                                                         which(names(Occurrences) == Spcol)])))
+    if (GUI) {
+      incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
+                                                                   Spcol)]))) + 1), detail = "SSDM built")
+    }
 
     # Saving
-    if(save) {
-      if(verbose){cat('#### Saving ##### \n\n')}
-      if (!is.null(name)) {save.stack(stack, name = name, path = path)}
-      else {save.stack(stack, path = path)}
+    if (save) {
+      if (verbose) {
+        cat("#### Saving ##### \n\n")
+      }
+      if (!is.null(name)) {
+        save.stack(stack, name = name, path = path)
+      } else {
+        save.stack(stack, path = path)
+      }
     }
   }
   return(stack)

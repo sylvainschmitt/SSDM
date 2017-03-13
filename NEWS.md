@@ -12,6 +12,17 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.1.9039
+=============
+
+-   stylistic rules correction with formatR and goodpractice
+
+SSDM 0.1.9038
+=============
+
+-   Travis-CI 0.1.9037 fixed
+-   Pre formatR test
+
 SSDM 0.1.9037
 =============
 

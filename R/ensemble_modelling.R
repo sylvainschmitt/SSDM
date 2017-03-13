@@ -276,7 +276,7 @@ NULL
 #'
 #'
 #'@export
-ensemble_modelling = function(algorithms,
+ensemble_modelling <- function(algorithms,
                               # Modelling data input
                               Occurrences, Env,
                               # Occurrences reading
@@ -302,77 +302,120 @@ ensemble_modelling = function(algorithms,
              weight = weight, verbose = verbose, GUI = GUI)
 
   # Test if algorithm is available
-  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
-  if ('all' %in% algorithms) {algorithms = available.algo}
+  available.algo <- c("GLM", "GAM", "MARS", "GBM", "CTA", "RF", "MAXENT",
+                      "ANN", "SVM")
+  if ("all" %in% algorithms) {
+    algorithms <- available.algo
+  }
   for (i in seq_len(length(algorithms))) {
-    if(!(algorithms[[i]] %in% available.algo)) {stop(algorithms[[i]],' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}}
+    if (!(algorithms[[i]] %in% available.algo)) {
+      stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
+    }
+  }
   if (tmp) {
-    tmppath = get("tmpdir",envir=.PkgEnv)
-    if (!("/.models" %in% list.dirs(path))) (dir.create(paste0(tmppath,'/.models')))
+    tmppath <- get("tmpdir", envir = .PkgEnv)
+    if (!("/.models" %in% list.dirs(path)))
+      (dir.create(paste0(tmppath, "/.models")))
   }
 
   # Algorithms models creation
-  if(is.null(name)){
-    spname = 'species'
+  if (is.null(name)) {
+    spname <- "species"
   } else {
-    spname = name
+    spname <- name
   }
-  if(verbose){cat(sprintf('#### Algorithms models creation for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
-  models = list()
+  if (verbose) {
+    cat(sprintf("#### Algorithms models creation for %s ##### %s \n\n",
+                spname, format(Sys.time(), "%Y-%m-%d %T")))
+  }
+  models <- list()
   for (i in seq_len(length(algorithms))) {
     for (j in 1:rep) {
-      model.name = paste0(algorithms[i],'.',j)
-      if(verbose){cat('Modelling :', model.name, '\n\n')}
-      model = try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol, Ycol = Ycol, Pcol = Pcol,
-                            name = NULL, PA = PA, cv = cv, cv.param = cv.param, thresh = thresh,
-                            metric = metric, axes.metric =axes.metric, select = FALSE,
-                            select.metric = ensemble.metric, select.thresh = ensemble.thresh,
-                            verbose = verbose, GUI = GUI, ...))
-      if(GUI) {incProgress(1/(length(algorithms)+1),
-                           detail = paste(algorithms[i],'SDM built'))}
-      if (inherits(model, "try-error")) {if(verbose){cat(model)}} else {
-        if (tmp) {
-          model@projection = writeRaster(model@projection, paste0(tmppath,'/.models/proba',j,model.name), overwrite = TRUE)
-          model@binary = writeRaster(model@binary, paste0(tmppath,'/.models/bin',j,model.name), overwrite = TRUE)
-        }
-        suppressWarnings({models[model.name] = model})
+      model.name <- paste0(algorithms[i], ".", j)
+      if (verbose) {
+        cat("Modelling :", model.name, "\n\n")
       }
-      if(verbose){cat(sprintf('%s done for %s %s \n\n', model.name, spname, format(Sys.time(), '%Y-%m-%d %T')))}
+      model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
+                             Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param,
+                             thresh = thresh, metric = metric, axes.metric = axes.metric,
+                             select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
+                             verbose = verbose, GUI = GUI, ...))
+      if (GUI) {
+        incProgress(1/(length(algorithms) + 1), detail = paste(algorithms[i],
+                                                               "SDM built"))
+      }
+      if (inherits(model, "try-error")) {
+        if (verbose) {
+          cat(model)
+        }
+      } else {
+        if (tmp) {
+          model@projection <- writeRaster(model@projection, paste0(tmppath,
+                                                                   "/.models/proba", j, model.name), overwrite = TRUE)
+          model@binary <- writeRaster(model@binary, paste0(tmppath,
+                                                           "/.models/bin", j, model.name), overwrite = TRUE)
+        }
+        suppressWarnings({
+          models[model.name] <- model
+        })
+      }
+      if (verbose) {
+        cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(),
+                                                                         "%Y-%m-%d %T")))
+      }
     }
   }
 
   # Ensemble modelling
-  if(verbose){cat(sprintf('#### Ensemble modelling with algorithms models for %s ##### %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
-  algo = list()
-  for (i in seq_len(length(models))) {algo[[i]] = models[[i]]}
-  if (!is.null(name)) {algo['name'] = name}
-  algo['thresh'] = thresh
-  algo['uncertainty'] = uncertainty
-  algo[['ensemble.metric']] = ensemble.metric
-  algo[['ensemble.thresh']] = ensemble.thresh
-  algo['weight'] = weight
-  algo['verbose'] = verbose
-  enm = do.call(ensemble, algo)
-  if(verbose){cat(sprintf('Ensemble modelling done for %s %s \n\n', spname, format(Sys.time(), '%Y-%m-%d %T')))}
-  if(GUI) {incProgress(1/(length(algorithms)+1), detail = 'Ensemble SDM built')}
+  if (verbose) {
+    cat(sprintf("#### Ensemble modelling with algorithms models for %s ##### %s \n\n",
+                spname, format(Sys.time(), "%Y-%m-%d %T")))
+  }
+  algo <- list()
+  for (i in seq_len(length(models))) {
+    algo[[i]] <- models[[i]]
+  }
+  if (!is.null(name)) {
+    algo["name"] <- name
+  }
+  algo["thresh"] <- thresh
+  algo["uncertainty"] <- uncertainty
+  algo[["ensemble.metric"]] <- ensemble.metric
+  algo[["ensemble.thresh"]] <- ensemble.thresh
+  algo["weight"] <- weight
+  algo["verbose"] <- verbose
+  enm <- do.call(ensemble, algo)
+  if (verbose) {
+    cat(sprintf("Ensemble modelling done for %s %s \n\n", spname, format(Sys.time(),
+                                                                         "%Y-%m-%d %T")))
+  }
+  if (GUI) {
+    incProgress(1/(length(algorithms) + 1), detail = "Ensemble SDM built")
+  }
 
-  if(!is.null(enm)) {
+  if (!is.null(enm)) {
     # Parameters
-    text.algorithms = character()
-    for (i in seq_len(length(algorithms))) {text.algorithms = paste0(text.algorithms,'.',algorithms[i])}
-    enm@parameters$algorithms = text.algorithms
-    enm@parameters$rep = rep
+    text.algorithms <- character()
+    for (i in seq_len(length(algorithms))) {
+      text.algorithms <- paste0(text.algorithms, ".", algorithms[i])
+    }
+    enm@parameters$algorithms <- text.algorithms
+    enm@parameters$rep <- rep
 
     # Saving
-    if(save) {
-      if(verbose){cat('#### Saving ##### \n\n')}
+    if (save) {
+      if (verbose) {
+        cat("#### Saving ##### \n\n")
+      }
       save.enm(enm, path = path)
     }
   }
 
   # Removing tmp
-  if (tmp) {unlink('./.models', recursive = TRUE, force = TRUE)}
-  rm(list = ls()[-which(ls() == 'enm')])
+  if (tmp) {
+    unlink("./.models", recursive = TRUE, force = TRUE)
+  }
+  rm(list = ls()[-which(ls() == "enm")])
   gc()
   return(enm)
 }

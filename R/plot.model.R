@@ -439,57 +439,58 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
 #' @rdname plot.model
 #' @export
 setMethod('plot', 'SDM', function(x, y, ...) {
-  if (inherits(x, 'Algorithm.SDM')) {full = FALSE} else {full = TRUE}
-  ui <- dashboardPage(
-    dashboardHeader(title = x@name, titleWidth = 450),
-    dashboardSidebar(disable = TRUE),
-    dashboardBody(
-      fluidRow(
-        tabBox(title = 'Maps',
-               tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                         plotOutput('probability', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
-                         title = 'Habitat suitability'),
-               if(full) {tabPanel(plotOutput('niche'), title = 'Binary map')},
-               if(full) {tabPanel(plotOutput('uncertainty'), title = 'uncertainty')},
-               tabPanel(tableOutput('summary'), title = 'Summary')
-        ),
-        tabBox(title = 'Variables importance',
-               tabPanel(plotOutput('varimp.barplot'),
-                        textOutput('varimp.info'),
-                        title = 'Barplot'),
-               tabPanel(tableOutput('varimp.table'), title = 'Table'),
-               tabPanel(tableOutput('varimplegend'), title = 'Legend')
-        )
-      ),
-      if(full) {
-        fluidRow(
-          tabBox(title = 'Model evaluation',
-                 tabPanel(plotOutput('evaluation.barplot'),
-                          textOutput('evaluation.info'),
-                          title = 'Barplot'),
-                 tabPanel(tableOutput('evaluation.table'), title = 'Table')
-          ),
-          if (length(x@algorithm.correlation) > 0) {
-            tabBox(title = 'Algorithms correlation',
-                   tabPanel(plotOutput('algo.corr.heatmap'), title = 'Heatmap'),
-                   tabPanel(tableOutput('algo.corr.table'), title = 'Table')
-            )}
-        )}
-    )
-  )
+  if (inherits(x, "Algorithm.SDM")) {
+    full <- FALSE
+  } else {
+    full <- TRUE
+  }
+  ui <- dashboardPage(dashboardHeader(title = x@name, titleWidth = 450),
+                      dashboardSidebar(disable = TRUE), dashboardBody(fluidRow(tabBox(title = "Maps",
+                                                                                      tabPanel(actionButton("unzoom", "unzoom", icon = icon("search-minus"),
+                                                                                                            width = NULL, ...), plotOutput("probability", dblclick = "plot1_dblclick",
+                                                                                                                                           brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
+                                                                                               title = "Habitat suitability"), if (full) {
+                                                                                                 tabPanel(plotOutput("niche"), title = "Binary map")
+                                                                                               }, if (full) {
+                                                                                                 tabPanel(plotOutput("uncertainty"), title = "uncertainty")
+                                                                                               }, tabPanel(tableOutput("summary"), title = "Summary")), tabBox(title = "Variables importance",
+                                                                                                                                                               tabPanel(plotOutput("varimp.barplot"), textOutput("varimp.info"),
+                                                                                                                                                                        title = "Barplot"), tabPanel(tableOutput("varimp.table"), title = "Table"),
+                                                                                                                                                               tabPanel(tableOutput("varimplegend"), title = "Legend"))), if (full) {
+                                                                                                                                                                 fluidRow(tabBox(title = "Model evaluation", tabPanel(plotOutput("evaluation.barplot"),
+                                                                                                                                                                                                                      textOutput("evaluation.info"), title = "Barplot"), tabPanel(tableOutput("evaluation.table"),
+                                                                                                                                                                                                                                                                                  title = "Table")), if (length(x@algorithm.correlation) > 0) {
+                                                                                                                                                                                                                                                                                    tabBox(title = "Algorithms correlation", tabPanel(plotOutput("algo.corr.heatmap"),
+                                                                                                                                                                                                                                                                                                                                      title = "Heatmap"), tabPanel(tableOutput("algo.corr.table"),
+                                                                                                                                                                                                                                                                                                                                                                   title = "Table"))
+                                                                                                                                                                                                                                                                                  })
+                                                                                                                                                               }))
 
 
   server <- function(input, output) {
     set.seed(122)
 
-    if(full) {
-      for (i in seq_len(length(row.names(x@algorithm.evaluation)))) {row.names(x@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.SDM', fixed = TRUE)[[1]][1]}
-      for (i in seq_len(length(row.names(x@algorithm.evaluation)))) {row.names(x@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@algorithm.evaluation)[i]), '.', fixed = TRUE), n = 1)}
+    if (full) {
+      for (i in seq_len(length(row.names(x@algorithm.evaluation)))) {
+        row.names(x@algorithm.evaluation)[i] <- strsplit(as.character(row.names(x@algorithm.evaluation)[i]),
+                                                         ".SDM", fixed = TRUE)[[1]][1]
+      }
+      for (i in seq_len(length(row.names(x@algorithm.evaluation)))) {
+        row.names(x@algorithm.evaluation)[i] <- tail(strsplit(as.character(row.names(x@algorithm.evaluation)[i]),
+                                                              ".", fixed = TRUE), n = 1)
+      }
       if (length(x@algorithm.correlation) > 0) {
-        for (i in seq_len(length(row.names(x@algorithm.correlation)))) {row.names(x@algorithm.correlation)[i] = strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.SDM', fixed = TRUE)[[1]][1]}
-        for (i in seq_len(length(row.names(x@algorithm.correlation)))) {row.names(x@algorithm.correlation)[i] = tail(strsplit(as.character(row.names(x@algorithm.correlation)[i]), '.', fixed = TRUE), n = 1)}
-        x@algorithm.correlation[upper.tri(x@algorithm.correlation, diag = TRUE)] = NA
-        names(x@algorithm.correlation) = row.names(x@algorithm.correlation)
+        for (i in seq_len(length(row.names(x@algorithm.correlation)))) {
+          row.names(x@algorithm.correlation)[i] <- strsplit(as.character(row.names(x@algorithm.correlation)[i]),
+                                                            ".SDM", fixed = TRUE)[[1]][1]
+        }
+        for (i in seq_len(length(row.names(x@algorithm.correlation)))) {
+          row.names(x@algorithm.correlation)[i] <- tail(strsplit(as.character(row.names(x@algorithm.correlation)[i]),
+                                                                 ".", fixed = TRUE), n = 1)
+        }
+        x@algorithm.correlation[upper.tri(x@algorithm.correlation,
+                                          diag = TRUE)] <- NA
+        names(x@algorithm.correlation) <- row.names(x@algorithm.correlation)
       }
     }
     # Maps
@@ -499,9 +500,15 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     observeEvent(input$plot1_dblclick, {
       brush <- input$plot1_brush
       if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(x@projection, c(ranges$x, ranges$y))} else {ref = x@projection}
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
+        if (!is.null(ranges$x)) {
+          ref <- crop(x@projection, c(ranges$x, ranges$y))
+        } else {
+          ref <- x@projection
+        }
+        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) +
+          extent(ref)[1]
+        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) +
+          extent(ref)[3]
       } else {
         ranges$x <- NULL
         ranges$y <- NULL
@@ -512,58 +519,72 @@ setMethod('plot', 'SDM', function(x, y, ...) {
       ranges$y <- NULL
     })
     output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba.map = crop(x@projection, c(ranges$x, ranges$y))} else {proba.map = x@projection}
-      spplot(proba.map,
-           main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)),
-           sp.layout=list(SpatialPoints(data.frame(X = x@data$X[which(x@data$Presence == 1)], Y = x@data$Y[which(x@data$Presence == 1)])),
-                          pch = 16, cex = 0.7, col = 'black'))
+      if (!is.null(ranges$x)) {
+        proba.map <- crop(x@projection, c(ranges$x, ranges$y))
+      } else {
+        proba.map <- x@projection
+      }
+      spplot(proba.map, main = paste("AUC :", round(x@evaluation$AUC,
+                                                    3), "  Kappa", round(x@evaluation$Kappa, 3)), xlab = "Longitude (\u02DA)",
+             ylab = "Latitude (\u02DA)", col.regions = rev(terrain.colors(10000)),
+             sp.layout = list(SpatialPoints(data.frame(X = x@data$X[which(x@data$Presence ==
+                                                                            1)], Y = x@data$Y[which(x@data$Presence == 1)])), pch = 16,
+                              cex = 0.7, col = "black"))
     })
     output$niche <- renderPlot({
       if (!is.null(ranges$x)) {
-        niche.map = x@binary
-      } else {niche.map = reclassify(x@projection, c(-Inf,x@evaluation$threshold,0, x@evaluation$threshold,Inf,1))}
-      spplot(niche.map,
-           main = paste('AUC :',round(x@evaluation$AUC,3),'  Kappa',round(x@evaluation$Kappa,3)),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)))
+        niche.map <- x@binary
+      } else {
+        niche.map <- reclassify(x@projection, c(-Inf, x@evaluation$threshold,
+                                                0, x@evaluation$threshold, Inf, 1))
+      }
+      spplot(niche.map, main = paste("AUC :", round(x@evaluation$AUC,
+                                                    3), "  Kappa", round(x@evaluation$Kappa, 3)), xlab = "Longitude (\u02DA)",
+             ylab = "Latitude (\u02DA)", col.regions = rev(terrain.colors(10000)))
     })
-    if(full) {
+    if (full) {
       output$uncertainty <- renderPlot({
-        if (!is.null(ranges$x)) {uncert.map = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@uncertainty}
-        spplot(uncert.map,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
-        })
-      output$evaluation.barplot <- renderPlot({
-        evaluation = x@algorithm.evaluation
-        if(!is.null(x@parameters$rep)) {
-          evaluation$kept.model = evaluation$kept.model / as.numeric(x@parameters$rep)
+        if (!is.null(ranges$x)) {
+          uncert.map <- crop(x@uncertainty, c(ranges$x, ranges$y))
         } else {
-          evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
+          uncert.map <- x@uncertainty
         }
-        metrics = '% kept.model'
-        metrics.nb = c(which(names(evaluation) == 'kept.model'))
-        for (i in seq_len(length(strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
-          metrics = c(metrics, strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i])
-          metrics.nb = c(metrics.nb, which(names(evaluation) == strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i]))
+        spplot(uncert.map, xlab = "Longitude (\u02DA)", ylab = "Latitude (\u02DA)",
+               col.regions = rev(terrain.colors(10000)))
+      })
+      output$evaluation.barplot <- renderPlot({
+        evaluation <- x@algorithm.evaluation
+        if (!is.null(x@parameters$rep)) {
+          evaluation$kept.model <- evaluation$kept.model/as.numeric(x@parameters$rep)
+        } else {
+          evaluation$kept.model <- evaluation$kept.model/max(evaluation$kept.model)
+        }
+        metrics <- "% kept.model"
+        metrics.nb <- c(which(names(evaluation) == "kept.model"))
+        for (i in seq_len(length(strsplit(x@parameters$ensemble.metric,
+                                          ".", fixed = TRUE)[[1]][-1]))) {
+          metrics <- c(metrics, strsplit(x@parameters$ensemble.metric,
+                                         ".", fixed = TRUE)[[1]][-1][i])
+          metrics.nb <- c(metrics.nb, which(names(evaluation) ==
+                                              strsplit(x@parameters$ensemble.metric, ".", fixed = TRUE)[[1]][-1][i]))
         }
         table <- t(evaluation[metrics.nb])
-        barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation), beside=TRUE)
-        legend('bottomright', metrics, fill = rainbow(length(metrics)))
+        barplot(table, col = rainbow(length(metrics)), names.arg = row.names(evaluation),
+                beside = TRUE)
+        legend("bottomright", metrics, fill = rainbow(length(metrics)))
       })
-      output$evaluation.table <- renderTable({x@algorithm.evaluation[c(2,4:8)]})
+      output$evaluation.table <- renderTable({
+        x@algorithm.evaluation[c(2, 4:8)]
+      })
       if (length(x@algorithm.correlation) > 0) {
         # Algorithms correlation
-        output$algo.corr.table <- renderTable({x@algorithm.correlation})
+        output$algo.corr.table <- renderTable({
+          x@algorithm.correlation
+        })
         output$algo.corr.heatmap <- renderPlot({
           m <- as.matrix(x@algorithm.correlation)
           heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                    cellnote = round(m,3), notecol = "black", notecex = 2,
+                    cellnote = round(m, 3), notecol = "black", notecex = 2,
                     trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
                     col = rev(heat.colors(1000)))
         })
@@ -571,64 +592,89 @@ setMethod('plot', 'SDM', function(x, y, ...) {
     }
     # Variable importance
     output$varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(x@variable.importance))
-      names(varimp) = 'Axes.evaluation'
-      barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2)
+      varimp <- as.data.frame(t(x@variable.importance))
+      names(varimp) <- "Axes.evaluation"
+      barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)),
+              las = 2)
     })
-    output$varimp.table <- renderTable({x@variable.importance})
-    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@variable.importance)), 'Variable' = names(x@variable.importance))})
+    output$varimp.table <- renderTable({
+      x@variable.importance
+    })
+    output$varimplegend <- renderTable({
+      data.frame(Abbreviation = abbreviate(names(x@variable.importance)),
+                 Variable = names(x@variable.importance))
+    })
     # Parameters
     output$summary <- renderTable({
-      summary = data.frame(matrix(nrow = 4, ncol = 1))
-      names(summary) = 'Summary'
-      row.names(summary) = c('Occurrences type', 'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
-      if (x@parameters$PA) {PA = 'default'}
-      if(x@parameters$cv == 'LOO') {cv.param = 'None'}
-      if(x@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                         strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
-                                                         'rep =',
-                                                         strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-      if(x@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                        strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
-                                                        'rep =',
-                                                        strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-      summary$Summary = c(x@parameters$data, PA, x@parameters$cv, cv.param)
-      if(!is.null(x@parameters$algorithms)) {
-        algo.info = character()
-        for (i in seq_len(length(strsplit(x@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
-          algo.info = paste(algo.info, strsplit(x@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
+      summary <- data.frame(matrix(nrow = 4, ncol = 1))
+      names(summary) <- "Summary"
+      row.names(summary) <- c("Occurrences type", "Pseudo-absences selection",
+                              "Cross validation method", "Cross validation parameters")
+      if (x@parameters$PA) {
+        PA <- "default"
+      }
+      if (x@parameters$cv == "LOO") {
+        cv.param <- "None"
+      }
+      if (x@parameters$cv == "holdout") {
+        cv.param <- paste("fraction =", strsplit(x@parameters$cv.param,
+                                                 "|", fixed = TRUE)[[1]][2], "rep =", strsplit(x@parameters$cv.param,
+                                                                                               "|", fixed = TRUE)[[1]][3])
+      }
+      if (x@parameters$cv == "k-fold") {
+        cv.param <- paste("k =", strsplit(x@parameters$cv.param, "|",
+                                          fixed = TRUE)[[1]][2], "rep =", strsplit(x@parameters$cv.param,
+                                                                                   "|", fixed = TRUE)[[1]][3])
+      }
+      summary$Summary <- c(x@parameters$data, PA, x@parameters$cv, cv.param)
+      if (!is.null(x@parameters$algorithms)) {
+        algo.info <- character()
+        for (i in seq_len(length(strsplit(x@parameters$algorithms,
+                                          ".", fixed = TRUE)[[1]][-1]))) {
+          algo.info <- paste(algo.info, strsplit(x@parameters$algorithms,
+                                                 ".", fixed = TRUE)[[1]][-1][i])
         }
-        summary = rbind(summary,
-                        data.frame(Summary = c(algo.info, x@parameters$rep)
-                                   , row.names = c('Original algorithms','Number of repetitions')))
+        summary <- rbind(summary, data.frame(Summary = c(algo.info,
+                                                         x@parameters$rep), row.names = c("Original algorithms",
+                                                                                          "Number of repetitions")))
       }
       summary
     })
     output$varimp.info <- renderText({
-      varimp.info = 'Axes evaluated with the variation of '
+      varimp.info <- "Axes evaluated with the variation of "
       for (i in seq_len(length(x@parameters$axes.metric))) {
         if (i == 1) {
-          varimp.info = paste(varimp.info, x@parameters$axes.metric[i])
+          varimp.info <- paste(varimp.info, x@parameters$axes.metric[i])
         } else if (i == length(x@parameters$axes.metric) && i != 1) {
-          varimp.info = paste(varimp.info, 'and', x@parameters$axes.metric[i], '.')
+          varimp.info <- paste(varimp.info, "and", x@parameters$axes.metric[i],
+                               ".")
         } else {
-          varimp.info = paste(varimp.info, ',', x@parameters$axes.metric[i])
+          varimp.info <- paste(varimp.info, ",", x@parameters$axes.metric[i])
         }
       }
       varimp.info
     })
     output$evaluation.info <- renderText({
-      evaluation.info = 'Models evaluated with'
-      for (i in seq_len(length(strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
+      evaluation.info <- "Models evaluated with"
+      for (i in seq_len(length(strsplit(x@parameters$ensemble.metric,
+                                        ".", fixed = TRUE)[[1]][-1]))) {
         if (i == 1) {
-          evaluation.info = paste(evaluation.info, strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+          evaluation.info <- paste(evaluation.info, strsplit(x@parameters$ensemble.metric,
+                                                             ".", fixed = TRUE)[[1]][-1][i], "(>", strsplit(x@parameters$ensemble.thresh,
+                                                                                                            "|", fixed = TRUE)[[1]][-1][i], ")")
         } else if (i == length(x@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste(evaluation.info, 'and', strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
+          evaluation.info <- paste(evaluation.info, "and", strsplit(x@parameters$ensemble.metric,
+                                                                    ".", fixed = TRUE)[[1]][-1][i], "(>", strsplit(x@parameters$ensemble.thresh,
+                                                                                                                   "|", fixed = TRUE)[[1]][-1][i], ")", ".")
         } else {
-          evaluation.info = paste(evaluation.info, ',', strsplit(x@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+          evaluation.info <- paste(evaluation.info, ",", strsplit(x@parameters$ensemble.metric,
+                                                                  ".", fixed = TRUE)[[1]][-1][i], "(>", strsplit(x@parameters$ensemble.thresh,
+                                                                                                                 "|", fixed = TRUE)[[1]][-1][i], ")")
         }
       }
-      if (x@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      if (x@parameters$weight) {
+        evaluation.info <- paste(evaluation.info, ", and then weighted with the previous metrics means")
+      }
       evaluation.info
     })
   }

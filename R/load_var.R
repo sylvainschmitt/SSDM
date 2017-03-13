@@ -31,100 +31,139 @@ NULL
 #'
 #' @examples
 #' \dontrun{
-#' load_var(system.file("extdata",  package = 'SSDM'))
+#' load_var(system.file('extdata',  package = 'SSDM'))
 #' }
 #'
 #'@seealso \code{\link{load_occ}} to load occurrences.
 #'
 #'@export
-load_var <- function (path = getwd(), files = NULL,
-                      format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.envi','.bil','.img'),
-                      categorical = NULL, Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
+load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
+                                                              ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
+                     Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(path = path, files = files, format = format, categorical = categorical,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
 
   # pdir = getwd()
-  if(verbose) {cat('Variables loading \n')}
+  if (verbose) {
+    cat("Variables loading \n")
+  }
   # setwd(path)
-  Env = stack()
+  Env <- stack()
 
   # Rasters loading
-  files.null = files
-  if (is.null(files)) {files.null = TRUE} else {files.null = FALSE}
-  resostack = c(0, 0)
-  extentstack = extent(-Inf,Inf,-Inf,Inf)
-  if(files.null){
-    n = length(format)
+  files.null <- files
+  if (is.null(files)) {
+    files.null <- TRUE
   } else {
-    n = 1
+    files.null <- FALSE
+  }
+  resostack <- c(0, 0)
+  extentstack <- extent(-Inf, Inf, -Inf, Inf)
+  if (files.null) {
+    n <- length(format)
+  } else {
+    n <- 1
   }
   for (j in 1:n) {
-    if(files.null) {
-      files = list.files(path = path, pattern = paste0('.',format[j],'$'))
+    if (files.null) {
+      files <- list.files(path = path, pattern = paste0(".", format[j],
+                                                        "$"))
     }
     if (length(files) > 0) {
       for (i in seq_len(length(files))) {
-        if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
-        Raster = raster(file)
+        if (!is.null(path)) {
+          file <- paste0(path, "/", files[[i]])
+        } else {
+          file <- files[i]
+        }
+        Raster <- raster(file)
         # Extent and resolution check
-        reso = res(Raster)
-        extent = extent(Raster)
-        resostack[1] = max(reso[1], resostack[1])
-        resostack[2] = max(reso[2], resostack[2])
-        extentstack@xmin = max(extentstack@xmin, extent@xmin)
-        extentstack@xmax = min(extentstack@xmax, extent@xmax)
-        extentstack@ymin = max(extentstack@ymin, extent@ymin)
-        extentstack@ymax = min(extentstack@ymax, extent@ymax)
-        if(GUI) {incProgress(1/(length(files)*3), detail = paste(i,'loaded'))}
+        reso <- res(Raster)
+        extent <- extent(Raster)
+        resostack[1] <- max(reso[1], resostack[1])
+        resostack[2] <- max(reso[2], resostack[2])
+        extentstack@xmin <- max(extentstack@xmin, extent@xmin)
+        extentstack@xmax <- min(extentstack@xmax, extent@xmax)
+        extentstack@ymin <- max(extentstack@ymin, extent@ymin)
+        extentstack@ymax <- min(extentstack@ymax, extent@ymax)
+        if (GUI) {
+          incProgress(1/(length(files) * 3), detail = paste(i,
+                                                            "loaded"))
+        }
       }
     }
   }
 
-  if(verbose) {cat('Variables treatment \n')}
+  if (verbose) {
+    cat("Variables treatment \n")
+  }
 
-  if(verbose) {cat('   resolution and extent adaptation...')}
+  if (verbose) {
+    cat("   resolution and extent adaptation...")
+  }
   for (j in 1:n) {
-    if(files.null) {
-      files = list.files(path = path, pattern = paste0('.',format[j],'$'))
+    if (files.null) {
+      files <- list.files(path = path, pattern = paste0(".", format[j],
+                                                        "$"))
     }
     if (length(files) > 0) {
       for (i in seq_len(length(files))) {
-        if(!is.null(path)){file = paste0(path,'/',files[[i]])} else {file = files[i]}
-        Raster = raster(file)
-        Raster = readAll(Raster)
-        Raster[Raster[] <= -900] = NA
-        names(Raster) = as.character(strsplit(files[i],format[j]))
+        if (!is.null(path)) {
+          file <- paste0(path, "/", files[[i]])
+        } else {
+          file <- files[i]
+        }
+        Raster <- raster(file)
+        Raster <- readAll(Raster)
+        Raster[Raster[] <= -900] <- NA
+        names(Raster) <- as.character(strsplit(files[i], format[j]))
         if (names(Raster) %in% categorical) {
-          Raster = raster::as.factor(Raster)
-          row.names(Raster@data@attributes[[1]]) = Raster@data@attributes[[1]]$ID
-          fun = max
-        } else {fun = mean}
-        if (round(res(Raster)[1], digits = 6) != round(resostack[1], digits = 6) || round(res(Raster)[2], digits = 6) != round(resostack[2], digits = 6)) {
-          cat('\n', names(Raster), 'is aggregated to the coarsest resolution \n')
-          Raster = aggregate(Raster, fact = c((resostack[1]/res(Raster)[1]), (resostack[2]/res(Raster)[2])), fun = fun)
+          Raster <- raster::as.factor(Raster)
+          row.names(Raster@data@attributes[[1]]) <- Raster@data@attributes[[1]]$ID
+          fun <- max
+        } else {
+          fun <- mean
         }
-        Raster = crop(Raster, extentstack)
-        if(i>1 && (any(res(Raster)!=res(Env)) || extent(Raster)!=extentstack)){
-          Raster = resample(Raster, Env[[1]])
+        if (round(res(Raster)[1], digits = 6) != round(resostack[1],
+                                                       digits = 6) || round(res(Raster)[2], digits = 6) != round(resostack[2],
+                                                                                                                 digits = 6)) {
+          cat("\n", names(Raster), "is aggregated to the coarsest resolution \n")
+          Raster <- aggregate(Raster, fact = c((resostack[1]/res(Raster)[1]),
+                                               (resostack[2]/res(Raster)[2])), fun = fun)
         }
-        Env = stack(Env, Raster, quick = TRUE)
-        if(GUI) {incProgress((1/(length(files)*3)), detail = paste(i,'treated'))}
+        Raster <- crop(Raster, extentstack)
+        if (i > 1 && (any(res(Raster) != res(Env)) || extent(Raster) !=
+                      extentstack)) {
+          Raster <- resample(Raster, Env[[1]])
+        }
+        Env <- stack(Env, Raster, quick = TRUE)
+        if (GUI) {
+          incProgress((1/(length(files) * 3)), detail = paste(i,
+                                                              "treated"))
+        }
       }
     }
   }
-  if(verbose) {cat('   done... \n')}
+  if (verbose) {
+    cat("   done... \n")
+  }
 
 
   # Normalizing variable
   if (Norm) {
-    if(verbose) {cat('   normalizing continuous variable \n\n')}
+    if (verbose) {
+      cat("   normalizing continuous variable \n\n")
+    }
     for (i in seq_len(length(Env@layers))) {
-      #For not categorical variable
+      # For not categorical variable
       if (!Env[[i]]@data@isfactor) {
-        Env[[i]] = Env[[i]]/Env[[i]]@data@max
+        Env[[i]] <- Env[[i]]/Env[[i]]@data@max
       }
-      if(GUI) {incProgress((1/length(Env@layers)/3), detail = paste(i,'normalized'))}
+      if (GUI) {
+        incProgress((1/length(Env@layers)/3), detail = paste(i,
+                                                             "normalized"))
+      }
     }
   }
 
@@ -132,9 +171,13 @@ load_var <- function (path = getwd(), files = NULL,
 
   # Temporary files
   if (tmp) {
-    path = get("tmpdir",envir=.PkgEnv)
-    if (!(file.path(path, '.rasters') %in% list.dirs(path))) (dir.create(paste0(path,'/.rasters')))
-    for (i in seq_len(length(Env@layers))) {Env[[i]] = writeRaster(Env[[i]], paste0(path,"/.rasters/", names(Env[[i]])), overwrite = TRUE)}
+    path <- get("tmpdir", envir = .PkgEnv)
+    if (!(file.path(path, ".rasters") %in% list.dirs(path)))
+      (dir.create(paste0(path, "/.rasters")))
+    for (i in seq_len(length(Env@layers))) {
+      Env[[i]] <- writeRaster(Env[[i]], paste0(path, "/.rasters/",
+                                               names(Env[[i]])), overwrite = TRUE)
+    }
   }
 
   return(Env)

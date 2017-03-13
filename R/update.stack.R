@@ -64,67 +64,97 @@ setMethod('update', 'Stacked.SDM',
                    # Modelling parameters
                    ...) {
             # Check arguments
-            .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spname = Spname, name = name, save = save,
-                         path = path, thresh = thresh, tmp = tmp, verbose = verbose, GUI = GUI)
+            .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spname = Spname, name = name,
+                       save = save, path = path, thresh = thresh, tmp = tmp, verbose = verbose,
+                       GUI = GUI)
 
-            stack = object
+            stack <- object
             # New ENM creation
-            if(verbose){cat('New specie ensemble distribution model creation...\n')}
-            if(stack@parameters$PA == 'default') {
-              PA = NULL
-            } else {
-              PA = list('nb'  = strsplit(stack@parameters$PA, '.', fixed = TRUE)[[1]][1],
-                        'strat' = strsplit(stack@parameters$PA, '.', fixed = TRUE)[[1]][2])
+            if (verbose) {
+              cat("New specie ensemble distribution model creation...\n")
             }
-            if(!is.null(Spname)) {enm.name = Spname} else {enm.name = 'new_Specie'}
-            ENM = ensemble_modelling(strsplit(stack@parameters$algorithms, '.', fixed = TRUE)[[1]][-1],
-                                     Occurrences, Env, Xcol, Ycol, Pcol,
-                                     rep = as.numeric(stack@parameters$rep), enm.name,
-                                     save = FALSE, path = getwd(), PA, cv = stack@parameters$cv,
-                                     cv.param = as.numeric(strsplit(stack@parameters$cv.param, '|', fixed = TRUE)[[1]][-1]),
-                                     thresh = thresh, metric = stack@parameters$metric,
-                                     axes.metric = stack@parameters$axes.metric,
-                                     uncertainity = stack@uncertainity@data@haveminmax, tmp = tmp,
-                                     ensemble.metric = strsplit(stack@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1],
-                                     ensemble.thresh = as.numeric(strsplit(stack@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1]),
-                                     weight = as.logical(stack@parameters$weight), ...)
-            if(verbose) {cat('   done.\n')}
+            if (stack@parameters$PA == "default") {
+              PA <- NULL
+            } else {
+              PA <- list(nb = strsplit(stack@parameters$PA, ".", fixed = TRUE)[[1]][1],
+                         strat = strsplit(stack@parameters$PA, ".", fixed = TRUE)[[1]][2])
+            }
+            if (!is.null(Spname)) {
+              enm.name <- Spname
+            } else {
+              enm.name <- "new_Specie"
+            }
+            ENM <- ensemble_modelling(strsplit(stack@parameters$algorithms, ".", fixed = TRUE)[[1]][-1],
+                                      Occurrences, Env, Xcol, Ycol, Pcol, rep = as.numeric(stack@parameters$rep),
+                                      enm.name, save = FALSE, path = getwd(), PA, cv = stack@parameters$cv,
+                                      cv.param = as.numeric(strsplit(stack@parameters$cv.param, "|", fixed = TRUE)[[1]][-1]),
+                                      thresh = thresh, metric = stack@parameters$metric, axes.metric = stack@parameters$axes.metric,
+                                      uncertainity = stack@uncertainity@data@haveminmax, tmp = tmp,
+                                      ensemble.metric = strsplit(stack@parameters$ensemble.metric,
+                                                                 ".", fixed = TRUE)[[1]][-1],
+                                      ensemble.thresh = as.numeric(strsplit(stack@parameters$ensemble.thresh,
+                                                                            "|", fixed = TRUE)[[1]][-1]),
+                                      weight = as.logical(stack@parameters$weight),
+                                      ...)
+            if (verbose) {
+              cat("   done.\n")
+            }
 
             # Test for new
-            if(verbose){cat('Check if the specie already exist...\n')}
-            if(!is.null(Spname)){
-              i = which(names(stack@enms) == paste0(Spname,'.Ensemble.SDM'))
-              if(verbose){cat(Spname,'replacement\n')}
-              if(length(i) > 0) {
-                stack@enms[[i]] = NULL
+            if (verbose) {
+              cat("Check if the specie already exist...\n")
+            }
+            if (!is.null(Spname)) {
+              i <- which(names(stack@enms) == paste0(Spname, ".Ensemble.SDM"))
+              if (verbose) {
+                cat(Spname, "replacement\n")
+              }
+              if (length(i) > 0) {
+                stack@enms[[i]] <- NULL
               } else {
-                stack@parameters$sp.nb.origin = stack@parameters$sp.nb.origin + 1
+                stack@parameters$sp.nb.origin <- stack@parameters$sp.nb.origin +
+                  1
               }
             } else {
-              stack@parameters$sp.nb.origin = stack@parameters$sp.nb.origin + 1
+              stack@parameters$sp.nb.origin <- stack@parameters$sp.nb.origin + 1
             }
-            if(verbose) {cat('   done.\n')}
+            if (verbose) {
+              cat("   done.\n")
+            }
 
             # New stacking
-            if(verbose){cat('New stacking...\n')}
-            enms = list()
-            for(i in seq_len(stack@enms)) {enms[[i]] = stack@enms[[i]]}
-            enms['method'] = stack@parameters$method
-            enms['endemism'] = strsplit(stack@parameters$endemism, '|', fixed = 'T')[[1]]
-            enms['rep.B'] = stack@parameters$rep.B
-            newstack = do.call(stacking, enms)
-            if(verbose) {cat('   done.\n')}
+            if (verbose) {
+              cat("New stacking...\n")
+            }
+            enms <- list()
+            for (i in seq_len(stack@enms)) {
+              enms[[i]] <- stack@enms[[i]]
+            }
+            enms["method"] <- stack@parameters$method
+            enms["endemism"] <- strsplit(stack@parameters$endemism, "|", fixed = "T")[[1]]
+            enms["rep.B"] <- stack@parameters$rep.B
+            newstack <- do.call(stacking, enms)
+            if (verbose) {
+              cat("   done.\n")
+            }
 
-            if(!is.null(stack)) {
+            if (!is.null(stack)) {
               # Paremeters
-              newstack@parameters$sp.nb.origin = stack@parameters$sp.nb.origin
+              newstack@parameters$sp.nb.origin <- stack@parameters$sp.nb.origin
 
               # Saving
-              if(save) {
-                if(verbose){cat('Saving...\n')}
-                if (!is.null(name)) {save.stack(newstack, name = name, path = path)}
-                else {save.stack(newstack, path = path)}
-                if(verbose) {cat('   done.\n')}
+              if (save) {
+                if (verbose) {
+                  cat("Saving...\n")
+                }
+                if (!is.null(name)) {
+                  save.stack(newstack, name = name, path = path)
+                } else {
+                  save.stack(newstack, path = path)
+                }
+                if (verbose) {
+                  cat("   done.\n")
+                }
               }
             }
 

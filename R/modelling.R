@@ -67,7 +67,7 @@ NULL
 #'  (\strong{MAXENT}), Artificial neural network (\strong{ANN}), and Support
 #'  vector machines (\strong{SVM}). Each algorithm has its own parameters
 #'  settable with the \strong{...} (see each algorithm section below to set
-#'  their parameters).} \item{"PA"}{list with two values: \strong{nb} number of
+#'  their parameters).} \item{'PA'}{list with two values: \strong{nb} number of
 #'  pseudo-absences selected, and \strong{strat} strategy used to select
 #'  pseudo-absences: either random selection or disk selection. We set default
 #'  recommendation from Barbet-Massin et al. (2012) (see reference).}
@@ -98,7 +98,7 @@ NULL
 #'  \item{select.metric}{Selection metric(s) used to select SDMs: \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
-#'  \item{"..."}{See algorithm in detail section} }
+#'  \item{'...'}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
 #'  function from the package 'stats', you can set the following parameters (see
@@ -195,8 +195,8 @@ NULL
 #'  \code{\link{stack_modelling}} to build SSDMs.
 #'
 #'@references M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
-#'  "Selecting pseudo-absences for species distribution models: how, where and
-#'  how many?" \emph{Methods Ecology and Evolution} 3:327-338
+#'  'Selecting pseudo-absences for species distribution models: how, where and
+#'  how many?' \emph{Methods Ecology and Evolution} 3:327-338
 #'  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
 #'
 #'
@@ -205,8 +205,8 @@ NULL
 #'
 #'
 #'
-#'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
-#'  thresholds of occurrence in the prediction of species distributions."
+#'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) 'Selecting
+#'  thresholds of occurrence in the prediction of species distributions.'
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 #'
@@ -217,117 +217,168 @@ NULL
 #'
 #'
 #'@export
-modelling = function(algorithm,
-                     # Modelling data input
-                     Occurrences, Env,
-                     # Occurrences reading
-                     Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
-                     # Model creation
-                     name = NULL,
-                     # Pseudo-absences definition
-                     PA = NULL,
-                     # Evaluation parameters
-                     cv = 'holdout', cv.param = c(0.7,2),
-                     thresh = 1001, metric = 'SES', axes.metric = 'Pearson',
-                     # Selection parameters
-                     select = FALSE, select.metric = c('AUC'), select.thresh = c(0.75),
-                     # Informations parameters
-                     verbose = TRUE, GUI = FALSE,
-                     # Modelling parameters
-                     ...) {
+modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
+                      Ycol = "Latitude", Pcol = NULL, name = NULL, PA = NULL, cv = "holdout",
+                      cv.param = c(0.7, 2), thresh = 1001, metric = "SES", axes.metric = "Pearson",
+                      select = FALSE, select.metric = c("AUC"), select.thresh = c(0.75),
+                      verbose = TRUE, GUI = FALSE, ...) {
   # Check arguments
-  .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = name, PA = PA, cv = cv, cv.param = cv.param,
-             thresh = thresh, metric = metric, axes.metric = axes.metric, select = select,
-             select.metric = select.metric, select.thresh = select.thresh,
-             verbose = verbose, GUI = GUI)
+  .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = name, PA = PA,
+             cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+             axes.metric = axes.metric, select = select, select.metric = select.metric,
+             select.thresh = select.thresh, verbose = verbose, GUI = GUI)
 
   # Test if algorithm is available
-  available.algo = c('GLM','GAM','MARS','GBM','CTA','RF','MAXENT','ANN','SVM')
-  if (algorithm == 'all') {algorithm = available.algo}
-  if(!(algorithm %in% available.algo)) {stop(algorithm,' is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM')}
+  available.algo <- c("GLM", "GAM", "MARS", "GBM", "CTA", "RF", "MAXENT",
+                      "ANN", "SVM")
+  if (algorithm == "all") {
+    algorithm <- available.algo
+  }
+  if (!(algorithm %in% available.algo)) {
+    stop(algorithm, " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
+  }
 
   # Empty Algorithm niche model object creation
-  model = Algorithm.SDM(algorithm)
-  if (!is.null(name)) {name = paste0(name,'.')}
-  model@name = paste0(name,algorithm,'.SDM')
-  model@parameters$data = 'presence/absence data set'
-  model@parameters$metric = metric
-
-  if(verbose){cat('Data check ... \n')}
-  # Occurrences data input test | Data frame needed
-  if (is.matrix(Occurrences)) {Occurrences = data.frame(Occurrences)}
-  if (!is.data.frame(Occurrences)) {stop('Occurrences data set is not a data frame or a matrix')}
-  if ((Xcol %in% names(Occurrences)) == FALSE) {stop('X column is not well defined')}
-  if ((Ycol %in% names(Occurrences)) == FALSE) {stop('Y column is not well defined')}
-  if (is.null(Pcol)) {
-    PO = TRUE # Presence only
-    if(verbose){cat('No presence column, presence-only data set is supposed.\n')}
-    model@parameters$data = 'presence-only data set'
-  } else if ((Pcol %in% names(Occurrences)) == FALSE) {
-    stop('Presence column is not well defined')
-  } else {
-    PO = FALSE
+  model <- Algorithm.SDM(algorithm)
+  if (!is.null(name)) {
+    name <- paste0(name, ".")
   }
-  if (!is.null(PA)) {PO = TRUE}
-  if (PO) {if(verbose) {cat('Pseudo-absence selection will be computed.\n')}}
-  data = data.frame(X = Occurrences[which(names(Occurrences) == Xcol)], Y = Occurrences[which(names(Occurrences) == Ycol)])
-  names(data) = c('X','Y')
-  if (PO) {
-    data$Presence = 1
+  model@name <- paste0(name, algorithm, ".SDM")
+  model@parameters$data <- "presence/absence data set"
+  model@parameters$metric <- metric
+
+  if (verbose) {
+    cat("Data check ... \n")
+  }
+  # Occurrences data input test | Data frame needed
+  if (is.matrix(Occurrences)) {
+    Occurrences <- data.frame(Occurrences)
+  }
+  if (!is.data.frame(Occurrences)) {
+    stop("Occurrences data set is not a data frame or a matrix")
+  }
+  if ((Xcol %in% names(Occurrences)) == FALSE) {
+    stop("X column is not well defined")
+  }
+  if ((Ycol %in% names(Occurrences)) == FALSE) {
+    stop("Y column is not well defined")
+  }
+  if (is.null(Pcol)) {
+    PO <- TRUE  # Presence only
+    if (verbose) {
+      cat("No presence column, presence-only data set is supposed.\n")
+    }
+    model@parameters$data <- "presence-only data set"
+  } else if ((Pcol %in% names(Occurrences)) == FALSE) {
+    stop("Presence column is not well defined")
   } else {
-    data$Presence = Occurrences[,which(names(Occurrences) == Pcol)]
+    PO <- FALSE
+  }
+  if (!is.null(PA)) {
+    PO <- TRUE
+  }
+  if (PO) {
+    if (verbose) {
+      cat("Pseudo-absence selection will be computed.\n")
+    }
+  }
+  data <- data.frame(X = Occurrences[which(names(Occurrences) == Xcol)],
+                     Y = Occurrences[which(names(Occurrences) == Ycol)])
+  names(data) <- c("X", "Y")
+  if (PO) {
+    data$Presence <- 1
+  } else {
+    data$Presence <- Occurrences[, which(names(Occurrences) == Pcol)]
   }
 
   # Environment data input test | RasterStack needed
-  if (is.raster(Env)) {Env = stack(Env)}
-  if (!inherits(Env, 'RasterStack')) {stop('Environment data set is not a raster or a raster stack')}
-  if(verbose){cat('   done. \n\n')}
-  if(GUI) {incProgress(1/5, detail = 'Data ckecked')}
+  if (is.raster(Env)) {
+    Env <- stack(Env)
+  }
+  if (!inherits(Env, "RasterStack")) {
+    stop("Environment data set is not a raster or a raster stack")
+  }
+  if (verbose) {
+    cat("   done. \n\n")
+  }
+  if (GUI) {
+    incProgress(1/5, detail = "Data ckecked")
+  }
 
   # Pseudo - absences selection
-  model@data = data
+  model@data <- data
   if (PO) {
-    if(verbose){cat('Pseudo absence selection... \n')}
-    model = PA.select(model, Env, PA, verbose)
-    model@parameters['PA'] = TRUE
-    if(verbose){cat('   done. \n\n')}
-    if(GUI) {incProgress(1/5, detail = 'Pseudo-absence selected')}
+    if (verbose) {
+      cat("Pseudo absence selection... \n")
+    }
+    model <- PA.select(model, Env, PA, verbose)
+    model@parameters["PA"] <- TRUE
+    if (verbose) {
+      cat("   done. \n\n")
+    }
+    if (GUI) {
+      incProgress(1/5, detail = "Pseudo-absence selected")
+    }
   }
-  model = data.values(model, Env)
+  model <- data.values(model, Env)
 
   # Evaluation
-  if(verbose){cat('Model evaluation...\n')}
-  model = evaluate(model, cv, cv.param, thresh, metric, Env, ...)
-  if(verbose){cat('   done. \n\n')}
-  if(GUI) {incProgress(1/5, detail = 'SDM evaluated')}
+  if (verbose) {
+    cat("Model evaluation...\n")
+  }
+  model <- evaluate(model, cv, cv.param, thresh, metric, Env, ...)
+  if (verbose) {
+    cat("   done. \n\n")
+  }
+  if (GUI) {
+    incProgress(1/5, detail = "SDM evaluated")
+  }
 
   # Model selection
-  test = TRUE
-  if(select) {
+  test <- TRUE
+  if (select) {
     for (j in seq_len(length(select.metric))) {
-      if(model@evaluation[,which(names(model@evaluation) == select.metric[j])] < select.thresh[j]) {
-        test = FALSE
+      if (model@evaluation[, which(names(model@evaluation) == select.metric[j])] <
+          select.thresh[j]) {
+        test <- FALSE
       }
     }
   }
-  if(test){
+  if (test) {
     # Projection
-    if(verbose){cat('Model projection...\n')}
-    model = project(model, Env, ...)
-    if(verbose){cat('   done. \n\n')}
-    if(GUI) {incProgress(1/5, detail = 'SDM projected')}
+    if (verbose) {
+      cat("Model projection...\n")
+    }
+    model <- project(model, Env, ...)
+    if (verbose) {
+      cat("   done. \n\n")
+    }
+    if (GUI) {
+      incProgress(1/5, detail = "SDM projected")
+    }
 
     # Axes evaluation
-    if(verbose){cat('Model axes contribution evaluation...\n')}
-    model = evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric, Env, ...)
-    if(verbose){cat('   done. \n\n')}
-    if(GUI) {incProgress(1/5, detail = 'SDM axes contribution evaluated')}
-    rm(list = ls()[-which(ls() == 'model')])
+    if (verbose) {
+      cat("Model axes contribution evaluation...\n")
+    }
+    model <- evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric,
+                           Env, ...)
+    if (verbose) {
+      cat("   done. \n\n")
+    }
+    if (GUI) {
+      incProgress(1/5, detail = "SDM axes contribution evaluated")
+    }
+    rm(list = ls()[-which(ls() == "model")])
     gc()
     return(model)
   } else {
-    if(verbose){cat('Model have been rejected, NULL is returned ! \n')}
-    if(GUI) {incProgress(2/5, detail = 'SDM rejected')}
+    if (verbose) {
+      cat("Model have been rejected, NULL is returned ! \n")
+    }
+    if (GUI) {
+      incProgress(2/5, detail = "SDM rejected")
+    }
     rm(list = ls())
     gc()
     return(NULL)

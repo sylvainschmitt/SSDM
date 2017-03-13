@@ -4,7 +4,7 @@
 }
 .onLoad <- function(libname, pkgname){
   dir.create(paste0(tempdir(),'/NumberOne'))
-  path = paste0(tempdir(),'/NumberOne')
+  path <- paste0(tempdir(),'/NumberOne')
   assign("tmpdir",path, envir = .PkgEnv)
 }
 .onUnload <- function(libpath)
