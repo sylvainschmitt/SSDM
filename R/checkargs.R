@@ -23,7 +23,7 @@
                       ensemble.metric = c('AUC'),
                       ensemble.thresh = c(0.75),
                       weight = TRUE,
-                      method = 'P',
+                      method = 'pSSDM',
                       rep.B = 1000,
                       richness = NULL,
                       GeoRes = TRUE,
@@ -206,11 +206,12 @@
   }
 
   # Stacking
-  if (!inherits(method, "character") || !(method %in% c("P", "B", "T", "ML",
-                                                        "PR", "TR", "CB"))) {
-    stop("method parameter should be P, B, T, LH, PR, TR or CB (see help).")
+  if (!inherits(method, "character") || !(method %in% c("pSSDM", "Bernoulli", "bSSDM",
+                                                        "MaximumLikelyhood",
+                                                        "PRR.MEM", "PRR.pSSDM"))) {
+    stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelyhood, PRR.MEM, or PRR.pSSDM (see help).")
   }
-  if (method == "B" && !inherits(rep.B, "numeric") && abs(rep.B - round(rep.B)) !=
+  if (method == "Bernoulli" && !inherits(rep.B, "numeric") && abs(rep.B - round(rep.B)) !=
       0 && rep.B < 1) {
     stop("rep.B parameter should be an integer > 1 (see help).")
   }

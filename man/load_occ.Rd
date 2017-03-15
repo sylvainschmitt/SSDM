@@ -49,7 +49,7 @@ Function to load occurrence data from a table to perform \code{\link{modelling}}
 \code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 }
 \examples{
-load_occ(path = system.file("extdata",  package = 'SSDM'), Env,
+load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
          Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
          file = 'Occurences.txt', sep = ',')
 

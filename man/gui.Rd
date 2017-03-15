@@ -2,7 +2,7 @@
 % Please edit documentation in R/gui.R
 \name{gui}
 \alias{gui}
-\title{SSDM package Global User Interface}
+\title{SSDM package Graphic User Interface}
 \usage{
 gui(port = getOption("shiny.port"), host = getOption("shiny.host",
   "127.0.0.1"))
@@ -24,6 +24,7 @@ User interface of the SSDM package.
 \details{
 If your environmental variables have an important size, you should
   gave enough memory to the interface with the (\code{maxmem} parameter).
+  Additionally, you can only run one instance of user interface at a time.
 }
 \examples{
 \dontrun{

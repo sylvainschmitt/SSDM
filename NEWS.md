@@ -15,6 +15,11 @@ TO DO
 SSDM 0.1.9039
 =============
 
+-   `mapDiversity` S4 methods for SSDM with pSSDM, bSSDM, Bernoulli, MaximumLikelyhood, PRR.MEM, PRR.pSSDM
+
+SSDM 0.1.9039
+=============
+
 -   stylistic rules correction with formatR and goodpractice
 
 SSDM 0.1.9038

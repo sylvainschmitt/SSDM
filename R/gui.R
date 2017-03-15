@@ -1,4 +1,4 @@
-#' SSDM package Global User Interface
+#' SSDM package Graphic User Interface
 #'
 #' User interface of the SSDM package.
 #'
@@ -12,6 +12,7 @@
 #'
 #' @details If your environmental variables have an important size, you should
 #'   gave enough memory to the interface with the (\code{maxmem} parameter).
+#'   Additionally, you can only run one instance of user interface at a time.
 #'
 #' @examples
 #' \dontrun{

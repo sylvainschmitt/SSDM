@@ -6,11 +6,11 @@
 \alias{stacking,Ensemble.SDM-method}
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
-stacking(enm, ..., name = NULL, method = "P", rep.B = 1000, Env = NULL,
-  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE,
-  GUI = FALSE)
+stacking(enm, ..., name = NULL, method = "pSSDM", rep.B = 1000,
+  Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
+  verbose = TRUE, GUI = FALSE)
 
-\S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "P",
+\S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "pSSDM",
   rep.B = 1000, Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
   verbose = TRUE, GUI = FALSE)
 }
@@ -24,13 +24,12 @@ default 'Species.SDM').}
 richness map (see details below).}
 
 \item{rep.B}{integer. If the method used to create the local species richness
-is the random bernoulli (\strong{B}), rep.B parameter defines the number of
+is the random bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
 \item{Env}{raster object. Stacked raster object of environmental variables
 (can be processed first by \code{\link{load_var}}). Needed only for stacking
-method using SESAM framework: probability ranking (\strong{PR}), trait range
-(\strong{TR}), or checkerboard (\strong{CB}).}
+method using probability ranking from richness (\strong{PRR}).}
 
 \item{range}{integer. Set a value of range restriction (in pixels) around
 presences occurrences on habitat suitability maps (all further points will
@@ -49,19 +48,30 @@ user interface).}
 \value{
 an S4 \linkS4class{Stacked.SDM} class object viewable with the
  \code{\link{plot.model}} function.
-
- \strong{Methods:} Choice of the method used to compute the local species
- richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for more
- informations, see reference below): \describe{\item{P}{(Probablity) sum
- probabilities of habitat suitability maps }\item{B}{(Random bernoulli) draw
- repeatedly from a Bernoulli distribution}\item{T}{(Threshold) sum the binary
- map obtained with the thresholding (depending on the metric, see metric
- parameter).}\item{ML}{(Maximum likelyhood) adjust species richness of the
- model by linear regression}\item{PR}{(Probability ranking) model richness
- with a macroecological model (MEM) and adjust each ESDM binary map by
- ranking habitat suitability and keeping as much as predicted richness of the
- MEM}\item{TR}{(Trait range) To be implemented in next
- versions}\item{CB}{(Checkerboard) To be implemented in next versions}}
+}
+\description{
+This is a function to stack several ensemble SDMs in an SSDM. The function
+takes as inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
+with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
+function returns an S4 \linkS4class{Stacked.SDM} class object containing the
+local species richness map, the between-algorithm variance map, and all
+evaluation tables coming with (model evaluation, algorithm evaluation,
+algorithm correlation matrix and variable importance), and a list of ensemble
+SDMs for each species (see \code{\link{ensemble_modelling}}).
+}
+\details{
+\strong{Methods:} Choice of the method used to compute the local
+ species richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for
+ more informations, see reference below): \describe{\item{pSSDM}{sum
+ probabilities of habitat suitability maps}\item{Bernoulli}{draw repeatedly
+ from a Bernoulli distribution}\item{bSSDM}{sum the binary map obtained with
+ the thresholding (depending on the metric of the
+ ESDM).}\item{MaximumLikelyhood}{adjust species richness of the model by
+ linear regression}\item{PRR.MEM}{model richness with a macroecological model
+ (MEM) and adjust each ESDM binary map by ranking habitat suitability and
+ keeping as much as predicted richness of the MEM}\item{PRR.pSSDM}{model
+ richness with a pSSDM and adjust each ESDM binary map by ranking habitat
+ suitability and keeping as much as predicted richness of the pSSDM}}
 
  \strong{Endemism:} Choice of the method used to compute the endemism map
  (see Crisp et al. (2001) for more information, see reference below):
@@ -74,16 +84,6 @@ an S4 \linkS4class{Stacked.SDM} class object viewable with the
  to precise range calculation, whether the total number of occurrences
  \strong{'NbOcc'} whether the surface of the binary map species distribution
  \strong{'Binary'}.
-}
-\description{
-This is a function to stack several ensemble SDMs in an SSDM. The function
-takes as inputs several S4 \linkS4class{Ensemble.SDM} class objects produced
-with \code{\link{ensemble_modelling}} or \code{\link{ensemble}} functions. The
-function returns an S4 \linkS4class{Stacked.SDM} class object containing the
-local species richness map, the between-algorithm variance map, and all
-evaluation tables coming with (model evaluation, algorithm evaluation,
-algorithm correlation matrix and variable importance), and a list of ensemble
-SDMs for each species (see \code{\link{ensemble_modelling}}).
 }
 \examples{
 \dontrun{

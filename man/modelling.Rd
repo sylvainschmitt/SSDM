@@ -94,7 +94,7 @@ evaluation table.
  (\strong{MAXENT}), Artificial neural network (\strong{ANN}), and Support
  vector machines (\strong{SVM}). Each algorithm has its own parameters
  settable with the \strong{...} (see each algorithm section below to set
- their parameters).} \item{"PA"}{list with two values: \strong{nb} number of
+ their parameters).} \item{'PA'}{list with two values: \strong{nb} number of
  pseudo-absences selected, and \strong{strat} strategy used to select
  pseudo-absences: either random selection or disk selection. We set default
  recommendation from Barbet-Massin et al. (2012) (see reference).}
@@ -125,7 +125,7 @@ evaluation table.
  \item{select.metric}{Selection metric(s) used to select SDMs: \strong{AUC},
  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
  \strong{prop.correct} (proportion of correctly predicted occurrences).}
- \item{"..."}{See algorithm in detail section} }
+ \item{'...'}{See algorithm in detail section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
@@ -241,8 +241,8 @@ plot(SDM)
 }
 \references{
 M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
- "Selecting pseudo-absences for species distribution models: how, where and
- how many?" \emph{Methods Ecology and Evolution} 3:327-338
+ 'Selecting pseudo-absences for species distribution models: how, where and
+ how many?' \emph{Methods Ecology and Evolution} 3:327-338
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
 
 
@@ -251,8 +251,8 @@ M. Barbet-Massin, F. Jiguet, C. H.  Albert, & W. Thuiller (2012)
 
 
 
- C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
- thresholds of occurrence in the prediction of species distributions."
+ C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) 'Selecting
+ thresholds of occurrence in the prediction of species distributions.'
  \emph{Ecography} 28:85-393
  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
 }

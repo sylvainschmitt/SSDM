@@ -10,7 +10,7 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
   axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
   ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
-  method = "P", metric = "SES", rep.B = 1000, range = NULL,
+  method = "pSSDM", metric = "SES", rep.B = 1000, range = NULL,
   endemism = c("WEI", "Binary"), verbose = TRUE, GUI = FALSE, cores = 1,
   ...)
 }
@@ -89,7 +89,7 @@ richness map (see details below).}
 details below.)}
 
 \item{rep.B}{integer. If the method used to create the local species richness
-is the random bernoulli (\strong{B}), rep.B parameter defines the number of
+is the random bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
 \item{range}{integer. Set a value of range restriction (in pixels) around
@@ -171,16 +171,16 @@ variable importance), and a list of ensemble SDMs for each species (see
  \strong{prop.correct} (proportion of correctly predicted occurrences).}
  \item{method}{Choice of the method used to compute the local species
  richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for more
- informations, see reference below): \strong{P} (Probablity) sum
- probabilities of habitat suitability maps, \strong{B} (Random Bernoulli)
- drawing repeatedly from a Bernoulli distribution, \strong{T} (Threshold) sum
- the binary map obtained with the thresholding (depending on the metric, see
- metric parameter), \strong{ML}(Maximum likelyhood) adjust species richness
- of the model by linear regression, \strong{PR}(Probability ranking) model
- richness with a macroecological model (MEM) and adjust each ESDM binary map
- by ranking habitat suitability and keeping as much as predicted richness of
- the MEM, \strong{TR}(Trait range) To be implemented in next versions,
- \strong{CB} (Checkerboard) To be implemented in next versions.}
+ informations, see reference below): \strong{pSSDM} sum probabilities of
+ habitat suitability maps, \strong{Bernoulli} drawing repeatedly from a
+ Bernoulli distribution, \strong{bSSDM} sum the binary map obtained with the
+ thresholding (depending on the metric, see metric parameter),
+ \strong{MaximumLikelyhood} adjust species richness of the model by linear
+ regression, \strong{PRR.MEM} model richness with a macroecological model
+ (MEM) and adjust each ESDM binary map by ranking habitat suitability and
+ keeping as much as predicted richness of the MEM, \strong{PRR.pSSDM} model
+ richness with a pSSDM and adjust each ESDM binary map by ranking habitat
+ suitability and keeping as much as predicted richness of the pSSDM}
  \item{endemism}{Choice of the method used to compute the endemism map (see
  Crisp et al. (2001) for more information, see reference below):
  \strong{NULL} No endemism map, \strong{WEI} (Weighted Endemism Index)
@@ -318,15 +318,18 @@ M. D'Amen, A. Dubuis, R. F. Fernandes, J. Pottier, L. Pelissier, &
  \url{http://onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2011.00172.x/full}
 
 
+
  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
  species distribution  models  and  adjusting  bias  by linking them to
  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
 
 
+
  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
  Australian flora"  \emph{Journal of Biogeography} 28:183-198
  \url{http://biology-assets.anu.edu.au/hosted_sites/Crisp/pdfs/Crisp2001_endemism.pdf}
+
 
 
  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting

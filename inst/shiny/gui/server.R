@@ -397,7 +397,7 @@ server <- function(input, output, session) {
   output$methodUI <- renderUI({
     if(input$modellingchoice == 'Stack modelling'){
       selectInput('method', 'Diversity mapping method',
-                  c('Probability','Random Bernoulli','Threshold','Maximum likelyhood','Probability Ranking'),
+                  c('pSSDM','Bernoulli','bSSDM','MaximumLikelyhood','PRR.MEM','PRR.pSSDM'),
                   selected = 'Probability')
       }
     })
@@ -405,11 +405,12 @@ server <- function(input, output, session) {
     if(input$modellingchoice == 'Stack modelling'){
       if(length(input$method) == 1) {
         p(switch(input$method,
-                 'Probability' = 'Sum probabilities of habitat suitability maps',
-                 'Random Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
-                 'Threshold' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)',
-                 'Maximum likelyhood' = 'Adjust species richness of the model by linear regression',
-                 'Probability Ranking' = 'Model richness with a macroecological model (MEM) and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the MEM'))
+                 'pSSDM' = 'Sum probabilities of habitat suitability maps',
+                 'Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
+                 'bSSDM' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)',
+                 'MaximumLikelyhood' = 'Adjust species richness of the model by linear regression',
+                 'PRR.MEM' = 'Model richness with a macroecological model (MEM) and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the MEM',
+                 'PRR.pSSDM' = 'Model richness with a pSSDM and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the pSSDM'))
       }
     }
   })
@@ -529,12 +530,6 @@ server <- function(input, output, session) {
     if('GBM' %in% input$algoparam || 'RF' %in% input$algoparam){algoparam$trees = as.numeric(input$trees)} else {algoparam$trees = 2500}
     if('GBM' %in% input$algoparam || 'RF' %in% input$algoparam || 'CTA' %in% input$algoparam){algoparam$final.leave = as.numeric(input$finalleave)}  else {algoparam$finalleave = 1}
     if('GBM' %in% input$algoparam || 'CTA' %in% input$algoparam || 'SVM' %in% input$algoparam){algoparam$cv = as.numeric(input$cv)}  else {algoparam$cv = 3}
-    method = switch(input$method,
-                    'Probability' = 'P',
-                    'Random Bernoulli' = 'B',
-                    'Threshold' = 'T',
-                    'Maximum likelyhood' = 'ML',
-                    'Probability Ranking' = 'PR')
     if(is.null(input$repB)) {rep.B = 1000} else {rep.B = as.numeric(input$repB)}
     if(is.null(input$cval)) {cval = 'holdout'} else {cval = input$cval}
     if(length(c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))) < 2) {cv.param = c(0.7, 1)} else {cv.param = c(as.numeric(input$cvalparam1), as.numeric(input$cvalrep))}
@@ -657,7 +652,7 @@ server <- function(input, output, session) {
                                                 ensemble.metric = ensemble.metric,
                                                 ensemble.thresh = ensemble.thresh,
                                                 weight = weight,
-                                                method = method,
+                                                method = input$method,
                                                 metric = input$metric,
                                                 rep.B =  rep.B,
                                                 range = range,

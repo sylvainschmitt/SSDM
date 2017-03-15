@@ -44,7 +44,7 @@ Function to load environmental variables in the form of rasters to perform
 }
 \examples{
 \dontrun{
-load_var(system.file("extdata",  package = 'SSDM'))
+load_var(system.file('extdata',  package = 'SSDM'))
 }
 
 }
