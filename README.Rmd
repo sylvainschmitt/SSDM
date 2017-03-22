@@ -4,7 +4,8 @@ output: github_document
 ---
 
 [![Travis-CI Build Status](https://travis-ci.org/sylvainschmitt/SSDM.svg?branch=master)](https://travis-ci.org/sylvainschmitt/SSDM)
-[![CRAN](http://www.r-pkg.org/badges/version/SSDM)](http://cran.rstudio.com/package=SSDM) [![Downloads](http://cranlogs.r-pkg.org/badges/SSDM?color=brightgreen)](http://www.r-pkg.org/pkg/SSDM)
+[![CRAN](https://www.r-pkg.org/badges/version/SSDM)](https://CRAN.R-project.org/package=SSDM) 
+[![Downloads](http://cranlogs.r-pkg.org/badges/SSDM?color=brightgreen)](http://www.r-pkg.org/pkg/SSDM)
 [![Coverage Status](https://img.shields.io/codecov/c/github/sylvainschmitt/SSDM/master.svg)](https://codecov.io/github/sylvainschmitt/SSDM?branch=master)
 [![Research software impact](http://depsy.org/api/package/cran/SSDM/badge.svg)](http://depsy.org/package/r/SSDM)
 
@@ -41,7 +42,7 @@ install.packages("SSDM")
 After installing, **SSDM** package, you can launch the graphical user interface by typing gui() in the console.
 
 <center>[**Click to enlarge**](https://raw.githubusercontent.com/sylvainschmitt/SSDM/master/examples/SSDM.gif)<center>
-![Screenshot](examples/SSDM.gif)
+![Screenshot](https://raw.githubusercontent.com/sylvainschmitt/SSDM/master/examples/SSDM.gif)
 
 # Functionnalities
 

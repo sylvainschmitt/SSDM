@@ -5,7 +5,7 @@
 \title{SSDM package Graphic User Interface}
 \usage{
 gui(port = getOption("shiny.port"), host = getOption("shiny.host",
-  "127.0.0.1"))
+  "127.0.0.1"), working.directory = getwd())
 }
 \arguments{
 \item{port}{char. The TCP port that the application should listen on (see
@@ -13,6 +13,8 @@ gui(port = getOption("shiny.port"), host = getOption("shiny.host",
 
 \item{host}{char. The IPv4 address that the application should listen on (see
 \code{\link[shiny]{runApp}} for more details).}
+
+\item{working.directory}{char. Directory in which the application will run.}
 }
 \value{
 Open a window with a shiny app to use the SSDM package with an
