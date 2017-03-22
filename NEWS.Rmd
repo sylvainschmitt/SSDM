@@ -11,6 +11,9 @@ output: github_document
 - add finer tests
 - document all S4 class and methods
 
+# SSDM 0.2.9000
+- AppVeyor integration 
+
 # SSDM 0.1.9040
 - `mapDiversity` S4 methods for SSDM with pSSDM, bSSDM, Bernoulli, MaximumLikelyhood, PRR.MEM, PRR.pSSDM
 

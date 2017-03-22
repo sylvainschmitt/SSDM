@@ -12,7 +12,12 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
-SSDM 0.1.9039
+SSDM 0.2.9000
+=============
+
+-   AppVeyor integration
+
+SSDM 0.1.9040
 =============
 
 -   `mapDiversity` S4 methods for SSDM with pSSDM, bSSDM, Bernoulli, MaximumLikelyhood, PRR.MEM, PRR.pSSDM
@@ -82,7 +87,7 @@ SSDM 0.1.9032
 SSDM 0.1.9031
 =============
 
--   `rgdal`issue on travis due to `test_load_vocc`
+-   `rgdal`issue on travis due to `test_load_occ`
 
 SSDM 0.1.9030
 =============

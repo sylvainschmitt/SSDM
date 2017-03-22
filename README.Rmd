@@ -4,6 +4,7 @@ output: github_document
 ---
 
 [![Travis-CI Build Status](https://travis-ci.org/sylvainschmitt/SSDM.svg?branch=master)](https://travis-ci.org/sylvainschmitt/SSDM)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/sylvainschmitt/SSDM?branch=master&svg=true)](https://ci.appveyor.com/project/sylvainschmitt/SSDM)
 [![CRAN](https://www.r-pkg.org/badges/version/SSDM)](https://CRAN.R-project.org/package=SSDM) 
 [![Downloads](http://cranlogs.r-pkg.org/badges/SSDM?color=brightgreen)](http://www.r-pkg.org/pkg/SSDM)
 [![Coverage Status](https://img.shields.io/codecov/c/github/sylvainschmitt/SSDM/master.svg)](https://codecov.io/github/sylvainschmitt/SSDM?branch=master)

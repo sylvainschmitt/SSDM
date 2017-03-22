@@ -6,3 +6,4 @@ NEWS.Rmd
 README.Rmd
 examples
 cran-comment.md
+^appveyor\.yml$
