@@ -33,6 +33,6 @@ gui <- function (port = getOption("shiny.port"),
   ui <- source(file.path(appDir, 'ui.R'))
   serverWD <- source(file.path(appDir, 'server.R'))
   shiny::runApp(shinyApp(ui = ui, server = serverWD(working.directory)),
-                         display.mode = "normal", port = port, host = host)
+                display.mode = "normal", port = port, host = host)
   rm(ui, serverWD, envir = .GlobalEnv)
 }

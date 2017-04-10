@@ -20,5 +20,4 @@ Those are scientific correctly spelled words of species distribution modelling f
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Fixed CRAN URL canonical form in README
-* Fixed reported bug on graphic user interface which was broken (on of the main functionality of the package) without assignment to global environment (following recommendations of Joe Chang https://github.com/rstudio/shiny/issues/237#issuecomment-288244875)
+* Still an issue with graphical user interface, shiny was not loaded by the UI. Bug is now fixed.

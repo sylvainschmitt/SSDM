@@ -12,6 +12,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.2.9001
+===============
+
+-   SSDM and GUI vignettes
+
 SSDM 0.2.9000
 =============
 

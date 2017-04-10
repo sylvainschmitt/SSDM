@@ -1,6 +1,7 @@
 if (!requireNamespace("shinyFiles", quietly = TRUE)) {
   stop("shinyFiles package is needed for the Global User Interface. Please install it.")
 }
+library(shiny)
 library(shinydashboard)
 library(shinyFiles)
 ui <- dashboardPage(dashboardHeader(title = 'SSDM'),

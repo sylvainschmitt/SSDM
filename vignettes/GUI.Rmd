@@ -1,0 +1,66 @@
+---
+title: "GUI: A user-friendly interface for SSDM"
+author: "Sylvain Schmitt"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"GUI"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+The package ‘SSDM’ offers a user-friendly interface built with the web application framework for R Shiny. The graphical user interface is launched with the function `gui`. 
+
+![](GUI/launch.png){width=100%}
+
+The interface is divided in three steps: data loading, modelling, and results display. 
+
+## Data inputs
+
+The `Load` tab allows to load a new dataset or a previously saved model. **Pop-up windows for data selection contains a link toward example raw data in the drop down menu.** 
+
+### Environmental variables
+
+First panel allows to load environmental variables through rasters. Don't forget to precise which variable should be considered as a categorical variable.
+
+![](GUI/load_var.png){width=100%}
+
+### Natural history records
+
+Second panel allows to load occurrences through csv or txt files. Don't forget to precise raw data formatting.
+
+![](GUI/load_occ.png){width=100%}
+
+## Model
+
+The `Modelling` tab proposes three types of models: individual species distribution model (SDM), ensemble species distribution model (ESDM), or stacked species distribution model (SSDM). The `Modelling` tab contains three sub-tabs offering more or less detailed levels of parameterization according to the user’s level of expertise: (1) basic, to select the model algorithm(s), the number of runs per model algorithm, the model evaluation metric(s), and the methods to be used to map diversity and endemism; (2) intermediate, to set pseudo-absence selection (number and strategy), the cross-validation method, the metric used to estimate the relative contribution of environmental variables, the ESDM consensus method, and the SSDM stacking method; and (3) advanced, to set algorithm parameters. 
+
+### Basic parameterization
+
+![](GUI/basic.png){width=100%}
+
+### Intermediate parameterization
+
+![](GUI/Intermediate.png){width=100%}
+
+### Advanced parameterization
+
+![](GUI/Advanced.png){width=100%}
+
+## Results
+
+The `Results` tab summarizes graphically modelling outputs: model maps (species habitat suitability, species richness and endemism), relative contribution of environmental variables, model accuracy assessment, and between-algorithms correlation. 
+
+#### Stack-level results
+
+![](GUI/stack.png){width=100%}
+
+#### Species level-results
+
+![](GUI/species.png){width=100%}
+
+## Save
+
+The interface includes a panel to save result maps in GeoTIFF format (.tif) compatible with most GIS softwares, and other numerical results as comma separated values (.csv) files.
+
+![](GUI/save.png){width=100%}
