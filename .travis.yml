@@ -1,12 +1,20 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
-language: R
+language: r
 sudo: required
+dist: trusty
 cache: packages
-apt_packages:
-  - libgdal1-dev
+warnings_are_errors: true
+
+addons:
+  apt:
+    packages:
+      - libgdal-dev
+      - libproj-dev
+
 r_packages:
   - rgdal
   - covr
+
 after_success:
   - Rscript -e 'library(covr); codecov()'
