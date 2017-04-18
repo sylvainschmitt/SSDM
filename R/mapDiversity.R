@@ -30,7 +30,7 @@ NULL
 #'  probabilities of habitat suitability maps}\item{Bernoulli}{draw repeatedly
 #'  from a Bernoulli distribution}\item{bSSDM}{sum the binary map obtained with
 #'  the thresholding (depending on the metric of the
-#'  ESDM).}\item{MaximumLikelyhood}{adjust species richness of the model by
+#'  ESDM).}\item{MaximumLikelihood}{adjust species richness of the model by
 #'  linear regression}\item{PRR.MEM}{model richness with a macroecological model
 #'  (MEM) and adjust each ESDM binary map by ranking habitat suitability and
 #'  keeping as much as predicted richness of the MEM}\item{PRR.pSSDM}{model
@@ -126,10 +126,10 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     diversity.map <- sum(diversity.map)/length(enms)/rep.B
   }
 
-  if (method == "MaximumLikelyhood") {
-    # Maximum likelyhood (Calabrese et al, 2014)
+  if (method == "MaximumLikelihood") {
+    # Maximum likelihood (Calabrese et al, 2014)
     if (verbose)
-      cat("\n Local species richness computed by maximum likelyhood adjustment. \n")
+      cat("\n Local species richness computed by maximum likelihood adjustment. \n")
     diversity.map <- mapDiversity(obj, method = 'bSSDM',
                                   verbose = FALSE)$diversity.map
     Richness <- .richness(obj)

@@ -12,6 +12,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.2.9002
+===============
+
+-   Vignettes 2, misspelling, and TRAVIS
+
 SSDM 0.2.2.9001
 ===============
 

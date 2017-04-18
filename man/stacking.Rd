@@ -66,7 +66,7 @@ SDMs for each species (see \code{\link{ensemble_modelling}}).
  probabilities of habitat suitability maps}\item{Bernoulli}{draw repeatedly
  from a Bernoulli distribution}\item{bSSDM}{sum the binary map obtained with
  the thresholding (depending on the metric of the
- ESDM).}\item{MaximumLikelyhood}{adjust species richness of the model by
+ ESDM).}\item{MaximumLikelihood}{adjust species richness of the model by
  linear regression}\item{PRR.MEM}{model richness with a macroecological model
  (MEM) and adjust each ESDM binary map by ranking habitat suitability and
  keeping as much as predicted richness of the MEM}\item{PRR.pSSDM}{model

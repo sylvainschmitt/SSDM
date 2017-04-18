@@ -1,8 +1,12 @@
 ---
 title: "GUI: A user-friendly interface for SSDM"
-author: "Sylvain Schmitt"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  html_document:
+    theme: journal
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
 vignette: >
   %\VignetteIndexEntry{"GUI"}
   %\VignetteEngine{knitr::rmarkdown}

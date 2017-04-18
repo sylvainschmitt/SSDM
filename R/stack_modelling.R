@@ -134,7 +134,7 @@ NULL
 #'  habitat suitability maps, \strong{Bernoulli} drawing repeatedly from a
 #'  Bernoulli distribution, \strong{bSSDM} sum the binary map obtained with the
 #'  thresholding (depending on the metric, see metric parameter),
-#'  \strong{MaximumLikelyhood} adjust species richness of the model by linear
+#'  \strong{MaximumLikelihood} adjust species richness of the model by linear
 #'  regression, \strong{PRR.MEM} model richness with a macroecological model
 #'  (MEM) and adjust each ESDM binary map by ranking habitat suitability and
 #'  keeping as much as predicted richness of the MEM, \strong{PRR.pSSDM} model

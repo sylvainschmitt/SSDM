@@ -1,8 +1,12 @@
 ---
 title: "SSDM: Stacked Species Distribution Models with R"
-author: "Sylvain Schmitt"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  html_document:
+    theme: journal
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
 vignette: >
   %\VignetteIndexEntry{SSDM}
   %\VignetteEngine{knitr::rmarkdown}

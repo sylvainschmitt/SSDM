@@ -399,7 +399,7 @@ serverWD <- function(working.directory){
     output$methodUI <- renderUI({
       if(input$modellingchoice == 'Stack modelling'){
         selectInput('method', 'Diversity mapping method',
-                    c('pSSDM','Bernoulli','bSSDM','MaximumLikelyhood','PRR.MEM','PRR.pSSDM'),
+                    c('pSSDM','Bernoulli','bSSDM','MaximumLikelihood','PRR.MEM','PRR.pSSDM'),
                     selected = 'Probability')
       }
     })
@@ -410,7 +410,7 @@ serverWD <- function(working.directory){
                    'pSSDM' = 'Sum probabilities of habitat suitability maps',
                    'Bernoulli' = 'Drawing repeatedly from a Bernoulli distribution',
                    'bSSDM' = 'Sum the binary map obtained with the thresholding (depending on the metric, see metric parameter)',
-                   'MaximumLikelyhood' = 'Adjust species richness of the model by linear regression',
+                   'MaximumLikelihood' = 'Adjust species richness of the model by linear regression',
                    'PRR.MEM' = 'Model richness with a macroecological model (MEM) and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the MEM',
                    'PRR.pSSDM' = 'Model richness with a pSSDM and adjust each ESDM binary map by ranking habitat suitability and keeping as much as predicted richness of the pSSDM'))
         }
@@ -484,7 +484,7 @@ serverWD <- function(working.directory){
     output$tmpinfoUI <- renderUI({if(input$modellingchoice != 'Algorithm modelling'){p('Rasters are saved in temporary files to release memory')}})
     output$testUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam){selectInput('test','Test (GLM/GAM)',c('AIC', 'BIC'))}})
     output$epsilonUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'SVM' %in% input$algoparam){sliderInput('epsilon','Epsilon (GLM/GAM/SVM) = 1e-X',1,20,8, step = 1)}})
-    output$maxitUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'ANN' %in% input$algoparam){sliderInput('maxit','Maximum number of iteration (GLM/GAM/ANN)',100,1000,500, step = 100)}})
+    output$maxitUI <- renderUI({if('GLM' %in% input$algoparam || 'GAM' %in% input$algoparam || 'ANN' %in% input$algoparam){sliderInput('maxit','Maximum number of iterations (GLM/GAM/ANN)',100,1000,500, step = 100)}})
     output$degreeUI <- renderUI({if('MARS' %in% input$algoparam){sliderInput('degree','Degree of interaction (MARS)',1,10,2, step = 1)}})
     output$threshshrinkUI <- renderUI({if('GBM' %in% input$algoparam){sliderInput('threshshrink','Shrinkage threshold (GBM)',1e-05,1,1e-03, step = 1e-04)}})
     output$treesUI <- renderUI({if('GBM' %in% input$algoparam || 'RF' %in% input$algoparam){sliderInput('trees','Maximum number of trees (GBM/RF)',500,10000,2500, step = 500)}})
