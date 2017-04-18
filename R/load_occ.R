@@ -36,7 +36,7 @@ NULL
 #' @examples
 #' load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
 #'          Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-#'          file = 'Occurences.txt', sep = ',')
+#'          file = 'Occurrences.txt', sep = ',')
 #'
 #'@seealso \code{\link{load_var}} to load environmental variables.
 #'

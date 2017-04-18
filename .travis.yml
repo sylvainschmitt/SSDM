@@ -3,6 +3,8 @@
 language: R
 sudo: false
 cache: packages
+apt_packages:
+  - libgdal1-dev
 r_packages:
   - rgdal
   - covr
