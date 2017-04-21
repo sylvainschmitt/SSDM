@@ -17,7 +17,7 @@ The package ‘SSDM’ offers a user-friendly interface built with the web appli
 
 ![](GUI/launch.png){width=100%}
 
-The interface is divided in three steps: data loading, modelling, and results display. 
+The interface has three tabs on the left, apperring as the requirements are fullfilled: `Load` to load datasets or models, `Modelling` to specify, train/test and save a model, and `Results` to display the results. 
 
 ## Data inputs
 
@@ -25,19 +25,19 @@ The `Load` tab allows to load a new dataset or a previously saved model. **Pop-u
 
 ### Environmental variables
 
-First panel allows to load environmental variables through rasters. Don't forget to precise which variable should be considered as a categorical variable.
+Top-left panel allows to load environmental variables through rasters. Don't forget to specify which variable should be considered as a categorical variable.
 
 ![](GUI/load_var.png){width=100%}
 
 ### Natural history records
 
-Second panel allows to load occurrences through csv or txt files. Don't forget to precise raw data formatting.
+Second panel allows to load occurrences through csv or txt files. Don't forget to specify raw data formatting.
 
 ![](GUI/load_occ.png){width=100%}
 
 ## Model
 
-The `Modelling` tab proposes three types of models: individual species distribution model (SDM), ensemble species distribution model (ESDM), or stacked species distribution model (SSDM). The `Modelling` tab contains three sub-tabs offering more or less detailed levels of parameterization according to the user’s level of expertise: (1) basic, to select the model algorithm(s), the number of runs per model algorithm, the model evaluation metric(s), and the methods to be used to map diversity and endemism; (2) intermediate, to set pseudo-absence selection (number and strategy), the cross-validation method, the metric used to estimate the relative contribution of environmental variables, the ESDM consensus method, and the SSDM stacking method; and (3) advanced, to set algorithm parameters. 
+The `Modelling` tab proposes three types of models: individual species distribution model (SDM), ensemble species distribution model (ESDM), or stacked species distribution model (SSDM). The `Modelling` tab contains three sub-tabs offering different levels of parameterization according to the user’s level of expertise: (1) `Basic` to select the model algorithm(s), the number of runs per model algorithm, the model evaluation metric(s), and the methods to be used to map diversity and endemism; (2) `Intermediate` to set pseudo-absence selection (number and strategy), the cross-validation method, the metric used to estimate the relative contribution of environmental variables, the ESDM consensus method, and the SSDM stacking method; and (3) `Advanced` to set algorithm parameters. 
 
 ### Basic parameterization
 
@@ -53,13 +53,13 @@ The `Modelling` tab proposes three types of models: individual species distribut
 
 ## Results
 
-The `Results` tab summarizes graphically modelling outputs: model maps (species habitat suitability, species richness and endemism), relative contribution of environmental variables, model accuracy assessment, and between-algorithms correlation. 
+The `Results` tab gives maps and graphs summurizing the results at stack and species levels: model maps (species habitat suitability, species richness and endemism), relative contribution of environmental variables, model accuracy assessment, and between-algorithms correlation. 
 
 #### Stack-level results
 
 ![](GUI/stack.png){width=100%}
 
-#### Species level-results
+#### Species-level results
 
 ![](GUI/species.png){width=100%}
 
