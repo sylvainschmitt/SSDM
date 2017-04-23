@@ -17,7 +17,7 @@ The package ‘SSDM’ offers a user-friendly interface built with the web appli
 
 ![](GUI/launch.png){width=100%}
 
-The interface has three tabs on the left, apperring as the requirements are fullfilled: `Load` to load datasets or models, `Modelling` to specify, train/test and save a model, and `Results` to display the results. 
+The interface has three tabs on the left, appearring successively: `Load` to load datasets or previous models and preview the data, `Modelling` to specify, train/test and save models, and `Results` to view the results and compare the performances. 
 
 ## Data inputs
 
