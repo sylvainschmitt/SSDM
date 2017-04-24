@@ -17,6 +17,7 @@ SSDM 0.2.2.9002
 
 -   Occurrences.csv and TRAVIS gdal
 -   Vignettes 2, misspelling, and TRAVIS
+-   Flo check
 
 SSDM 0.2.2.9001
 ===============

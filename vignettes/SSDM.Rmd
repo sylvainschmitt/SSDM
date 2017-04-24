@@ -35,7 +35,7 @@ Species distribution models are built on natural history records.
 library(SSDM)
 Occ <- load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
          Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-         file = 'Occurences.txt', sep = ',', verbose = FALSE)
+         file = 'Occurrences.csv', sep = ',', verbose = FALSE)
 head(Occ)
 ```
 
