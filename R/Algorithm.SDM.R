@@ -10,12 +10,12 @@ NULL
 #' random forest, maximum entropy, artificial neural network, and support vector
 #' machines). This S4 class is obtained with \code{\link{modelling}}.
 #'
-#' @slot name character. Name of the SDM (by default Species.SDM).
+#' @slot name character. Name of the SDM (default is 'Species.SDM').
 #' @slot projection raster. Habitat suitability map produced by the SDM.
 #' @slot binary raster. Presence/Absence binary map produced by the SDM.
-#' @slot evaluation data frame. Evaluation of the SDM (available metrics include
+#' @slot evaluation data frame. SDM evaluation results (available metrics include
 #'  AUC, Kappa, sensitivity, specificity and proportion of correctly predicted
-#'  occurrences) and identification of the optimal threshold to convert the
+#'  occurrences) and optimal threshold to convert the
 #'  habitat suitability map into a binary presence/absence map.
 #' @slot variable.importance data frame. Relative importance of
 #'  each variable in the SDM.
