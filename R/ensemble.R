@@ -6,11 +6,11 @@ NULL
 #'
 #'This is a method to assemble several algorithms in an ensemble SDM. The
 #'function takes as inputs several S4 \linkS4class{Algorithm.SDM} class objects
-#'obtained with the \code{\link{modelling}} function. The function returns an S4
+#'returned by the \code{\link{modelling}} function. The function returns an S4
 #'\linkS4class{Ensemble.SDM} class object containing the habitat suitability
 #'map, the binary map, and the uncertainty map (based on the between-algorithm
-#'variance) and the associated evaluation tables (model evaluation,
-#'algorithm evaluation, algorithm correlation matrix and variable importance).
+#'variance) and the associated evaluation tables (model evaluation, algorithm
+#'evaluation, algorithm correlation matrix and variable importance).
 #'
 #'@param x,... SDMs. SDMs to be assembled.
 #'@param name character. Optional name given to the final Ensemble.SDM produced
@@ -19,17 +19,16 @@ NULL
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
 #'  used to compute the selection.
-#'@param weight logical. Choose whether or not you want the SDMs to be weighted
-#'  using the selection metric or, alternatively, the mean of the selection
-#'  metrics.
-#'@param thresh numeric. A single integer value representing the number of equal
+#'@param weight logical. If TRUE, SDMs are weighted using the ensemble metric
+#'  or, alternatively, the mean of the selection   metrics.
+#'@param thresh numeric. A integer value specifying the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
-#'@param uncertainty logical. If set to true, generates an uncertainty map and an algorithm
-#'  correlation matrix.
-#'@param verbose logical. If set to true, allows the function to print text in the
-#'  console.
-#'@param GUI,format,na.rm  logical. Don't take those arguments into account
+#'@param uncertainty logical. If TRUE, generates an uncertainty map and
+#'  an algorithm correlation matrix.
+#'@param verbose logical. If set to true, allows the function to print text in
+#'  the console.
+#'@param GUI,format,na.rm  logical. Do not take those arguments into account
 #'  (parameters for the user interface and sum function).
 #'
 #'@details ensemble.metric (metric(s) used to select the best SDMs that will be

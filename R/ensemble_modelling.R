@@ -5,34 +5,33 @@ NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
 #'
-#'This is a function to build an ensemble SDM that assembles multiple algorithms
-#'for a single species. The function takes as inputs an occurrence data frame
-#'made of presence/absence or presence-only records and a raster object for data
-#'extraction and projection. The function returns an S4
-#'\linkS4class{Ensemble.SDM} class object containing the habitat suitability
-#'map, the binary map, the between-algorithm variance map and the associated
-#'evaluation tables (model evaluation, algorithm evaluation, algorithm
-#'correlation matrix and variable importance).
+#'Build an ensemble SDM that assembles multiple algorithms for a single species.
+#'The function takes as inputs an occurrence data frame made of presence/absence
+#'or presence-only records and a raster object for data extraction and
+#'projection. The function returns an S4 \linkS4class{Ensemble.SDM} class object
+#'containing the habitat suitability map, the binary map, the between-algorithm
+#'variance map and the associated evaluation tables (model evaluation, algorithm
+#'evaluation, algorithm correlation matrix and variable importance).
 #'
-#'@param algorithms character. Choice of the algorithm(s) to be run (see details
-#'  below).
-#'@param Occurrences data frame. Occurrence table (can be processed first by
+#'@param algorithms character. A character vector specifying the algorithm
+#'  name(s) to be run (see details below).
+#'@param Occurrences data frame. Occurrences table (can be processed first by
 #'  \code{\link{load_occ}}).
-#'@param Env raster object. Stacked raster object of environmental variables
-#'  (can be processed first by \code{\link{load_var}}).
+#'@param Env raster object. RasterStack object of environmental variables (can
+#'  be processed first by \code{\link{load_var}}).
 #'@param Xcol character. Name of the column  in the occurrence table  containing
 #'  Latitude or X coordinates.
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence, by setting presence to 1 and
-#'  absence to 0. If NULL presence-only dataset is assumed.
+#'  whether a line is a presence or an absence. A value of 1 is presence and
+#'  value of 0 is absence. If NULL presence-only dataset is assumed.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced
 #'  (by default 'Ensemble.SDM').
-#'@param save logical. If set to true, the ensemble SDM is automatically saved.
-#'@param path character. If save is true, the path to the directory in which the
-#'  ensemble SDM will be saved.
+#'@param save logical. If \code{TRUE}, the ensemble SDM is automatically saved.
+#'@param path character. If save is If \code{TRUE}, the path to the directory in
+#'  which the ensemble SDM will be saved.
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
 #'  in case of presence-only dataset. If PA is NULL, recommended PA selection
 #'  strategy is used depending on the algorithm (see details below).
@@ -47,24 +46,23 @@ NULL
 #'  details below.)
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
-#'@param uncertainty logical. If set to true, generates an uncertainty map and
+#'@param uncertainty logical. If \code{TRUE}, generates an uncertainty map and
 #'  an algorithm correlation matrix.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithm is saved in a temporary file to release memory. But beware: if you
-#'  close R, temporary files will be destroyed. To avoid any loss you can save
-#'  your ensemble SDM with \code{\link{save.model}}. Depending on number,
-#'  resolution and extent of models, temporary files can take a lot of disk
-#'  space. Temporary files are written in R environment temporary folder.
+#'  close R, temporary files will be deleted To avoid any loss you can save your
+#'  ensemble SDM with \code{\link{save.model}}. Depending on number, resolution
+#'  and extent of models, temporary files can take a lot of disk space.
+#'  Temporary files are written in R environment temporary folder.
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
 #'  used to compute the selection.
-#'@param weight logical. Choose whether or not you want the SDMs to be weighted
-#'  using the selection metric or, alternatively, the mean of the selection
-#'  metrics.
-#'@param verbose logical. If set to true, allows the function to print text in
+#'@param weight logical. If \code{TRUE}, SDMs are weighted using the ensemble
+#'  metric or, alternatively, the mean of the selection metrics.
+#'@param verbose logical. If \code{TRUE}, allows the function to print text in
 #'  the console.
-#'@param GUI logical. Don't take that argument into account (parameter for the
+#'@param GUI logical. Do not take this argument into account (parameter for the
 #'  user interface).
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
@@ -72,44 +70,44 @@ NULL
 #'@return an S4 \linkS4class{Ensemble.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
 #'
-#'@details \describe{ \item{algorithms}{'all' allows you to call directly all
-#'  available algorithms. Currently, available algorithms include Generalized
-#'  linear model (\strong{GLM}), Generalized additive model (\strong{GAM}),
-#'  Multivariate adaptive regression splines (\strong{MARS}), Generalized
-#'  boosted regressions model (\strong{GBM}), Classification tree analysis
-#'  (\strong{CTA}), Random forest (\strong{RF}), Maximum entropy
-#'  (\strong{MAXENT}), Artificial neural network (\strong{ANN}), and Support
-#'  vector machines (\strong{SVM}). Each algorithm has its own parameters
-#'  settable with the \strong{...} (see each algorithm section below to set
-#'  their parameters).} \item{"PA"}{list with two values: \strong{nb} number of
-#'  pseudo-absences selected, and \strong{strat} strategy used to select
-#'  pseudo-absences: either random selection or disk selection. We set default
-#'  recommendation from Barbet-Massin et al. (2012) (see reference).}
-#'  \item{cv}{\strong{Cross-validation} method used to split the occurrence
-#'  dataset used for evaluation: \strong{holdout} data are partitioned into a
-#'  training set and an evaluation set using a fraction (\emph{cv.param[1]}) and
-#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{k-fold}
-#'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in
-#'  the training set and once the evaluation set and the operation can be
-#'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
-#'  is successively taken as evaluation data.} \item{metric}{Choice of the
-#'  metric used to compute the binary map threshold and the confusion matrix (by
-#'  default SES as recommended by Liu et al. (2005), see reference below):
-#'  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
-#'  correctly predicted observations, \strong{TSS} (True Skill Statistic)
-#'  maximizes the sum of sensitivity and specificity, \strong{SES} uses the
-#'  sensitivity-specificity equality, \strong{LW} uses the lowest occurrence
-#'  prediction probability, \strong{ROC} minimizes the distance between the ROC
-#'  plot (receiving operating characteristic curve) and the upper left corner
-#'  (1,1).}\item{axes.metric}{Choice of the metric used to evaluate the variable
-#'  relative importance (difference between a full model and one with each
-#'  variable successively omitted): \strong{Pearson} (computes a simple
-#'  Pearson's correlation \emph{r} between predictions of the full model and the
-#'  one without a variable, and returns the score \emph{1-r}: the highest the
-#'  value, the more influence the variable has on the model), \strong{AUC},
+#'@details \describe{ \item{algorithms}{'all' calls all the following
+#'  algorithms. Algorithms include Generalized linear model (\strong{GLM}),
+#'  Generalized additive model (\strong{GAM}), Multivariate adaptive regression
+#'  splines (\strong{MARS}), Generalized boosted regressions model
+#'  (\strong{GBM}), Classification tree analysis (\strong{CTA}), Random forest
+#'  (\strong{RF}), Maximum entropy (\strong{MAXENT}), Artificial neural network
+#'  (\strong{ANN}), and Support vector machines (\strong{SVM}). Each algorithm
+#'  has its own parameters settable with the \strong{...} (see each algorithm
+#'  section below to set their parameters).} \item{"PA"}{list with two values:
+#'  \strong{nb} number of pseudo-absences selected, and \strong{strat} strategy
+#'  used to select pseudo-absences: either random selection or disk selection.
+#'  We set default recommendation from Barbet-Massin et al. (2012) (see
+#'  reference).} \item{cv}{\strong{Cross-validation} method used to split the
+#'  occurrence dataset used for evaluation: \strong{holdout} data are
+#'  partitioned into a training set and an evaluation set using a fraction
+#'  (\emph{cv.param[1]}) and the operation can be repeated (\emph{cv.param[2]})
+#'  times, \strong{k-fold} data are partitioned into k (\emph{cv.param[1]})
+#'  folds being k-1 times in the training set and once the evaluation set and
+#'  the operation can be repeated (\emph{cv.param[2]}) times, \strong{LOO}
+#'  (Leave One Out) each point is successively taken as evaluation data.}
+#'  \item{metric}{Choice of the metric used to compute the binary map threshold
+#'  and the confusion matrix (by default SES as recommended by Liu et al.
+#'  (2005), see reference below): \strong{Kappa} maximizes the Kappa,
+#'  \strong{CCR} maximizes the proportion of correctly predicted observations,
+#'  \strong{TSS} (True Skill Statistic) maximizes the sum of sensitivity and
+#'  specificity, \strong{SES} uses the sensitivity-specificity equality,
+#'  \strong{LW} uses the lowest occurrence prediction probability, \strong{ROC}
+#'  minimizes the distance between the ROC plot (receiving operating
+#'  characteristic curve) and the upper left corner
+#'  (1,1).}\item{axes.metric}{Metric used to evaluate the variable relative
+#'  importance (difference between a full model and one with each variable
+#'  successively omitted): \strong{Pearson} (computes a simple Pearson's
+#'  correlation \emph{r} between predictions of the full model and the one
+#'  without a variable, and returns the score \emph{1-r}: the highest the value,
+#'  the more influence the variable has on the model), \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
-#'  \item{ensemble.metric}{Ensemble metric(s) sed to select SDMs: \strong{AUC},
+#'  \item{ensemble.metric}{Ensemble metric(s) used to select SDMs: \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
 #'  \item{"..."}{See algorithm in detail section} }
@@ -188,7 +186,7 @@ NULL
 #'  for regression. By default, set to 3.} }
 #'
 #'@section Warning : Depending on the raster object resolution the process can
-#'  be more or less time- and memory-consuming.
+#'  be more or less time and memory consuming.
 #'
 #' @examples
 #' \dontrun{
@@ -242,10 +240,18 @@ NULL
 #'
 #'
 #'
+#'
+#'
+#'
+#'
 #'  C. Liu, P. M. Berry, T. P. Dawson,  R. & G. Pearson (2005) "Selecting
 #'  thresholds of occurrence in the prediction of species distributions."
 #'  \emph{Ecography} 28:85-393
 #'  \url{http://www.researchgate.net/publication/230246974_Selecting_Thresholds_of_Occurrence_in_the_Prediction_of_Species_Distributions}
+#'
+#'
+#'
+#'
 #'
 #'
 #'

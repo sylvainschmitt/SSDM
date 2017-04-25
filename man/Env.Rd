@@ -12,8 +12,8 @@ Env
 }
 \description{
 A stack of three 30 arcsec-resolution rasters covering the north part of the
-main island of New Caledonia 'Grande Terre'. Climatic variables (RAINFALL and
-TEMPERATURE) are from the WorldClim database, and the SUBSTRATE map is from
+main island of New Caledonia 'Grande Terre'. CRAINFALL and
+TEMPERATURE rasters are climatic variables from the WorldClim database, and SUBSTRATE raster is from
 the IRD Atlas of New Caledonia (2012) (see reference below).
 }
 \references{

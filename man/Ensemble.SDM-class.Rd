@@ -9,7 +9,7 @@ This is an S4 class to represent an ensemble SDM from multiple algorithms
 (including generalized linear model, general additive model, multivariate
 adaptive splines, generalized boosted regression model, classification tree
 analysis, random forest, maximum entropy, artificial neural network, and
-support vector machines). This S4 class is obtained with
+support vector machines). This S4 class is returned by
 \code{\link{ensemble_modelling}} or \code{\link{ensemble}}.
 }
 \section{Slots}{

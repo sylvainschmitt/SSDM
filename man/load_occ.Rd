@@ -20,32 +20,29 @@ perform spatial thinning (can be the result of the
 
 \item{...}{additional parameters given to \code{\link[utils]{read.csv}}.}
 
-\item{Xcol}{character. Name of the column  in the occurrence table  containing
-Latitude or X coordinates.}
+\item{Xcol}{character. Name of the Latitude or X coordinate variable.}
 
-\item{Ycol}{character. Name of the column in the occurrence table  containing
-Longitude or Y coordinates.}
+\item{Ycol}{character. Name of the Longitude or Y coordinate variable.}
 
 \item{Spcol}{character. Name of the column containing species names or IDs.}
 
-\item{GeoRes}{logical. Geographical thinning will be perform on occurrences
+\item{GeoRes}{logical. If \code{TRUE}, performs geographical thinning on occurrences
 to limit geographical biases in the SDMs.}
 
-\item{reso}{numeric. Resolution used to perform the geographical thinning, by
-default the resolution of the raster stack (Env).}
+\item{reso}{numeric. Resolution used to perform the geographical thinning,
+default is the resolution of \code{Env}.}
 
-\item{verbose}{logical. If set to true, allows the function to print text in the
+\item{verbose}{logical. If \code{TRUE}, allows the function to print text in the
 console.}
 
-\item{GUI}{logical. Don't take that argument into account (parameter for the
-user interface).}
+\item{GUI}{logical. Parameter reserved for graphical interface.}
 }
 \value{
 A data frame containing the occurrence dataset (spatially thinned or
  not).
 }
 \description{
-Function to load occurrence data from a table to perform \code{\link{modelling}},
+Load occurrence data from CSV file to perform \code{\link{modelling}},
 \code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 }
 \examples{

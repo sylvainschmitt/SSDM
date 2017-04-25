@@ -25,8 +25,8 @@ User interface of the SSDM package.
 }
 \details{
 If your environmental variables have an important size, you should
-  gave enough memory to the interface with the (\code{maxmem} parameter).
-  Additionally, you can only run one instance of user interface at a time.
+  give enough memory to the interface with the (\code{maxmem} parameter).
+  Note that only one instance of gui can be run at a time.
 }
 \examples{
 \dontrun{

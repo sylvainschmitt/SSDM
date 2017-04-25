@@ -4,27 +4,27 @@
 \alias{load.model}
 \alias{load_enm}
 \alias{load_stack}
-\title{Function to load ensemble SDMs and SSDMs}
+\title{Load ensemble SDMs and SSDMs.}
 \usage{
 load_enm(name, path = getwd())
 
 load_stack(name = "Stack", path = getwd(), GUI = FALSE)
 }
 \arguments{
-\item{name}{character. Name of the folder that contains the model to be
+\item{name}{character. Name of the folder containing the model to be
 loaded.}
 
 \item{path}{character. Path to the directory containing the model to be
 loaded, by default the path to the current directory.}
 
-\item{GUI}{logical. Don't take that argument into account (parameter for the
+\item{GUI}{logical. Do not take this argument into account (parameter for the
 user interface).}
 }
 \value{
 The corresponding SDM object.
 }
 \description{
-Allows to load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
+Load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
 objects saved with their respective save function.
 }
 \seealso{

@@ -20,15 +20,15 @@ below).}
 \item{Env}{raster object. Raster object of environmental variable (can be
 processed first by \code{\link{load_var}}).}
 
-\item{Xcol}{character. Name of the column  in the occurrence table  containing
+\item{Xcol}{character. Name of the column in the occurrence table containing
 Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the column in the occurrence table  containing
+\item{Ycol}{character. Name of the column in the occurrence table containing
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence, by setting presence to 1 and
-absence to 0. If NULL presence-only dataset is assumed.}
+whether a line is a presence or an absence. A value of 1 is presence and
+value of 0 is absence. If NULL presence-only dataset is assumed.}
 
 \item{name}{character. Optional name given to the final SDM produced (by
 default 'Algorithm.SDM').}
@@ -48,7 +48,7 @@ interval threshold values between 0 and 1 (see
 \code{\link[SDMTools]{optim.thresh}}).}
 
 \item{metric}{character. Metric used to compute the binary map threshold (see
-details below.)}
+details below).}
 
 \item{axes.metric}{Metric used to evaluate variable relative importance (see
 details below).}
@@ -74,7 +74,7 @@ details below).}
 }
 \value{
 an S4 \linkS4class{Algorithm.SDM} Class object viewable with the
- \code{\link{plot.model}} method
+ \code{\link{plot.model}} method.
 }
 \description{
 This is a function to build an SDM with one algorithm for a single species.
@@ -85,7 +85,7 @@ object containing the habitat suitability map, the binary map and the
 evaluation table.
 }
 \details{
-\describe{ \item{algorithm}{'all' allows you to call directly all
+\describe{ \item{algorithm}{'all' allows to call directly all
  available algorithms. Currently, available algorithms include Generalized
  linear model (\strong{GLM}), Generalized additive model (\strong{GAM}),
  Multivariate adaptive regression splines (\strong{MARS}), Generalized
@@ -165,7 +165,7 @@ evaluation table.
  to the number of iterations and the number of basis functions in the
  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
  minimum number of observations in the trees terminal nodes. Note that this
- is the actual number of observations not the total weight. By default, set
+ is the actual number of observations, not the total weight. By default, set
  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
@@ -220,7 +220,7 @@ evaluation table.
 
 \section{Warning }{
  Depending on the raster object resolution the process can
- be more or less time- and memory-consuming.
+ be more or less time and memory consuming.
 }
 
 \examples{

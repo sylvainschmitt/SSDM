@@ -4,7 +4,7 @@
 #' @importFrom raster stack writeRaster
 NULL
 
-#'Build an SSDM that assembles multiple algorithms and species
+#'Build an SSDM that assembles multiple algorithms and species.
 #'
 #'This is a function to build an SSDM that assembles multiple algorithm and
 #'species. The function takes as inputs an occurrence data frame made of
@@ -22,13 +22,13 @@ NULL
 #'  \code{\link{load_occ}}).
 #'@param Env raster object. Raster object of environmental variables (can be
 #'  processed first by \code{\link{load_var}}).
-#'@param Xcol character. Name of the column  in the occurrence table containing
+#'@param Xcol character. Name of the column in the occurrence table containing
 #'  Latitude or X coordinates.
-#'@param Ycol character. Name of the column in the occurrence table  containing
+#'@param Ycol character. Name of the column in the occurrence table containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence, by setting presence to 1 and
-#'  absence to 0. If NULL presence-only dataset is assumed.
+#'  whether a line is a presence or an absence. A value of 1 is presence and
+#'  value of 0 is absence. If NULL presence-only dataset is assumed.
 #'@param Spcol character. Name of the column containing species names or IDs.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced.
@@ -53,7 +53,7 @@ NULL
 #'  an algorithm correlation matrix.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithms is saved in a temporary file to release memory. But beware: if
-#'  you close R, temporary files will be destroyed. To avoid any loss you can
+#'  you close R, temporary files will be deleted To avoid any loss you can
 #'  save your SSDM with \code{\link{save.model}}. Depending on number,
 #'  resolution and extent of models, temporary files can take a lot of disk
 #'  space. Temporary files are written in R environment temporary folder.
@@ -81,7 +81,7 @@ NULL
 #'  user interface).
 #'@param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'  used all you available CPU cores.
+#'  used all the available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -226,7 +226,7 @@ NULL
 #'  for regression. By default, set to 3.} }
 #'
 #'@section Warning : Depending on the raster object resolution the process can
-#'  be more or less time- and memory-consuming.
+#'  be more or less time and memory consuming.
 #'
 #' @examples
 #' \dontrun{

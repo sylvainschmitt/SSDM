@@ -26,8 +26,8 @@ Latitude or X coordinates.}
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence, by setting presence to 1 and
-absence to 0. If NULL presence-only dataset is assumed.}
+whether a line is a presence or an absence. A value of 1 is presence and
+value of 0 is absence. If NULL presence-only dataset is assumed.}
 
 \item{Spname}{character. Name of the new or updated species.}
 
@@ -45,7 +45,7 @@ interval threshold values between 0 and 1 (see
 
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithm is saved in a temporary file to release memory. But beware: if you
-close R, temporary files will be destroyed. To avoid any loss you can save
+close R, temporary files will be deleted To avoid any loss you can save
 your model with \code{\link{save.model}}.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in

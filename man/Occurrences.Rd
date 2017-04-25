@@ -3,7 +3,7 @@
 \docType{data}
 \name{Occurrences}
 \alias{Occurrences}
-\title{Plant occurrence data frame}
+\title{Plant occurrences data frame}
 \format{A data frame with 57 rows and 3 variables: \describe{
   \item{SPECIES}{Species of the occurrence} \item{LONGITUDE}{Longitude of the
   occurrence} \item{LATITUDE}{Latitude of the occurrence} }}
@@ -11,7 +11,7 @@
 Occurrences
 }
 \description{
-A dataset containing a list of plant occurrences of five Cryptocarya species
+A dataset containing plant occurrences of five Cryptocarya species
 native to New Caledonia. Occurrence data come from  the Noumea Herbarium
 (NOU) and NC-PIPPN network (see Ibanez et al (2014) in reference below).
 }

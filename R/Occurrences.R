@@ -1,6 +1,6 @@
-#' Plant occurrence data frame
+#' Plant occurrences data frame
 #'
-#' A dataset containing a list of plant occurrences of five Cryptocarya species
+#' A dataset containing plant occurrences of five Cryptocarya species
 #' native to New Caledonia. Occurrence data come from  the Noumea Herbarium
 #' (NOU) and NC-PIPPN network (see Ibanez et al (2014) in reference below).
 #'

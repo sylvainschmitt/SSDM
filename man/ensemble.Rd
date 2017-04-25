@@ -31,21 +31,20 @@ will be included in the ensemble SDM (see details below).}
 \item{ensemble.thresh}{numeric. Threshold(s) associated with the metric(s)
 used to compute the selection.}
 
-\item{weight}{logical. Choose whether or not you want the SDMs to be weighted
-using the selection metric or, alternatively, the mean of the selection
-metrics.}
+\item{weight}{logical. If TRUE, SDMs are weighted using the ensemble metric
+or, alternatively, the mean of the selection   metrics.}
 
-\item{thresh}{numeric. A single integer value representing the number of equal
+\item{thresh}{numeric. A integer value specifying the number of equal
 interval threshold values between 0 and 1 (see
 \code{\link[SDMTools]{optim.thresh}}).}
 
-\item{uncertainty}{logical. If set to true, generates an uncertainty map and an algorithm
-correlation matrix.}
+\item{uncertainty}{logical. If TRUE, generates an uncertainty map and
+an algorithm correlation matrix.}
 
-\item{verbose}{logical. If set to true, allows the function to print text in the
-console.}
+\item{verbose}{logical. If set to true, allows the function to print text in
+the console.}
 
-\item{GUI, format, na.rm}{logical. Don't take those arguments into account
+\item{GUI, format, na.rm}{logical. Do not take those arguments into account
 (parameters for the user interface and sum function).}
 }
 \value{
@@ -55,11 +54,11 @@ an S4 \linkS4class{Ensemble.SDM} class object viewable with the
 \description{
 This is a method to assemble several algorithms in an ensemble SDM. The
 function takes as inputs several S4 \linkS4class{Algorithm.SDM} class objects
-obtained with the \code{\link{modelling}} function. The function returns an S4
+returned by the \code{\link{modelling}} function. The function returns an S4
 \linkS4class{Ensemble.SDM} class object containing the habitat suitability
 map, the binary map, and the uncertainty map (based on the between-algorithm
-variance) and the associated evaluation tables (model evaluation,
-algorithm evaluation, algorithm correlation matrix and variable importance).
+variance) and the associated evaluation tables (model evaluation, algorithm
+evaluation, algorithm correlation matrix and variable importance).
 }
 \details{
 ensemble.metric (metric(s) used to select the best SDMs that will be

@@ -15,31 +15,15 @@ vignette: >
 
 The package ‘SSDM’ is a computer platform implemented in R providing a range of methodological approaches and parameterization at each step of the SSDM building. This vignette presents a typical workflow in R command to use it. An additionnal vignette presents the same workflow using the graphic user interface with `gui` function (see [GUI](GUI.html) vignette).
 
-The workflow of the package ‘SSDM’ is based on three levels: 
+The workflow of the package ‘SSDM’ is based on three modelling levels: 
 
-1. an individual SDM is fitted by linking occurrences of a single species to environmental predictor variables based on the response curve of a single computer algorithm
-2. for each species, an ensemble SDM (ESDM) can be created from several algorithm outputs to create a model that captures components of each
-3. species assemblage from an SSDM is predicted by stacking several SDM or ESDM outputs (Fig. 1).
+1. the individual Species Distribution Model (SDM) fitting the occurrences of a **single species** on environmental predictor variables with a **single modelling algorithm**,
+2. the ensemble SDM (ESDM) combining the outputs of several SDMs, **each SDM using a different modelling algorithm**,
+3. the stack SDM combining several SDM or ESDM outputs to model **species assemblages** and compute **species diversity and species richness** (Fig. 1).
 
 ![Figure 1.  Flow chart of the package ‘SSDM’](SSDM/workflow.png){width=100%}
 
 ## Data inputs
-
-### Natural history records
-
-Species distribution models are built on natural history records. 
-
-‘SSDM’ include `load_occ` function to read raw csv or txt files including your natural history records. We will work with natural history records from five Cryptocarya species native to New Caledonia (see `?Occurrences`).  
-
-```{r Natural history records}
-library(SSDM)
-Occ <- load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
-         Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-         file = 'Occurrences.csv', sep = ',', verbose = FALSE)
-head(Occ)
-```
-
-*Remarks: You need to first load environmental data because occurrences are checked to be in the  extent of environmental data. In addition take care to `GeoRes` option which allow thinning. Thinning aims to remove the fewest records necessary to reduce the effect of sampling bias, while retaining the greatest amount of information. Finally if you have issues to open your file look at additional options of `read.csv` function used to open you raw data.*
 
 ### Environmental variables
 
@@ -50,17 +34,41 @@ Rasters of environmental data need to have the same coordinate reference system 
 ‘SSDM’ include `load_var` function to read raster files including your environmental variables. We will work with three 30 arcsec-resolution rasters covering the north part of the main island of New Caledonia ’Grande Terre’. Climatic variables (RAINFALL and TEMPERATURE) are from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of New Caledonia (2012) (see `?Env`).  
 
 ```{r Environmental variables}
+library(SSDM)
 Env <- load_var(system.file('extdata',  package = 'SSDM'), categorical = 'SUBSTRATE', verbose = FALSE)
 Env
 ```
 
-*Remarks: Take care to correctly precise which environmental variable is categorical with `categorical` parameter. Normalization is activated by default, check `Norm` option.*
+**Note that:**
+
+  - Specify which environmental variable is categorical with `categorical` parameter. 
+  - Normalization is activated by default, check `Norm` option.
+  
+### Natural history records
+
+Species distribution models are built on natural history records. 
+
+‘SSDM’ include `load_occ` function to read raw csv or txt files including your natural history records. We will work with natural history records from five Cryptocarya species native to New Caledonia (see `?Occurrences`).  
+
+```{r Natural history records}
+Occ <- load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
+         Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
+         file = 'Occurrences.csv', sep = ',', verbose = FALSE)
+head(Occ)
+```
+
+**Note that:** 
+
+  - Occurences are checked after environmental data are loaded, therefore environmental data need to be loaded before occurrences. 
+  - Use `GeoRes` option to thin occurences. Thinning removes unnecessary records, reducing the effect of sampling bias while retaining the greatest amount of information.
+  - For issues opening file look at additional options of `read.csv` function used to open you raw data.*
+
 
 ## Model algorithms
 
 ### Individual species distribution models (SDMs)
 
-First, you can build an individual species distribution model using one algorithm and one species. The package ‘SSDM’ includes the main algorithms used to model species distributions: general additive models (GAM), generalized linear models (GLM), multivariate adaptive regression splines (MARS), classification tree analysis (CTA), generalized boosted models (GBM), maximum entropy (Maxent), artificial neural networks (ANN), random forests (RF), and support vector machines (SVM). Default parameters of the dependent R package of each algorithm were conserved but most of them remain settable.
+In the example below we build an *elliptica* distribution model with a subset the occurrences of the species and specifying a single algorithm, here generalized linear models. The package ‘SSDM’ includes the main algorithms used to model species distributions: general additive models (GAM), generalized linear models (GLM), multivariate adaptive regression splines (MARS), classification tree analysis (CTA), generalized boosted models (GBM), maximum entropy (Maxent), artificial neural networks (ANN), random forests (RF), and support vector machines (SVM). Default parameters of the dependent R package of each algorithm were conserved but most of them remain settable.
 
 ```{r SDM}
 SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'), 
@@ -68,14 +76,14 @@ SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'),
 plot(SDM@projection, main = 'SDM\nfor Cryptocarya elliptica\nwith GLM algorithm')
 ```
 
-*Remarks: The package ‘SSDM’ encompass a large methodolgy offered by litterature. Have a look at all parameters for `modelling` function with `?modelling`.*
+**Note that:** The package ‘SSDM’ encompass a large methodolgy offered by litterature. Have a look at all parameters for `modelling` function with `?modelling`.
 
 ### Ensemble species distribution models (ESDMs)
 
-Secondly, you can build an ensemble species distribution model using several algorithm and one species. Because uncertainty in distribution projections can skew policy making and planning, one recommendation is to fit a number of alternative model algorithms and to explore the range of projections across the different SDMs and then to find consensus in SDM projections. Two consensus methods are implemented in the package ‘SSDM’: 
+In this other example we build an ensemble *elliptica* distribution model combining CTA and MARS based SDMs of this species. Because uncertainty in distribution projections can skew policy making and planning, a recommendation is to fit a number of alternative model algorithms and to explore the range of projections across the different SDMs and then to find consensus in SDM projections. Two consensus methods are implemented in the package ‘SSDM’: 
 
 1. a simple average of the SDM outputs
-2. a weighted average based on a user-specified metric or group of metrics (presented below). 
+2. a weighted average (default option, used below), with weigths based on a user-specified metric or group of metrics. 
 
 The package also provides an uncertainty map representing the between-algorithms variance. The degree of agreement between each pair of algorithms can be assessed through a correlation matrix giving the Pearson's coefficient.
 
@@ -87,18 +95,12 @@ ESDM <- ensemble_modelling(c('CTA', 'MARS'), subset(Occurrences, Occurrences$SPE
 plot(ESDM@projection, main = 'ESDM\nfor Cryptocarya elliptica\nwith CTA and MARS algorithms')
 ```
 
-*Remarks: The package ‘SSDM’ encompass a large methodolgy offered by litterature. Have a look at all parameters for `ensemble_modelling` function with `?ensemble_modelling`.*
+**Note that:** the package ‘SSDM’ includes a large methodology offered by litterature. Have a look at all parameters for `ensemble_modelling` function with `?ensemble_modelling`.
 
 ### Stacked species distribution models (SSDMs)
 
-Finally, you can build a stacked species distribution model using several algorihtms and multiple species. The final maps of local species richness and composition can be computed through six different methods: 
+Finally, we build a stacked species distribution model using CTA and SVM algorihtms and multiple species. The outputs of the differnt species are aggregated in SSDM maps of local species richness and composition using summing continuous habitat suitability maps stacking method (pSSDM).
 
-1. by summing discrete presence/absence maps (bSSDM) derived from one of the six metrics available to compute binary maps
-2. by summing discrete presence/absence maps obtained by drawing repeatedly from a Bernoulli distribution 
-3. by summing continuous habitat suitability maps (pSSDM) 
-4. by applying the ‘probability ranking’ rule (PRR) of the SESAM framework (a number of species equal to the prediction of species richness is selected on the basis of decreasing probability of presence calculated by the SDMs) with species richness as estimated by a pSSDM (referred to as ‘PRR.pSSDM’)
-5. by applying the PRR with species richness as estimated by a MEM (‘PRR.MEM’)
-6. by using the maximum-likelihood adjustment approach
 
 ```{r SSDM}
 SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
@@ -107,17 +109,25 @@ SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
 plot(SSDM@diversity.map, main = 'SSDM\nfor Cryptocarya genus\nwith CTA and SVM algorithms')
 ```
 
+Five other stacking methods are available (see references in `?stack_modelling` for details): 
+
+  - by summing discrete presence/absence maps (bSSDM) derived from one of the six metrics available to compute binary maps
+  - by summing discrete presence/absence maps obtained by drawing repeatedly from a Bernoulli distribution 
+  - by applying the ‘probability ranking’ rule (PRR) of the SESAM framework (a number of species equal to the prediction of species richness is selected on the basis of decreasing probability of presence calculated by the SDMs) with species richness as estimated by a pSSDM (referred to as ‘PRR.pSSDM’)
+  - by applying the PRR with species richness as estimated by a MEM (‘PRR.MEM’)
+  - by using the maximum-likelihood adjustment approach
+
 ## Outputs
 
 ### Model accuracy assessment
 
-A range of metrics to evaluate models have been integrated in the package ‘SSDM’ using the package ‘SDMTools’. They include the area under the receiving operating characteristic (ROC) curve (AUC), the Cohen's Kappa coefficient, the omission rate, the sensitivity (true positive rate) and the specificity (true negative rate). These metrics are all based on the confusion matrix (also called ‘error matrix’, which represents the instances in a predicted class versus the instances in an actual class) and, consequently, need an a priori conversion of habitat suitability maps into binary presence/absence maps.
+A range of model evaluation metrics included in package ‘SDMTools’ have been integrated in the package ‘SSDM’. They include the area under the receiving operating characteristic (ROC) curve (AUC), the Cohen's Kappa coefficient, the omission rate, the sensitivity (true positive rate) and the specificity (true negative rate). These metrics are all based on the confusion matrix (also called ‘error matrix’, which represents the instances in a predicted class versus the instances in an actual class). The confusion matrix is computed converting the habitat suitability maps into binary presence/absence maps.
 
 ```{r SDM evaluation}
 knitr::kable(ESDM@evaluation)
 ```
 
-To assess the accuracy of an SSDM, the package provides the opportunity to compare modeled species assemblages with species pools from independent inventories observed in the field. Six evaluation metrics can be computed: (1) the species richness error, i.e. the difference between the predicted and observed species richness; (2) assemblage prediction success, i.e. the proportion of correct predictions; (3) assemblage Cohen’s kappa, i.e. the proportion of specific agreement; (4) assemblage specificity, i.e. the proportion of true negatives (species that are both predicted and observed as being absent); (5) assemblage sensitivity, i.e. the proportion of true positives (species that are both predicted and observed as present); and (6) the Jaccard index, a widely used metric of community similarity.
+To assess the accuracy of an SSDM, the package provides the opportunity to compare modeled species assemblages with species pools from independent inventories observed in the field. Six evaluation metrics are computed: (1) the species richness error, i.e. the difference between the predicted and observed species richness; (2) assemblage prediction success, i.e. the proportion of correct predictions; (3) assemblage Cohen’s kappa, i.e. the proportion of specific agreement; (4) assemblage specificity, i.e. the proportion of true negatives (species that are both predicted and observed as being absent); (5) assemblage sensitivity, i.e. the proportion of true positives (species that are both predicted and observed as present); and (6) the Jaccard index, a widely used metric of community similarity.
 
 ```{r SSDM evaluation}
 knitr::kable(SSDM@evaluation)
@@ -125,7 +135,7 @@ knitr::kable(SSDM@evaluation)
 
 ### Importance analysis of environmental variables
 
-The package ‘SSDM’ provides two measures of the relative contribution of environmental variables, which quantifies the relevance of an environmental variable to determine species distribution. The first one is based on a jack knife approach that evaluates the change in accuracy between a full model and one with each environmental variable omitted in turns. All metrics available in the package can serve to assess the change in accuracy. The second method is based on the Pearson's correlation coefficient between a full model and one with each environmental variable omitted in turns.
+The package ‘SSDM’ provides two methods to measure the relative contribution of environmental variables, which quantifies the relevance of an environmental variable to determine species distribution. The first method is based on a jack knife approach that evaluates the change in accuracy between a full model and the models where each environmental variable are omitted in turns. All metrics available in the package can serve to assess the change in accuracy. The second method is based on the Pearson's correlation coefficient between a full model and the models where each environmental variable are omitted in turns.
 
 ```{r SSDM variable importance}
 knitr::kable(SSDM@variable.importance)
@@ -133,7 +143,7 @@ knitr::kable(SSDM@variable.importance)
 
 ### Endemism mapping
 
-In addition to species richness, endemism is an important feature for conservation as it refers to species being unique to the defined geographic location. The package ‘SSDM’ offers the opportunity to map local species endemism using two metrics: 
+In addition to species richness, endemism is an important feature for conservation as it refers to species being unique to the defined geographic location. Species endemism maps can be computed using two metrics: 
 
 1. the weighted endemism index (WEI)
 2. the corrected weighted endemism index
@@ -144,7 +154,7 @@ plot(SSDM@endemism.map, main = 'Endemism map\nfor Cryptocarya genus\nwith CTA an
 
 ### Summary plot
 
-All results can be sumarize inside a shiny dashboard by calling `plot` method directly on an SSDM object.
+All results can be sumarized inside a shiny dashboard by calling `plot` method directly on an SSDM object.
 
 ```{r plot}
 # plot(SSDM)

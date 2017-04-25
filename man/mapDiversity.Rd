@@ -21,7 +21,7 @@ mapDiversity(obj, ...)
 richness map (see details below).}
 
 \item{rep.B}{integer. If the method used to create the local species richness
-is the random bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
+is the random Bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
 repetitions used to create binary maps for each species.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
@@ -33,10 +33,10 @@ method using probability ranking from richness (\strong{PRR}).}
 }
 \value{
 a list with a diversity map and eventually ESDMs for stacking method
- using probability ranking from richness (\strong{PPR})
+ using probability ranking from richness (\strong{PPR}).
 }
 \description{
-Methods for Stacked.SDM or SSDM to map diversity and communties composition.
+Methods for Stacked.SDM or SSDM to map diversity and communities composition.
 }
 \details{
 \strong{Methods:} Choice of the method used to compute the local

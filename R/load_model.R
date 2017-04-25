@@ -3,16 +3,16 @@
 #' @importFrom raster raster stack reclassify
 NULL
 
-#' Function to load ensemble SDMs and SSDMs
+#' Load ensemble SDMs and SSDMs.
 #'
-#' Allows to load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
+#' Load S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
 #' objects saved with their respective save function.
 #'
-#' @param name character. Name of the folder that contains the model to be
+#' @param name character. Name of the folder containing the model to be
 #'   loaded.
 #' @param path character. Path to the directory containing the model to be
 #'   loaded, by default the path to the current directory.
-#' @param GUI logical. Don't take that argument into account (parameter for the
+#' @param GUI logical. Do not take this argument into account (parameter for the
 #'   user interface).
 #'
 #' @return The corresponding SDM object.

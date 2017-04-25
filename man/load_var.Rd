@@ -25,12 +25,12 @@ be loaded.}
 
 \item{tmp}{logical. If set to true, rasters are
 read in temporary file avoiding to overload the random access memory. But
-beware: if you close R, temporary files will be destroyed.}
+beware: if you close R, temporary files will be deleted.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in the
 console.}
 
-\item{GUI}{logical. Don't take that argument into account (parameter for the
+\item{GUI}{logical. Do not take that argument into account (parameter for the
 user interface).}
 }
 \value{

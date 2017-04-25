@@ -1,16 +1,13 @@
 #' SSDM: Stacked species distribution modelling
 #'
-#' SSDM is a package to map species richness and endemism based on stacked species distribution models (SSDM). Individual
-#' SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species,
-#' an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map,
-#' and can assess variable importance, algorithm accuracy, and between-algorithm
-#' correlation. Methods to stack individual SDMs include summing individual
-#' probabilities and thresholding then summing. Thresholding can be based on a
-#' specific evaluation metric or by drawing repeatedly from a Bernouilli
-#' distribution. The SSDM package also provides a user-friendly interface
-#' (\code{\link{gui}}).
+#' SSDM is a package to map species richness and endemism based on Stacked Species Distribution Models (SSDM). It provides tools to build
+#' SDM, i.e. a single species fitted with a single algorithm, Ensemble SDM (ESDM), i.e. a single species fitted with multiple algorithms,
+#' SSDM several species with one or more algorithms. The package includes numerous modelling algorithms, and specifiable ensemble aggregating and stacking methods.
+#' This package also provides tools to evaluate and explore models such as variable importance, algorithm accuracy, and between-algorithm
+#' correlation, and tools to map results such as habitat suitability maps, binary maps, between-algorithm variance maps.
+#' For ease of use, the SSDM package provides a user-friendly graphical interface (\code{\link{gui}}).
 #'
-#' SSDM provides five categories of functions (that you can find in details
+#' The SSDM package provides five categories of functions (that you can find in details
 #' below): Data preparation, Modelling main functions, Model main methods, Model
 #' classes, and Miscellaneous.
 #'

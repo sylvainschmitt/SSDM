@@ -2,7 +2,7 @@
 % Please edit documentation in R/stack_modelling.R
 \name{stack_modelling}
 \alias{stack_modelling}
-\title{Build an SSDM that assembles multiple algorithms and species}
+\title{Build an SSDM that assembles multiple algorithms and species.}
 \usage{
 stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
@@ -24,15 +24,15 @@ below).}
 \item{Env}{raster object. Raster object of environmental variables (can be
 processed first by \code{\link{load_var}}).}
 
-\item{Xcol}{character. Name of the column  in the occurrence table containing
+\item{Xcol}{character. Name of the column in the occurrence table containing
 Latitude or X coordinates.}
 
-\item{Ycol}{character. Name of the column in the occurrence table  containing
+\item{Ycol}{character. Name of the column in the occurrence table containing
 Longitude or Y coordinates.}
 
 \item{Pcol}{character. Name of the column in the occurrence table specifying
-whether a line is a presence or an absence, by setting presence to 1 and
-absence to 0. If NULL presence-only dataset is assumed.}
+whether a line is a presence or an absence. A value of 1 is presence and
+value of 0 is absence. If NULL presence-only dataset is assumed.}
 
 \item{Spcol}{character. Name of the column containing species names or IDs.}
 
@@ -67,7 +67,7 @@ an algorithm correlation matrix.}
 
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithms is saved in a temporary file to release memory. But beware: if
-you close R, temporary files will be destroyed. To avoid any loss you can
+you close R, temporary files will be deleted To avoid any loss you can
 save your SSDM with \code{\link{save.model}}. Depending on number,
 resolution and extent of models, temporary files can take a lot of disk
 space. Temporary files are written in R environment temporary folder.}
@@ -108,7 +108,7 @@ user interface).}
 
 \item{cores}{integer. Specify the number of CPU cores used to do the
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-used all you available CPU cores.}
+used all the available CPU cores.}
 
 \item{...}{additional parameters for the algorithm modelling function (see
 details below).}
@@ -286,7 +286,7 @@ variable importance), and a list of ensemble SDMs for each species (see
 
 \section{Warning }{
  Depending on the raster object resolution the process can
- be more or less time- and memory-consuming.
+ be more or less time and memory consuming.
 }
 
 \examples{
