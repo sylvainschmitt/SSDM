@@ -25,8 +25,8 @@ NULL
 #'@param Ycol character. Name of the column in the occurrence table  containing
 #'  Longitude or Y coordinates.
 #'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence, by setting presence to 1 and
-#'  absence to 0. If NULL presence-only dataset is assumed.
+#'  whether a line is a presence or an absence A value of 1 is presence and a
+#'  value of 0 is absence. If NULL presence-only dataset is assumed.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced
 #'  (by default 'Ensemble.SDM').
@@ -51,7 +51,7 @@ NULL
 #'  an algorithm correlation matrix.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithm is saved in a temporary file to release memory. But beware: if you
-#'  close R, temporary files will be destroyed. To avoid any loss you can save
+#'  close R, temporary files will be deleted. To avoid any loss you can save
 #'  your ensemble SDM with \code{\link{save.model}}. Depending on number,
 #'  resolution and extent of models, temporary files can take a lot of disk
 #'  space. Temporary files are written in R environment temporary folder.
@@ -188,7 +188,7 @@ NULL
 #'  for regression. By default, set to 3.} }
 #'
 #'@section Warning : Depending on the raster object resolution the process can
-#'  be more or less time- and memory-consuming.
+#'  be more or less time and memory consuming.
 #'
 #' @examples
 #' \dontrun{

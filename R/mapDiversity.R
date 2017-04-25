@@ -6,13 +6,13 @@ NULL
 
 #' Map Diversity
 #'
-#' Methods for Stacked.SDM or SSDM to map diversity and communties composition.
+#' Methods for Stacked.SDM or SSDM to map diversity and communities composition.
 #'
 #'@param obj Stacked.SDM. SSDM to map diversity with.
 #'@param method character. Define the method used to create the local species
 #'  richness map (see details below).
 #'@param rep.B integer. If the method used to create the local species richness
-#'  is the random bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
+#'  is the random Bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
 #'  repetitions used to create binary maps for each species.
 #'@param Env raster object. Stacked raster object of environmental variables
 #'  (can be processed first by \code{\link{load_var}}). Needed only for stacking
@@ -22,7 +22,7 @@ NULL
 #'@param ... other arguments pass to the method.
 #'
 #'@return a list with a diversity map and eventually ESDMs for stacking method
-#'  using probability ranking from richness (\strong{PPR})
+#'  using probability ranking from richness (\strong{PPR}).
 #'
 #'@details \strong{Methods:} Choice of the method used to compute the local
 #'  species richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for

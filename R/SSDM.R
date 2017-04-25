@@ -17,7 +17,7 @@
 #' @section Data preparation: \describe{\item{\code{\link{load_occ}}}{Load
 #'   occurrence data} \item{\code{\link{load_var}}}{Load environmental variables}}
 #'
-#' @section Modelling main  functions: \describe{
+#' @section Modelling main functions: \describe{
 #'   \item{\code{\link{modelling}}}{Build an SDM using a single algorithm}
 #'   \item{\code{\link{ensemble_modelling}}}{Build an SDM that assembles
 #'   multiple algorithms} \item{\code{\link{stack_modelling}}}{Build an SSDMs

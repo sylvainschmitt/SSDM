@@ -20,7 +20,7 @@ NULL
 #'@param Norm logical. If set to true, normalizes environmental variables between 0 and 1.
 #'@param tmp logical. If set to true, rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
-#'  beware: if you close R, temporary files will be destroyed.
+#'  beware: if you close R, temporary files will be deleted.
 #'@param verbose logical. If set to true, allows the function to print text in the
 #'  console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
