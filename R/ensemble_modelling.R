@@ -5,7 +5,7 @@ NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
 #'
-#'This is a function to build an ensemble SDM that assembles multiple algorithms
+#'Build an ensemble SDM (ESDM) that assembles multiple algorithms
 #'for a single species. The function takes as inputs an occurrence data frame
 #'made of presence/absence or presence-only records and a raster object for data
 #'extraction and projection. The function returns an S4
@@ -14,57 +14,51 @@ NULL
 #'evaluation tables (model evaluation, algorithm evaluation, algorithm
 #'correlation matrix and variable importance).
 #'
-#'@param algorithms character. Choice of the algorithm(s) to be run (see details
+#'@param algorithms character. A character vector specifying the algorithm names to be run (see details
 #'  below).
-#'@param Occurrences data frame. Occurrence table (can be processed first by
+#'@param Occurrences data frame. Occurrences table (can be processed first by
 #'  \code{\link{load_occ}}).
-#'@param Env raster object. Stacked raster object of environmental variables
+#'@param Env raster object. RasterStack object of environmental variables
 #'  (can be processed first by \code{\link{load_var}}).
-#'@param Xcol character. Name of the column  in the occurrence table  containing
-#'  Latitude or X coordinates.
-#'@param Ycol character. Name of the column in the occurrence table  containing
-#'  Longitude or Y coordinates.
-#'@param Pcol character. Name of the column in the occurrence table specifying
-#'  whether a line is a presence or an absence, by setting presence to 1 and
-#'  absence to 0. If NULL presence-only dataset is assumed.
+#'@param Xcol character. Name of the Latitude or X coordinate variable in Occurences data frame.
+#'@param Ycol character. Name of the Longitude or Y coordinates variable in Occurences data frame.
+#'@param Pcol character. Name presence/absence variable in Occurrence variable in Occurences data frame.
+#' 1 is presence, 0 is absence. If \code{NULL} presence-only dataset is assumed.
 #'@param rep integer. Number of repetitions for each algorithm.
 #'@param name character. Optional name given to the final Ensemble.SDM produced
-#'  (by default 'Ensemble.SDM').
-#'@param save logical. If set to true, the ensemble SDM is automatically saved.
-#'@param path character. If save is true, the path to the directory in which the
-#'  ensemble SDM will be saved.
+#'  (default is 'Ensemble.SDM').
+#'@param save logical. If \code{TRUE}, the ESDM is automatically saved.
+#'@param path character. If save is \code{TRUE}, the path to the directory in which the
+#'  ESDM will be saved.
 #'@param PA list(nb, strat) defining the pseudo-absence selection strategy used
-#'  in case of presence-only dataset. If PA is NULL, recommended PA selection
+#'  if \code{Pcol} is \code{NULL}. If \code{PA} is \code{NULL}, recommended selection
 #'  strategy is used depending on the algorithm (see details below).
-#'@param cv character. Method of cross-validation used to evaluate the ensemble
-#'  SDM (see details below).
-#'@param cv.param numeric. Parameters associated to the method of
-#'  cross-validation used to evaluate the ensemble SDM (see details below).
-#'@param thresh numeric. A single integer value representing the number of equal
+#'@param cv character. Cross-validation method for the ESDM evaluation (see details below).
+#'@param cv.param numeric. Parameters of the cross-validation method (see details below).
+#'@param thresh numeric. An integer value specifying the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
 #'@param metric character. Metric used to compute the binary map threshold (see
 #'  details below.)
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
-#'@param uncertainty logical. If set to true, generates an uncertainty map and
+#'@param uncertainty logical. If \code{TRUE}, generates an uncertainty map and
 #'  an algorithm correlation matrix.
-#'@param tmp logical. If set to true, the habitat suitability map of each
-#'  algorithm is saved in a temporary file to release memory. But beware: if you
-#'  close R, temporary files will be destroyed. To avoid any loss you can save
-#'  your ensemble SDM with \code{\link{save.model}}. Depending on number,
-#'  resolution and extent of models, temporary files can take a lot of disk
-#'  space. Temporary files are written in R environment temporary folder.
+#'@param tmp logical. If \code{TRUE}, the habitat suitability map of each
+#'  algorithm is saved in a temporary file to release memory. Temporary files are written in R environment temporary folder.
+#'  Depending on the number, the resolution and the extent of the models, temporary files can be large.
+#'  Notice that temporary files are deleted when closing R. To avoid any loss, save
+#'  the ESDMs with \code{\link{save.model}}.
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
-#'  will be included in the ensemble SDM (see details below).
+#'  will be included in the ESDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
 #'  used to compute the selection.
-#'@param weight logical. Choose whether or not you want the SDMs to be weighted
-#'  using the selection metric or, alternatively, the mean of the selection
+#'@param weight logical. If \code{TRUE}, SDMs are weighted
+#'  using the ensemble metric or, alternatively, the mean of the selection
 #'  metrics.
-#'@param verbose logical. If set to true, allows the function to print text in
+#'@param verbose logical. If \code{TRUE}, allows the function to print text in
 #'  the console.
-#'@param GUI logical. Don't take that argument into account (parameter for the
+#'@param GUI logical. Do not take this argument into account (parameter for the
 #'  user interface).
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
@@ -72,8 +66,8 @@ NULL
 #'@return an S4 \linkS4class{Ensemble.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
 #'
-#'@details \describe{ \item{algorithms}{'all' allows you to call directly all
-#'  available algorithms. Currently, available algorithms include Generalized
+#'@details \describe{ \item{algorithms}{'all' calls all
+#'  the following algorithms. Algorithms include Generalized
 #'  linear model (\strong{GLM}), Generalized additive model (\strong{GAM}),
 #'  Multivariate adaptive regression splines (\strong{MARS}), Generalized
 #'  boosted regressions model (\strong{GBM}), Classification tree analysis
@@ -93,15 +87,15 @@ NULL
 #'  the training set and once the evaluation set and the operation can be
 #'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
 #'  is successively taken as evaluation data.} \item{metric}{Choice of the
-#'  metric used to compute the binary map threshold and the confusion matrix (by
-#'  default SES as recommended by Liu et al. (2005), see reference below):
+#'  metric used to compute the binary map threshold and the confusion matrix
+#'  (default is SES as recommended by Liu et al. (2005), see reference below):
 #'  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
 #'  correctly predicted observations, \strong{TSS} (True Skill Statistic)
 #'  maximizes the sum of sensitivity and specificity, \strong{SES} uses the
 #'  sensitivity-specificity equality, \strong{LW} uses the lowest occurrence
 #'  prediction probability, \strong{ROC} minimizes the distance between the ROC
 #'  plot (receiving operating characteristic curve) and the upper left corner
-#'  (1,1).}\item{axes.metric}{Choice of the metric used to evaluate the variable
+#'  (1,1).}\item{axes.metric}{Metric used to evaluate the variable
 #'  relative importance (difference between a full model and one with each
 #'  variable successively omitted): \strong{Pearson} (computes a simple
 #'  Pearson's correlation \emph{r} between predictions of the full model and the
@@ -109,7 +103,7 @@ NULL
 #'  value, the more influence the variable has on the model), \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
-#'  \item{ensemble.metric}{Ensemble metric(s) sed to select SDMs: \strong{AUC},
+#'  \item{ensemble.metric}{Ensemble metric(s) used to select SDMs: \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
 #'  \item{"..."}{See algorithm in detail section} }
@@ -117,26 +111,25 @@ NULL
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
 #'  function from the package 'stats', you can set the following parameters (see
 #'  \code{\link[stats]{glm}} for more details): \describe{
-#'  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
+#'  \item{test}{character. Test used to evaluate the SDM, default is 'AIC'.}
 #'  \item{epsilon}{numeric. Positive convergence tolerance eps ; the iterations
-#'  converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}. By default, set
-#'  to 10e-08.} \item{maxit}{numeric. Integer giving the maximal number of IWLS
+#'  converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}. Default is 10e-08.}
+#'  \item{maxit}{numeric. Integer giving the maximal number of IWLS
 #'  (Iterative Weighted Last Squares) iterations, default 500.} }
 #'
 #'@section Generalized additive model (\strong{GAM}) : Uses the \code{gam}
 #'  function from the package 'mgcv', you can set the following parameters (see
 #'  \code{\link[mgcv]{gam}} for more details): \describe{ \item{test}{character.
-#'  Test used to evaluate the model, default 'AIC'.} \item{epsilon}{numeric.
+#'  Test used to evaluate the model, default is 'AIC'.} \item{epsilon}{numeric.
 #'  This is used for judging conversion of the GLM IRLS (Iteratively Reweighted
-#'  Least Squares) loop, default 10e-08.} \item{maxit}{numeric. Maximum number
-#'  of IRLS iterations to perform, default 500.} }
+#'  Least Squares) loop, default is 10e-08.} \item{maxit}{numeric. Maximum number
+#'  of IRLS iterations to perform, default is 500.} }
 #'
 #'@section Multivariate adaptive regression splines (\strong{MARS}) : Uses the
 #'  \code{earth} function from the package 'earth', you can set the following
 #'  parameters (see \code{\link[earth]{earth}} for more details): \describe{
 #'  \item{degree}{integer. Maximum degree of interaction (Friedman's mi) ; 1
-#'  meaning build an additive model (i.e., no interaction terms). By default,
-#'  set to 2.} }
+#'  meaning build an additive model (i.e., no interaction terms). Default is 2.} }
 #'
 #'@section Generalized boosted regressions model (\strong{GBM}) : Uses the
 #'  \code{gbm} function from the package 'gbm,' you can set the following
@@ -145,47 +138,47 @@ NULL
 #'  to the number of iterations and the number of basis functions in the
 #'  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
 #'  minimum number of observations in the trees terminal nodes. Note that this
-#'  is the actual number of observations not the total weight. By default, set
-#'  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
+#'  is the actual number of observations not the total weight. Default
+#'  is 1.} \item{algocv}{integer. Number of cross-validations, default is 3.}
 #'  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
 #'  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
-#'  cross-validation. By default, set to 1e-03.} }
+#'  cross-validation. Default is 1e-03.} }
 #'
 #'@section Classification tree analysis (\strong{CTA}) : Uses the \code{rpart}
 #'  function from the package 'rpart', you can set the following parameters (see
 #'  \code{\link[rpart]{rpart}} for more details): \describe{
 #'  \item{final.leave}{integer. The minimum number of observations in any
-#'  terminal node, default 1.} \item{algocv}{integer. Number of
-#'  cross-validations, default 3.} }
+#'  terminal node, default is 1.} \item{algocv}{integer. Number of
+#'  cross-validations, default is 3.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the \code{randomForest} function
 #'  from the package 'randomForest', you can set the following parameters (see
 #'  \code{\link[randomForest]{randomForest}} for more details): \describe{
 #'  \item{trees}{integer. Number of trees to grow. This should not be set to a
 #'  too small number, to ensure that every input row gets predicted at least a
-#'  few times. By default, set to 2500.} \item{final.leave}{integer. Minimum
+#'  few times. Default is 2500.} \item{final.leave}{integer. Minimum
 #'  size of terminal nodes. Setting this number larger causes smaller trees to
-#'  be grown (and thus take less time). By default, set to 1.} }
+#'  be grown (and thus take less time). Default is 1.} }
 #'
 #'@section Maximum Entropy (\strong{MAXENT}) : Uses the \code{maxent} function
-#'  from the package 'dismo'. Make sure that you have correctly installed the
-#'  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
+#'  from the package 'dismo'. Make sure that file maxent.jar is correctly installed the
+#'  in folder ~\\R\\library\\version\\dismo\\java.  maxent.jar is available
 #'  at \url{https://www.cs.princeton.edu/~schapire/maxent/} (see
 #'  \code{\link[dismo]{maxent}} for more details).
 #'
 #'@section Artificial Neural Network (\strong{ANN}) : Uses the \code{nnet}
 #'  function from the package 'nnet', you can set the following parameters (see
 #'  \code{\link[nnet]{nnet}} for more details): \describe{ \item{maxit}{integer.
-#'  Maximum number of iterations, default 500.} }
+#'  Maximum number of iterations, default is 500.} }
 #'
 #'@section Support vector machines (\strong{SVM}) : Uses the \code{svm} function
 #'  from the package 'e1071', you can set the following parameters (see
 #'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
-#'  Epsilon parameter in the insensitive loss function, default 1e-08.}
+#'  Epsilon parameter in the insensitive loss function, default is 1e-08.}
 #'  \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
 #'  cross-validation on the training data is performed to assess the quality of
 #'  the model: the accuracy rate for classification and the Mean Squared Error
-#'  for regression. By default, set to 3.} }
+#'  for regression. Default is 3.} }
 #'
 #'@section Warning : Depending on the raster object resolution the process can
 #'  be more or less time- and memory-consuming.

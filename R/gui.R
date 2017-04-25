@@ -2,9 +2,9 @@
 #'
 #' User interface of the SSDM package.
 #'
-#' @param port char. The TCP port that the application should listen on (see
+#' @param port char. The TCP port that the application should listen to (see
 #'   \code{\link[shiny]{runApp}} for more details).
-#' @param host char. The IPv4 address that the application should listen on (see
+#' @param host char. The IPv4 address that the application should listen to (see
 #'   \code{\link[shiny]{runApp}} for more details).
 #' @param working.directory char. Directory in which the application will run.
 #'
@@ -12,8 +12,8 @@
 #'   user-friendly interface.
 #'
 #' @details If your environmental variables have an important size, you should
-#'   gave enough memory to the interface with the (\code{maxmem} parameter).
-#'   Additionally, you can only run one instance of user interface at a time.
+#'   give enough memory to the interface with the (\code{maxmem} parameter).
+#'   Note that only one instance of gui can be run at a time.
 #'
 #' @examples
 #' \dontrun{

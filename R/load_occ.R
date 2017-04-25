@@ -6,7 +6,7 @@ NULL
 
 #'Load occurrence data
 #'
-#'Function to load occurrence data from a table to perform \code{\link{modelling}},
+#'Load occurrence data from CSV file to perform \code{\link{modelling}},
 #'\code{\link{ensemble_modelling}} or \code{\link{stack_modelling}}.
 #'
 #'@param path character. Path to the directory that contains the occurrence table.
@@ -16,19 +16,16 @@ NULL
 #'@param file character. File containing the occurrence table, if NULL
 #'  (default) the .csv file located in the path will be loaded.
 #'@param ... additional parameters given to \code{\link[utils]{read.csv}}.
-#'@param Xcol character. Name of the column  in the occurrence table  containing
-#'  Latitude or X coordinates.
-#'@param Ycol character. Name of the column in the occurrence table  containing
-#'  Longitude or Y coordinates.
+#'@param Xcol character. Name of the Latitude or X coordinate variable.
+#'@param Ycol character. Name of the Longitude or Y coordinate variable.
 #'@param Spcol character. Name of the column containing species names or IDs.
-#'@param GeoRes logical. Geographical thinning will be perform on occurrences
+#'@param GeoRes logical. If \code{TRUE}, performs geographical thinning on occurrences
 #'  to limit geographical biases in the SDMs.
-#'@param reso numeric. Resolution used to perform the geographical thinning, by
-#'  default the resolution of the raster stack (Env).
-#'@param verbose logical. If set to true, allows the function to print text in the
+#'@param reso numeric. Resolution used to perform the geographical thinning,
+#'  default is the resolution of \code{Env}.
+#'@param verbose logical. If \code{TRUE}, allows the function to print text in the
 #'  console.
-#'@param GUI logical. Don't take that argument into account (parameter for the
-#'  user interface).
+#'@param GUI logical. Parameter reserved for graphical interface.
 #'
 #'@return A data frame containing the occurrence dataset (spatially thinned or
 #'  not).

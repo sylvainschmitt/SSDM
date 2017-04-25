@@ -17,17 +17,15 @@ NULL
 #'@param format character. Format of environmental variables files
 #'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
 #'@param categorical character. Specify whether an environmental variable is a categorical variable.
-#'@param Norm logical. If set to true, normalizes environmental variables between 0 and 1.
-#'@param tmp logical. If set to true, rasters are
-#'  read in temporary file avoiding to overload the random access memory. But
-#'  beware: if you close R, temporary files will be destroyed.
-#'@param verbose logical. If set to true, allows the function to print text in the
+#'@param Norm logical. If \code{TRUE}, normalizes environmental variables between 0 and 1.
+#'@param tmp logical. If \code{TRUE}, rasters are
+#'  read in temporary file to avoid overloading memory. Note that temporary files are deleted when closing R.
+#'@param verbose logical. If \code{TRUE}, allows the function to print text in the
 #'  console.
-#'@param GUI logical. Don't take that argument into account (parameter for the
+#'@param GUI logical. Do not take that argument into account (parameter for the
 #'  user interface).
 #'
-#'@return A stack containing the environmental rasters (normalized or
-#'  not).
+#'@return A stack containing the environmental rasters.
 #'
 #' @examples
 #' \dontrun{

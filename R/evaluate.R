@@ -10,16 +10,15 @@ NULL
 
 #' Evaluate
 #'
-#' Evaluation of SDM or ESDM habitat suitability predictions or evalaution of
-#' SSDM floristic composition with Pottier et al, 2013 method (see reference
+#' Evaluation of SDM or ESDM habitat suitability predictions or evaluation of
+#' SSDM floristic composition computed with Pottier et al, 2013 method (see reference
 #' below)
 #'
 #' @param obj Stacked.SDM. SSDM to evaluate
-#' @param cv character. Method of cross-validation used to evaluate the SDM (see
+#' @param cv character. Method of cross-validation for SDM evaluation (see
 #'  details below).
-#' @param cv.param numeric. Parameters associated to the method of
-#'  cross-validation used to evaluate the SDM (see details below).
-#' @param thresh numeric. A single integer value representing the number of equal
+#' @param cv.param numeric. Cross-validation parameters for SDM evaluation (see details below).
+#' @param thresh numeric. An integer value specifying the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
 #' @param metric character. Metric(s) used to select the best SDMs that will be
