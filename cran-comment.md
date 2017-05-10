@@ -1,6 +1,8 @@
 ## Test environments
 * local Ubuntu 14.04 LTS, R 3.2.2
 * local Windows 7, R 3.2.2
+* Travis CI Ubuntu 14.04.5 LTS, R 3.4.0
+* AppVeyor Windows Server 2012, R 3.3.3
 * win-builder (devel and release)
 
 ## R CMD check results
@@ -20,4 +22,6 @@ Those are scientific correctly spelled words of species distribution modelling f
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Still an issue with graphical user interface, shiny was not loaded by the UI. Bug is now fixed.
+* Added two vignettes (for the main workflow and the use of the user interface)
+* Corrected the english in description, documentations, vignettes and user interface with three different reviewers
+* Made all the modifications requested by anonymous reviewers of a peer reviewed scientific journal in which the package is being published

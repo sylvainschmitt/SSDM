@@ -59,7 +59,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                         uiOutput('Pcol'),
                                         checkboxInput('GeoRes', 'Geographic resampling', value = TRUE),
                                         uiOutput('reso'),
-                                        p('Geographical thinning can be performed on occurrences to limit geographical biases in the SDMs.'),
+                                        p('Randomize occurrences so that they will at least be separated by a user-specified distance to reduce the effect of biased occurrence collections on SDM outcomes'),
                                         actionButton('load2', 'Load')),
                                     box(title = 'Preview',
                                         dataTableOutput('occ')

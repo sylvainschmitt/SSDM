@@ -12,6 +12,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.3
+==========
+
+-   CRAN submission following article submission in MEE
+
 SSDM 0.2.2.9002
 ===============
 
