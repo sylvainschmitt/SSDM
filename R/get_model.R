@@ -130,7 +130,7 @@ setMethod("get_model", "SVM.SDM", function(obj, epsilon = 1e-08, algocv = 3,
                                            ...) {
   data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
                                                              "Y"))]
-  model <- svm(Presence ~ ., data = data, type = "eps-regression", gamma = 1/(length(data) -
-                                                                                1), kernel = "radial", epsilon = epsilon, cross = algocv)
+  model <- svm(Presence ~ ., data = data, type = "eps-regression",
+               gamma = 1/(length(data) - 1), kernel = "radial", epsilon = epsilon, cross = algocv)
   return(model)
 })

@@ -12,6 +12,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.3.9001
+===============
+
+-   axes contribution evaluation when only one variable
+
 SSDM 0.2.3
 ==========
 
