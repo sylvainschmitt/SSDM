@@ -72,4 +72,6 @@ Suggests:
     knitr,
     rmarkdown
 RoxygenNote: 6.0.1
-VignetteBuilder: knitr
+VignetteBuilder: 
+    knitr,
+    rmarkdown

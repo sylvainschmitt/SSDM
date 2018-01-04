@@ -1,6 +1,5 @@
 ## Test environments
-* local Ubuntu 14.04 LTS, R 3.2.2
-* local Windows 7, R 3.2.2
+* local Ubuntu 16.04 LTS, R 3.4.3
 * Travis CI Ubuntu 14.04.5 LTS, R 3.4.0
 * AppVeyor Windows Server 2012, R 3.3.3
 * win-builder (devel and release)
@@ -22,6 +21,5 @@ Those are scientific correctly spelled words of species distribution modelling f
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Added two vignettes (for the main workflow and the use of the user interface)
-* Corrected the english in description, documentations, vignettes and user interface with three different reviewers
-* Made all the modifications requested by anonymous reviewers of a peer reviewed scientific journal in which the package is being published
+* Added `rmarkdown` to VignetteBuilder field in DESCRIPTION following Prof Brian Ripley mail
+* Added CTATION file following article publication
