@@ -40,7 +40,7 @@ Methods for Stacked.SDM or SSDM to map diversity and communities composition.
 }
 \details{
 \strong{Methods:} Choice of the method used to compute the local
- species richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for
+ species richness map (see Calabrese et al. (2014) and D'Amen et al (2015) for
  more informations, see reference below): \describe{\item{pSSDM}{sum
  probabilities of habitat suitability maps}\item{Bernoulli}{draw repeatedly
  from a Bernoulli distribution}\item{bSSDM}{sum the binary map obtained with

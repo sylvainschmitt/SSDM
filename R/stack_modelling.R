@@ -129,7 +129,7 @@ NULL
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
 #'  \item{method}{Choice of the method used to compute the local species
-#'  richness map (see Calabrez et al. (2014) and D'Amen et al (2015) for more
+#'  richness map (see Calabrese et al. (2014) and D'Amen et al (2015) for more
 #'  informations, see reference below): \strong{pSSDM} sum probabilities of
 #'  habitat suitability maps, \strong{Bernoulli} drawing repeatedly from a
 #'  Bernoulli distribution, \strong{bSSDM} sum the binary map obtained with the
