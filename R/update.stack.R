@@ -71,7 +71,7 @@ setMethod('update', 'Stacked.SDM',
             stack <- object
             # New ENM creation
             if (verbose) {
-              cat("New specie ensemble distribution model creation...\n")
+              cat("New species ensemble distribution model creation...\n")
             }
             if (stack@parameters$PA == "default") {
               PA <- NULL
@@ -102,7 +102,7 @@ setMethod('update', 'Stacked.SDM',
 
             # Test for new
             if (verbose) {
-              cat("Check if the specie already exist...\n")
+              cat("Check if the species already exist...\n")
             }
             if (!is.null(Spname)) {
               i <- which(names(stack@enms) == paste0(Spname, ".Ensemble.SDM"))
