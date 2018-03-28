@@ -212,7 +212,7 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     a <- try(enms[[i]]@uncertainty)
     if (inherits(a, "try-error")) {
       if (verbose) {
-        cat("Ensemble model", enms[[i]]@name, "uncertinity map not computed")
+        cat("Ensemble model", enms[[i]]@name, "uncertainty map not computed")
       }
     } else {
       b <- try(stack(uncertainities, a))

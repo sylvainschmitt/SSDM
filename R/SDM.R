@@ -39,7 +39,7 @@ setMethod('print', 'SDM', function(x, ...) {
   print(x@evaluation)
   print(x@variable.importance)
   if(inherits(x, 'Ensemble.SDM')) {
-    cat('Uncertinity map :', names(x@uncertainty),'\n')
+    cat('Uncertainty map :', names(x@uncertainty),'\n')
     print(x@algorithm.evaluation)
     print(x@algorithm.correlation)
   }
