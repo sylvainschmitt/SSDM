@@ -3,6 +3,7 @@ title: "NEWS"
 output: github_document
 ---
 # TO DO
+- **model forecasting**
 - possibility to add external richness data
 - add evaluation for MEMs
 - add ensemble method for MEMs
@@ -10,6 +11,9 @@ output: github_document
 - implement checkerboard stacking method
 - add finer tests
 - document all S4 class and methods
+
+# SSDM 0.2.3.9003
+- fixed issue #22 from @Rekyt
 
 # SSDM 0.2.3.9002
 - `rmarkdown` added to VignetteBuilder field in DESCRIPTION

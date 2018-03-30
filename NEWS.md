@@ -4,6 +4,7 @@ NEWS
 TO DO
 =====
 
+-   **model forecasting**
 -   possibility to add external richness data
 -   add evaluation for MEMs
 -   add ensemble method for MEMs
@@ -11,6 +12,17 @@ TO DO
 -   implement checkerboard stacking method
 -   add finer tests
 -   document all S4 class and methods
+
+SSDM 0.2.3.9003
+===============
+
+-   fixed issue \#22 from @Rekyt
+
+SSDM 0.2.3.9002
+===============
+
+-   `rmarkdown` added to VignetteBuilder field in DESCRIPTION
+-   CTATION file added following article publication
 
 SSDM 0.2.3.9001
 ===============

@@ -431,7 +431,7 @@ stack_modelling <- function(algorithms,
   # Species stacking
   if (length(enms) < 2) {
     if (verbose) {
-      stop("You have less than two remaining species ensemble models, maybe you should try an easier thresholding ?")
+      stop("Less than two species models were retained, you should lower the ensemble threshold value (ensemble.thresh parameter).")
     } else {
       return(NULL)
     }
