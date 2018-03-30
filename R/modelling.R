@@ -292,7 +292,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
   }
 
   # Environment data input test | RasterStack needed
-  if (is.raster(Env)) {
+  if (inherits(Env, "Raster")) {
     Env <- stack(Env)
   }
   if (!inherits(Env, "RasterStack")) {

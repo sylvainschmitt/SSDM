@@ -13,6 +13,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.3.9004
+===============
+
+-   fixed issue \#20 from @Rekyt
+
 SSDM 0.2.3.9003
 ===============
 
