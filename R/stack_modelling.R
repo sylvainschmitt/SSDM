@@ -444,7 +444,7 @@ stack_modelling <- function(algorithms,
     }
     enms["method"] <- method
     enms["rep.B"] <- rep.B
-    if (method %in% c("PR", "TR", "CB")) {
+    if (method %in% c("PRR.MEM", "PRR.pSSDM")) {
       enms["Env"] <- Env
     }
     if (!is.null(range)) {
