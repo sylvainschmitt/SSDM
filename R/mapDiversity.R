@@ -182,7 +182,9 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
 
 .MEM <- function(obj, Env){
   occ <- data.frame(rasterToPoints(.richness(obj), function(x) x > 0))
-  ensemble_modelling(algorithms = unlist(
+  maxOcc <- max(occ$layer) # Reucing occ for algorithms
+  occ$layer <- occ$layer/max(maxOcc)
+  MEM <- ensemble_modelling(algorithms = unlist(
     strsplit(obj@enms[[1]]@parameters$algorithms,
              ".", fixed = TRUE))[-1],
     Occurrences = occ, Env = Env, Xcol = "x",
@@ -202,6 +204,8 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     uncertainty = FALSE,
     weight = as.logical(obj@enms[[1]]@parameters$weight),
     verbose = FALSE)
+  MEM@projection <- MEM@projection*maxOcc
+  return(MEM)
 }
 
 .PRR <- function(obj, Richness){
