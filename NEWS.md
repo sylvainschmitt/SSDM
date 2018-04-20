@@ -13,6 +13,11 @@ TO DO
 -   add finer tests
 -   document all S4 class and methods
 
+SSDM 0.2.3.9007
+===============
+
+-   fixed GBM and removed MAXENT for MEM issue \#24 from @BoiMau
+
 SSDM 0.2.3.9006
 ===============
 

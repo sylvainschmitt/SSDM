@@ -184,9 +184,12 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   occ <- data.frame(rasterToPoints(.richness(obj), function(x) x > 0))
   maxOcc <- max(occ$layer) # Reucing occ for algorithms
   occ$layer <- occ$layer/max(maxOcc)
-  MEM <- ensemble_modelling(algorithms = unlist(
+  algo <- unlist(
     strsplit(obj@enms[[1]]@parameters$algorithms,
-             ".", fixed = TRUE))[-1],
+             ".", fixed = TRUE))[-1]
+  if("MAXENT" %in% algo)
+    algo <- algo[-which(algo == "MAXENT")]
+  MEM <- ensemble_modelling(algorithms = algo,
     Occurrences = occ, Env = Env, Xcol = "x",
     Ycol = "y", Pcol = "layer", rep = obj@enms[[1]]@parameters$rep,
     name = "MEM", cv = obj@enms[[1]]@parameters$cv,

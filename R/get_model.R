@@ -92,7 +92,11 @@ setMethod("get_model", "GBM.SDM", function(obj, trees = 2500, final.leave = 1,
                                            algocv = 3, thresh.shrink = 0.001, n.cores = NULL, ...) {
   data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
                                                              "Y"))]
-  model <- gbm(Presence ~ ., data = data, distribution = "bernoulli",
+  if (all(data$Presence %in% c(0, 1)))
+    distribution  <- "bernoulli"
+  else
+    distribution <- "gaussian"
+  model <- gbm(Presence ~ ., data = data, distribution = distribution,
                n.minobsinnode = final.leave, shrinkage = thresh.shrink, bag.fraction = 0.5,
                n.cores = n.cores, train.fraction = 1, cv.folds = algocv, n.trees = trees)
   return(model)
