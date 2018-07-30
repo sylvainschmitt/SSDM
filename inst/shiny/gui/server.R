@@ -79,9 +79,9 @@ serverWD <- function(working.directory){
                       filetypes=c('',"grd", "tif", "asc","sdat", "rst", "nc", "tif", "envi", "bil", "img"))
     }
     observeEvent(input$envfiles,{
-      load.var$vars = list()
-      for(i in seq_len(length(input$envfiles$files))) {
-        load.var$vars[[i]] = as.character(input$envfiles$files[[i]][length(input$envfiles$files[[i]])])
+      if(!is.integer(input$envfiles)){
+          load.var$vars = lapply(input$envfiles$files, function(x) x[[2]])
+          names(load.var$vars) <- unlist(load.var$vars)
       }
     })
     output$factors <- renderUI({
@@ -190,16 +190,18 @@ serverWD <- function(working.directory){
                       filetypes=c('',"csv", "txt"))
     }
     observeEvent(input$Occ, {
-      file = paste0(switch(input$Occ$root,
-                           'wd' = working.directory,
-                           'example' = example,
-                           'home' = '/home',
-                           'root' = '/',
-                           input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
-      load.occ$columns = names(read.csv2(file))
+      if(!is.integer(input$Occ)) {
+        file = paste0(switch(input$Occ$root,
+                             'wd' = working.directory,
+                             'example' = example,
+                             'home' = '/home',
+                             'root' = '/',
+                             input$Occ$root), '/', paste0(unlist(input$Occ$files[[1]])[-1], collapse = '/'))
+        load.occ$columns = names(read.csv2(file))
+      }
     })
     observeEvent(input$sep, {
-      if(!is.null(input$Occ)) {
+       if(!is.integer(input$Occ)) {
         file = paste0(switch(input$Occ$root,
                              'wd' = working.directory,
                              'example' = example,
@@ -210,7 +212,7 @@ serverWD <- function(working.directory){
       }
     })
     observeEvent(input$Occ, {
-      if(!is.null(input$Occ)) {
+      if(!is.integer(input$Occ)) {
         file = paste0(switch(input$Occ$root,
                              'wd' = working.directory,
                              'example' = example,
