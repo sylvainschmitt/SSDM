@@ -33,7 +33,7 @@ Imports:
     shiny (>= 0.12.2),
     shinydashboard (>= 0.5.1),
     gplots (>= 0.1.0),
-    shinyFiles (>= 0.6.0),
+    shinyFiles (>= 0.7.0),
     spThin (>= 0.1.0)
 Depends:
     R (>= 3.2.2)

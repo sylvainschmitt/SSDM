@@ -3,6 +3,7 @@ title: "NEWS"
 output: github_document
 ---
 # TO DO
+- **gui() formal testing**
 - **model forecasting**
 - possibility to add external richness data
 - add evaluation for MEMs
@@ -11,6 +12,9 @@ output: github_document
 - implement checkerboard stacking method
 - add finer tests
 - document all S4 class and methods
+
+# SSDM 0.2.3.9009
+- evaluation unactivation with `eval=F` in stacking function for Robin issue
 
 # SSDM 0.2.3.9008
 - issue #32 fixed related to `shinyFiles` version 0.7.0
