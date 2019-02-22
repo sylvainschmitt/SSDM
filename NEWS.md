@@ -1,20 +1,6 @@
 NEWS
 ================
 
-TO DO
-=====
-
-- **model forecasting** (@lukasbaumbach, @sylvainschmitt)
-- possibility to add external richness data
-- add evaluation for MEMs
-- add ensemble method for MEMs
-- implement trait range stacking method
-- implement checkerboard stacking method
-- add model calibration statistics (@lukasbaumbach)
-- document all S4 class and methods
-- implement backwards compatibility with source packages (@lukasbaumbach, @sylvainschmitt)
-- add more methods for pseudo-absence generation, e.g. buffer (@lukasbaumbach)
-
 SSDM 0.2.3.9007
 ===============
 
