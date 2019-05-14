@@ -13,6 +13,9 @@ output: github_document
 - add finer tests
 - document all S4 class and methods
 
+# SSDM @raster_update 0.2.3.9010
+- solved compatibility issue with new raster version
+
 # SSDM 0.2.3.9009
 - evaluation unactivation with `eval=F` in stacking function for Robin issue
 

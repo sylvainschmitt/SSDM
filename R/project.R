@@ -9,18 +9,24 @@ setGeneric("project", function(obj, Env, ...) {
 
 setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   model = get_model(obj, ...)
-  proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
-                                                                     x) {
-    x = as.data.frame(x)
-    for (i in seq_len(length(Env@layers))) {
-      if (Env[[i]]@data@isfactor) {
-        x[, i] = as.factor(x[, i])
-        x[, i] = droplevels(x[, i])
-        levels(x[, i]) = Env[[i]]@data@attributes[[1]]$ID
-      }
-    }
-    return(predict(model, x))
-  }))
+  factors <- sapply(seq_len(length(Env@layers)), function(i)
+    if(Env[[i]]@data@isfactor) Env[[i]]@data@attributes[[1]]$ID)
+  factors[sapply(factors, is.null)] <- NULL
+  names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
+    if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  proj = suppressWarnings(raster::predict(Env, model, factors = factors))
+  # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
+  #                                                                    x) {
+  #   x = as.data.frame(x)
+  #   for (i in seq_len(length(Env@layers))) {
+  #     if (Env[[i]]@data@isfactor) {
+  #       x[, i] = as.factor(x[, i])
+  #       x[, i] = droplevels(x[, i])
+  #       levels(x[, i]) = Env[[i]]@data@attributes[[1]]$ID
+  #     }
+  #   }
+  #   return(predict(model, x))
+  # }))
   # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
