@@ -19,7 +19,7 @@ License: GPL (>=3) | file LICENSE
 LazyData: TRUE
 Imports:
     sp (>= 1.2.0),
-    raster (>= 2.4.20),
+    raster (>= 2.9-4),
     methods (>= 3.2.2),
     SDMTools (>= 1.1.221),
     mgcv (>= 1.8.7),
