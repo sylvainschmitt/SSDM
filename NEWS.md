@@ -1,6 +1,21 @@
 NEWS
 ================
 
+SSDM 0.2.3.9010
+===============
+
+- solved compatibility issue with new raster version
+
+SSDM 0.2.3.9009
+===============
+
+- evaluation unactivation with `eval=F` in stacking function for Robin issue
+
+SSDM 0.2.3.9008
+===============
+
+- issue #32 fixed related to `shinyFiles` version 0.7.0
+
 SSDM 0.2.3.9007
 ===============
 

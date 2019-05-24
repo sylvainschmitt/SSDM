@@ -38,7 +38,8 @@
                       range = NULL,
                       endemism = 'WEI',
                       cores = 1,
-                      MEM = FALSE){
+                      MEM = FALSE,
+                      eval = TRUE){
   ## Argument checking function
   ## Occurrences, Environment, and part of
   ## X, Y, Pcol are directly defined in functions
@@ -217,6 +218,9 @@
   }
   if (!is.null(richness)) {
     warning("Richness check arg to implement !")
+  }
+  if (!inherits(eval, "logical")) {
+    stop("eval parameter should be a logical (True or False).")
   }
 
   # load.occ and load.var

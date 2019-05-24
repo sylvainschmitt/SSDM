@@ -32,6 +32,7 @@ NULL
 #'  range restriction will be applied.
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
+#'@param eval logical. If set to true, disable stack evaluation.
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -110,16 +111,18 @@ NULL
 #'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'pSSDM', rep.B = 1000, Env = NULL, range = NULL, endemism = c('WEI','Binary'), verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
+setGeneric('stacking', function(enm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
+                                Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE,
+                                verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
                                                Env = NULL, range = NULL, endemism = c('WEI','Binary'),
-                                               verbose = TRUE, GUI = FALSE) {
+                                               eval = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range,
-             endemism = endemism, verbose = verbose, GUI = GUI)
+             endemism = endemism, eval = eval, verbose = verbose, GUI = GUI)
 
   enms <- list(enm, ...)
   if (length(enms) < 2) {
@@ -377,10 +380,11 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   }
 
   # Evaluation
-  if (verbose) {
-    cat("   evaluating...")
+  if (eval){
+    if (verbose)
+      cat("   evaluating...")
+    stack@evaluation <- evaluate(stack)
   }
-  stack@evaluation <- evaluate(stack)
 
   # Parameters
   stack@parameters$method <- method
