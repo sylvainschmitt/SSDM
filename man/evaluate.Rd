@@ -3,7 +3,6 @@
 \docType{methods}
 \name{evaluate}
 \alias{evaluate}
-\alias{evaluate}
 \alias{evaluate,Algorithm.SDM-method}
 \alias{evaluate,MAXENT.SDM-method}
 \alias{evaluate,Stacked.SDM-method}

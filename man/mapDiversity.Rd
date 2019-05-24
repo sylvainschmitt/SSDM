@@ -3,7 +3,6 @@
 \docType{methods}
 \name{mapDiversity}
 \alias{mapDiversity}
-\alias{mapDiversity}
 \alias{mapDiversity,Stacked.SDM-method}
 \title{Map Diversity}
 \usage{

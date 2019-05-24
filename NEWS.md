@@ -1,6 +1,13 @@
 NEWS
 ================
 
+SSDM 0.2.3.9011
+===============
+
+- Fixed dependency compatibility with raster 2.9-5
+- Changed maintainter mail adress (permanent adress)
+- Removed rgdal from vignette builder as asked by mail
+
 SSDM 0.2.3.9010
 ===============
 

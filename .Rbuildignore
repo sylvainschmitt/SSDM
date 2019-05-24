@@ -7,3 +7,4 @@ README.Rmd
 examples
 cran-comment.md
 ^appveyor\.yml$
+ToDo.md

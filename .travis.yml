@@ -19,4 +19,4 @@ r_packages:
   - devtools
 
 after_success:
-  - Rscript -e 'library(covr); codecov(type ="all"); devtools::install_github("rspatial/raster")'
+  - Rscript -e 'library(covr); codecov(type ="all")'

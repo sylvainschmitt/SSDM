@@ -5,10 +5,10 @@
 \alias{update,Stacked.SDM-method}
 \title{Update a previous SSDM}
 \usage{
-\S4method{update}{Stacked.SDM}(object, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, Spname = NULL, name = stack@name,
-  save = FALSE, path = getwd(), thresh = 1001, tmp = FALSE,
-  verbose = TRUE, GUI = FALSE, ...)
+\S4method{update}{Stacked.SDM}(object, Occurrences, Env,
+  Xcol = "Longitude", Ycol = "Latitude", Pcol = NULL,
+  Spname = NULL, name = stack@name, save = FALSE, path = getwd(),
+  thresh = 1001, tmp = FALSE, verbose = TRUE, GUI = FALSE, ...)
 }
 \arguments{
 \item{object}{Stacked.SDM. The previously built SSDM.}

@@ -7,12 +7,13 @@
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
 stacking(enm, ..., name = NULL, method = "pSSDM", rep.B = 1000,
-  Env = NULL, range = NULL, endemism = c("WEI", "Binary"), eval = TRUE,
-  verbose = TRUE, GUI = FALSE)
-
-\S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL, method = "pSSDM",
-  rep.B = 1000, Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
+  Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
   eval = TRUE, verbose = TRUE, GUI = FALSE)
+
+\S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL,
+  method = "pSSDM", rep.B = 1000, Env = NULL, range = NULL,
+  endemism = c("WEI", "Binary"), eval = TRUE, verbose = TRUE,
+  GUI = FALSE)
 }
 \arguments{
 \item{enm, ...}{character. Ensemble SDMs to be stacked.}
@@ -39,13 +40,13 @@ range restriction will be applied.}
 \item{endemism}{character. Define the method used to create an endemism map
 (see details below).}
 
-\item{verbose}{logical. If set to true, disable stack evaluation.}
-
-\item{GUI}{logical. Don't take that argument into account (parameter for the
-user interface).}
+\item{eval}{logical. If set to true, disable stack evaluation.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
 the console.}
+
+\item{GUI}{logical. Don't take that argument into account (parameter for the
+user interface).}
 }
 \value{
 an S4 \linkS4class{Stacked.SDM} class object viewable with the
