@@ -237,8 +237,8 @@
     stop("files parameter should be characters or NULL")
   }
   if (!is.null(format) && !inherits(format, "character") || (inherits(format,
-                                                                      "character") && !(format %in% c(".grd", ".tif", ".asc", ".sdat", ".rst",
-                                                                                                      ".nc", ".tif", ".envi", ".bil", ".img")))) {
+                                                                      "character") && any(!(format %in% c(".grd", ".tif", ".asc", ".sdat", ".rst",
+                                                                                                          ".nc", ".tif", ".envi", ".bil", ".img"))))) {
     stop("format parameter should be .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil or .img")
   }
   if (!inherits(categorical, "character") && !is.null(categorical)) {
