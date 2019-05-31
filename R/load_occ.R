@@ -31,10 +31,12 @@ NULL
 #'  not).
 #'
 #' @examples
-#' data(Env)
+#'
+#' \dontrun{
 #' load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
 #'          Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
 #'          file = 'Occurrences.csv', sep = ',')
+#' }
 #'
 #'@seealso \code{\link{load_var}} to load environmental variables.
 #'
