@@ -14,6 +14,7 @@ NULL
 #'@slot uncertainty raster. Between-algorithm variance map.
 #'@slot algorithm.correlation data frame. Between-algorithm correlation matrix.
 #'@slot algorithm.evaluation data frame. Evaluation of the ensemble SDM (available
+#'@slot sdms list. Individual SDMs used to create the ESDM.
 #'  metrics include AUC, Kappa, sensitivity, specificity and proportion of
 #'  correctly predicted occurrences) and identification of the optimal threshold
 #'  to convert the habitat suitability map into a binary presence/absence map.
@@ -26,10 +27,12 @@ setClass('Ensemble.SDM',
          contains = 'SDM',
          representation(uncertainty = 'Raster',
                         algorithm.correlation = 'data.frame',
-                        algorithm.evaluation = 'data.frame'),
+                        algorithm.evaluation = 'data.frame',
+                        sdms = 'list'),
          prototype(uncertainty = raster(),
                    algorithm.correlation = data.frame(),
-                   algorithm.evaluation = data.frame()))
+                   algorithm.evaluation = data.frame(),
+                   sdms = list()))
 
 Ensemble.SDM <- function(name = character(),
                          projection = raster(),
@@ -40,7 +43,8 @@ Ensemble.SDM <- function(name = character(),
                          uncertainty = raster(),
                          algorithm.correlation = data.frame(),
                          algorithm.evaluation = data.frame(),
-                         parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
+                         parameters = data.frame(matrix(nrow = 1, ncol = 0)),
+                         sdms = list()) {
   return(new('Ensemble.SDM',
              name = name,
              projection = projection,
@@ -51,4 +55,5 @@ Ensemble.SDM <- function(name = character(),
              uncertainty = uncertainty,
              algorithm.correlation = algorithm.correlation,
              algorithm.evaluation = algorithm.evaluation,
-             parameters = parameters))}
+             parameters = parameters,
+             sdms = sdms))}

@@ -82,6 +82,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
 
   models <- list(x, ...)
   enm <- Ensemble.SDM()
+  enm@sdms <- models
 
   # Algorithm ensemble model creation
   if (verbose) {
