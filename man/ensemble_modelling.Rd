@@ -5,12 +5,12 @@
 \title{Build an ensemble SDM that assembles multiple algorithms}
 \usage{
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL, save = FALSE,
-  path = getwd(), PA = NULL, cv = "holdout", cv.param = c(0.7, 1),
-  thresh = 1001, metric = "SES", axes.metric = "Pearson",
-  uncertainty = TRUE, tmp = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE, GUI = FALSE,
-  ...)
+  Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL,
+  save = FALSE, path = getwd(), PA = NULL, cv = "holdout",
+  cv.param = c(0.7, 1), thresh = 1001, metric = "SES",
+  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
+  weight = TRUE, verbose = TRUE, GUI = FALSE, ...)
 }
 \arguments{
 \item{algorithms}{character. A character vector specifying the algorithm

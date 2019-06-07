@@ -1,9 +1,9 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.2.3.9008
+Version: 0.2.5.9000
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Florian de Boissieu, Philippe Birnbaum
-Maintainer: Sylvain Schmitt <sylvain.schmitt@agroparistech.fr>
+Maintainer: Sylvain Schmitt <sylvain.m.schmitt@gmail.com>
 URL: https://github.com/sylvainschmitt/SSDM
 BugReports: https://github.com/sylvainschmitt/SSDM/issues
 Description: Allows to map species richness and endemism based on stacked
@@ -19,7 +19,7 @@ License: GPL (>=3) | file LICENSE
 LazyData: TRUE
 Imports:
     sp (>= 1.2.0),
-    raster (>= 2.4.20),
+    raster (>= 2.9-5),
     methods (>= 3.2.2),
     SDMTools (>= 1.1.221),
     mgcv (>= 1.8.7),
@@ -33,7 +33,7 @@ Imports:
     shiny (>= 0.12.2),
     shinydashboard (>= 0.5.1),
     gplots (>= 0.1.0),
-    shinyFiles (>= 0.6.0),
+    shinyFiles (>= 0.7.0),
     spThin (>= 0.1.0)
 Depends:
     R (>= 3.2.2)
@@ -72,8 +72,7 @@ Suggests:
     knitr,
     rmarkdown,
     rgdal
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: 
     knitr,
-    rmarkdown,
-    rgdal
+    rmarkdown

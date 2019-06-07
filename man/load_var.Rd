@@ -4,9 +4,10 @@
 \alias{load_var}
 \title{Load environmental variables}
 \usage{
-load_var(path = getwd(), files = NULL, format = c(".grd", ".tif", ".asc",
-  ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
-  Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE)
+load_var(path = getwd(), files = NULL, format = c(".grd", ".tif",
+  ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"),
+  categorical = NULL, Norm = TRUE, tmp = TRUE, verbose = TRUE,
+  GUI = FALSE)
 }
 \arguments{
 \item{path}{character. Path to the directory that contains the environmental variables

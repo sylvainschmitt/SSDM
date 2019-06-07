@@ -9,10 +9,10 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   name = NULL, save = FALSE, path = getwd(), PA = NULL,
   cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
   axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
-  method = "pSSDM", metric = "SES", rep.B = 1000, range = NULL,
-  endemism = c("WEI", "Binary"), verbose = TRUE, GUI = FALSE, cores = 1,
-  ...)
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
+  weight = TRUE, method = "pSSDM", metric = "SES", rep.B = 1000,
+  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE,
+  GUI = FALSE, cores = 1, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details

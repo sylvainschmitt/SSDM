@@ -16,6 +16,7 @@ addons:
 r_packages:
   - rgdal
   - covr
+  - devtools
 
 after_success:
   - Rscript -e 'library(covr); codecov(type ="all")'

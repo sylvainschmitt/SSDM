@@ -1,3 +1,4 @@
+^CRAN-RELEASE$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.cran-comment
@@ -5,5 +6,6 @@
 NEWS.Rmd
 README.Rmd
 examples
-cran-comment.md
+cran-comments.md
 ^appveyor\.yml$
+ToDo.md

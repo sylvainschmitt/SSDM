@@ -12,12 +12,14 @@ ensemble(x, ..., name = NULL, ensemble.metric = c("AUC"),
   uncertainty = TRUE, verbose = TRUE, GUI = FALSE)
 
 \S4method{ensemble}{Algorithm.SDM}(x, ..., name = NULL,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
-  thresh = 1001, uncertainty = TRUE, verbose = TRUE, GUI = FALSE)
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
+  weight = TRUE, thresh = 1001, uncertainty = TRUE, verbose = TRUE,
+  GUI = FALSE)
 
 \S4method{sum}{Algorithm.SDM}(x, ..., name = NULL,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75), weight = TRUE,
-  thresh = 1001, format = TRUE, verbose = TRUE, na.rm = TRUE)
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
+  weight = TRUE, thresh = 1001, format = TRUE, verbose = TRUE,
+  na.rm = TRUE)
 }
 \arguments{
 \item{x, ...}{SDMs. SDMs to be assembled.}

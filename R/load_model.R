@@ -32,22 +32,24 @@ load_enm <- function(name, path = getwd()) {
     cat("Algorithm correlation table empty ! \n")
     a <- data.frame()
   }
-  b <- try(raster(paste0(path, "/Rasters/Probability.tif")))
+  b <- try(raster(paste0(path, "/Rasters/Binary.tif")))
   if (inherits(b, "try-error")) {
     projection <- raster(paste0(path, "/Rasters/Probability.tif"))
     evaluation <- read.csv(paste0(path, "/Tables/ENMeval.csv"), row.names = 1)
     b <- reclassify(projection, c(-Inf, evaluation$threshold, 0, evaluation$threshold,
                                   Inf, 1))
   }
-  enm <- Ensemble.SDM(name = as.character(read.csv(paste0(path, "/Tables/Name.csv"))[1,
-                                                                                     2]), projection = raster(paste0(path, "/Rasters/Probability.tif")),
+  enm <- Ensemble.SDM(name = as.character(read.csv(paste0(path, "/Tables/Name.csv"))[1,2]),
+                      projection = raster(paste0(path, "/Rasters/Probability.tif")),
+                      binary = b,
                       uncertainty = try(raster(paste0(path, "/Rasters/uncertainty.tif"))),
                       evaluation = read.csv(paste0(path, "/Tables/ENMeval.csv"), row.names = 1),
                       algorithm.evaluation = read.csv(paste0(path, "/Tables/AlgoEval.csv"),
-                                                      row.names = 1), algorithm.correlation = a, data = read.csv(paste0(path,
-                                                                                                                        "/Tables/Data.csv"), row.names = 1), variable.importance = read.csv(paste0(path,
-                                                                                                                                                                                                   "/Tables/VarImp.csv"), row.names = 1), parameters = read.csv(paste0(path,
-                                                                                                                                                                                                                                                                       "/Tables/Parameters.csv"), row.names = 1, colClasses = "character"))
+                                                      row.names = 1),
+                      algorithm.correlation = a,
+                      data = read.csv(paste0(path, "/Tables/Data.csv"), row.names = 1),
+                      variable.importance = read.csv(paste0(path, "/Tables/VarImp.csv"), row.names = 1),
+                      parameters = read.csv(paste0(path, "/Tables/Parameters.csv"), row.names = 1, colClasses = "character"))
   return(enm)
 }
 
