@@ -75,14 +75,14 @@ setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
 setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
                                                 ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
                                                 verbose = TRUE, GUI = FALSE) {
-  # Check agruments
+  # Check arguments
   .checkargs(name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
              weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose,
              GUI = GUI)
 
   models <- list(x, ...)
   enm <- Ensemble.SDM()
-  enm@sdms <- models
+  sdms <- models
 
   # Algorithm ensemble model creation
   if (verbose) {
@@ -129,6 +129,17 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
     }
     return(NULL)
   } else {
+    # Extract indices of models that met the threshold
+    ind <- 0
+    selection.indices <- c()
+    for (i in seq_len(length(sdms))) {
+      if (all(sdms[[i]]@evaluation[,which(names(sdms[[i]]@evaluation) %in% ensemble.metric)] > ensemble.thresh)) {
+        ind <- ind+1
+        selection.indices[ind] <- i
+        }
+    }
+    # Store individual models
+    enm@sdms <- sdms[c(selection.indices)]
 
     # Sum of algorithm ensemble
     if (verbose) {
@@ -200,7 +211,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       # Algorithms Correlation
       if (!(uncertainty)) {
         if (verbose) {
-          cat("Algorithm correlation computing is unactivated \n")
+          cat("Algorithm correlation computing is deactivated \n")
         }
       }
       if (uncertainty && length(projections@layers) > 1) {
@@ -217,7 +228,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       # uncertainty map
       if (!(uncertainty)) {
         if (verbose) {
-          cat("Uncertainty mapping is unactivated \n")
+          cat("Uncertainty mapping is deactivated \n")
         }
       }
       if (uncertainty && length(projections@layers) > 1) {
