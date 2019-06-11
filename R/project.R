@@ -5,18 +5,21 @@ NULL
 
 #' Project model into a new environment
 #'
+#'This is a method to project existing SDMs, ESDMs or SSDMs to a new environment. The function uses any S4 .SDM class object and either returns the object with updated projection slots or only returns the projection as rasters (if minimal.outputs = TRUE)
+#'
 #' @param obj Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
 #' @param ... 
 #'
 #' @return A raster (Algorithm.SDM), raster stack (Ensemble.SDM), biodiversity map/mean raster (Stacked.SDM)
+#' @name project
 #' @export
-#'
-#' @examples
 setGeneric("project", function(obj, Env, ...) {
   return(standardGeneric("project"))
 })
 
+#' @rdname project
+#' @export
 setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   model = get_model(obj, ...)
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -49,6 +52,8 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   return(obj)
 })
 
+#' @rdname project
+#' @export
 setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   model = get_model(obj, Env, ...)
   proj = raster::predict(Env, model, fun = function(model, x) {
@@ -74,6 +79,8 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   return(obj)
 })
 
+#' @rdname project
+#' @export
 setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
   models = lapply(obj@sdms,FUN=get_model)
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -81,6 +88,7 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  # project SDMs
   proj = suppressWarnings(lapply(models,FUN=function(x){raster::predict(Env, x, factors = factors)}))
   # rescaling
   proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
@@ -91,7 +99,11 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
     obj@sdms[[i]]@projection = proj[[i]]
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
       obj@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@sdms[[i]]@evaluation$threshold,0, obj@evaluation$threshold,Inf,1))
-  }  
+  }
+  # sum SDMs (use ensemble function with minimal.outputs)
+  ensemble.args <- list(verbose=FALSE)
+  sum.algo.ensemble <- do.call(ensemble, c(obj@sdms,ensemble.args))
+  obj@projection <- sum.algo.ensemble@projection
     
   return(obj)
 })
