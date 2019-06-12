@@ -22,7 +22,7 @@ NULL
 #'@slot variable.importance data frame. Relative importance of each variable in
 #'  the SSDM.
 #'@slot algorithm.correlation data frame. Between-algorithm correlation matrix.
-#'@slot enms list. List of ensemble SDMs used in the SSDM.
+#'@slot esdms list. List of ensemble SDMs used in the SSDM.
 #'@slot parameters data frame. Parameters used to build the SSDM.
 #'@slot algorithm.evaluation data frame. Evaluation of the algorithm averaging
 #'  the metrics of all SDMs (AUC, Kappa, omission rate, sensitivity,
@@ -48,7 +48,7 @@ setClass('Stacked.SDM',
                         variable.importance = 'data.frame',
                         algorithm.correlation = 'data.frame',
                         algorithm.evaluation = 'data.frame',
-                        enms = 'list',
+                        esdms = 'list',
                         parameters = 'data.frame'),
          prototype(name = character(),
                    diversity.map = raster(),
@@ -58,7 +58,7 @@ setClass('Stacked.SDM',
                    variable.importance = data.frame(),
                    algorithm.correlation = data.frame(),
                    algorithm.evaluation = data.frame(),
-                   enms = list(),
+                   esdms = list(),
                    parameters = data.frame()))
 
 # Class Generator
@@ -70,7 +70,7 @@ Stacked.SDM <- function(name = character(),
                         variable.importance = data.frame(),
                         algorithm.correlation = data.frame(),
                         algorithm.evaluation = data.frame(),
-                        enms = list(),
+                        esdms = list(),
                         parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
   return(new('Stacked.SDM',
              name = name,
@@ -81,5 +81,5 @@ Stacked.SDM <- function(name = character(),
              uncertainty = uncertainty,
              algorithm.correlation = algorithm.correlation,
              algorithm.evaluation = algorithm.evaluation,
-             enms = enms,
+             esdms = esdms,
              parameters = parameters))}

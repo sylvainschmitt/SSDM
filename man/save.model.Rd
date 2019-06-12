@@ -3,16 +3,16 @@
 \docType{methods}
 \name{save.model}
 \alias{save.model}
-\alias{save.enm}
-\alias{save.enm,Ensemble.SDM-method}
+\alias{save.esdm}
+\alias{save.esdm,Ensemble.SDM-method}
 \alias{save.stack}
 \alias{save.stack,Stacked.SDM-method}
 \title{Save ensemble SDMs and SSDMs}
 \usage{
-save.enm(enm, name = strsplit(enm@name, ".", fixed = TRUE)[[1]][1],
+save.esdm(esdm, name = strsplit(esdm@name, ".", fixed = TRUE)[[1]][1],
   path = getwd(), verbose = TRUE, GUI = FALSE)
 
-\S4method{save.enm}{Ensemble.SDM}(enm, name = strsplit(enm@name,
+\S4method{save.esdm}{Ensemble.SDM}(esdm, name = strsplit(esdm@name,
   ".Ensemble.SDM", fixed = TRUE)[[1]][1], path = getwd(),
   verbose = TRUE, GUI = FALSE)
 
@@ -23,7 +23,7 @@ save.stack(stack, name = "Stack", path = getwd(), verbose = TRUE,
   path = getwd(), verbose = TRUE, GUI = FALSE)
 }
 \arguments{
-\item{enm}{Ensemble.SDM. Ensemble SDM to be saved.}
+\item{esdm}{Ensemble.SDM. Ensemble SDM to be saved.}
 
 \item{name}{character. Folder name of the model to save.}
 

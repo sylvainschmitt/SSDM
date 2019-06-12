@@ -33,7 +33,7 @@
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       categorical = NULL,
                       Norm = TRUE,
-                      enm = Ensemble.SDM(),
+                      esdm = Ensemble.SDM(),
                       stack = Stacked.SDM(),
                       range = NULL,
                       endemism = 'WEI',
@@ -249,8 +249,8 @@
   }
 
   # save
-  if (!inherits(enm, "Ensemble.SDM")) {
-    stop("enm parameter should be an Ensemble.SDM.")
+  if (!inherits(esdm, "Ensemble.SDM")) {
+    stop("esdm parameter should be an Ensemble.SDM.")
   }
   if (!inherits(stack, "Stacked.SDM")) {
     stop("stack parameter should be a Stacked.SDM.")

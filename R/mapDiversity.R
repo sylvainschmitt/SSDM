@@ -81,18 +81,18 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   # Check arguments
   .checkargs(stack = obj, method = method, rep.B = rep.B, verbose = verbose)
 
-  enms <- NULL # Preparing enms slot for PPR methods
-  diversity.map <- reclassify(obj@enms[[1]]@projection[[1]], c(-Inf,Inf, 0))
+  esdms <- NULL # Preparing esdms slot for PPR methods
+  diversity.map <- reclassify(obj@esdms[[1]]@projection[[1]], c(-Inf,Inf, 0))
 
   # Useless datacheck to prevent bugs to remove after debugging
-  for (i in seq_len(length(obj@enms))) {
-    if (!inherits(obj@enms[[i]]@projection, "RasterLayer")) {
+  for (i in seq_len(length(obj@esdms))) {
+    if (!inherits(obj@esdms[[i]]@projection, "RasterLayer")) {
       if (verbose) {
-        cat("Error", obj@enms[[i]]@name, "is not a raster but a",
-            class(obj@enms[[i]]@projection)[1],
+        cat("Error", obj@esdms[[i]]@name, "is not a raster but a",
+            class(obj@esdms[[i]]@projection)[1],
             ".\nIt will be removed for the stacking")
       }
-      obj@enms[[i]] <- NULL
+      obj@esdms[[i]] <- NULL
     }
   }
 
@@ -100,7 +100,7 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     # Threshold and sum (Calabrese et al, 2014)
     if (verbose)
       cat("\n Local species richness computed by thresholding and then summing. \n")
-    diversity.map <- sum(stack(lapply(obj@enms, function(x)
+    diversity.map <- sum(stack(lapply(obj@esdms, function(x)
       reclassify(x@projection,
                  c(-Inf,x@evaluation$threshold,0,x@evaluation$threshold,Inf,1))
       )))
@@ -110,20 +110,20 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     # Individual probabilities sum (Calabrese et al, 2014)
     if (verbose)
       cat("\n Local species richness computed by summing individual probabilities. \n")
-    diversity.map <- sum(stack(lapply(obj@enms, function(x) x@projection)))
+    diversity.map <- sum(stack(lapply(obj@esdms, function(x) x@projection)))
   }
 
   if (method == "Bernoulli") {
     # Random Bernoulli distribution (Calabrese et al, 2014)
     if (verbose)
       cat("\n Local species richness computed by drawing repeatedly from a Bernoulli distribution. \n")
-    proba <- stack(lapply(obj@enms, function(x) x@projection))
+    proba <- stack(lapply(obj@esdms, function(x) x@projection))
     diversity.map <- calc(proba, fun = function(...) {
       x <- c(...)
       x[is.na(x)] <- 0
       return(rbinom(lengths(x), rep.B, x))
     }, forcefun = TRUE)
-    diversity.map <- sum(diversity.map)/length(enms)/rep.B
+    diversity.map <- sum(diversity.map)/length(esdms)/rep.B
   }
 
   if (method == "MaximumLikelihood") {
@@ -148,7 +148,7 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     if (verbose)
       cat("\n Local species richness computed by probability ranking from MEM. \n")
     diversity.map <- .MEM(obj,Env)@projection
-    enms <- .PRR(obj, diversity.map)
+    esdms <- .PRR(obj, diversity.map)
   }
 
   if (method == "PRR.pSSDM") {
@@ -157,23 +157,23 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
       cat("\n Local species richness computed by probability ranking from pSSDM. \n")
     diversity.map <- mapDiversity(obj, method = 'pSSDM',
                                   verbose = FALSE)$diversity.map
-    enms <- .PRR(obj, diversity.map)
+    esdms <- .PRR(obj, diversity.map)
   }
 
   return(list(
     diversity.map = diversity.map,
-    enms = enms
+    esdms = esdms
   ))
 })
 
 ##### Internals ####
 
 .richness <- function(obj){
-  Richness <- reclassify(obj@enms[[1]]@projection, c(-Inf, Inf, 0))
-  for (i in seq_len(length(obj@enms)))
+  Richness <- reclassify(obj@esdms[[1]]@projection, c(-Inf, Inf, 0))
+  for (i in seq_len(length(obj@esdms)))
     Richness <- Richness + rasterize(
-      SpatialPoints(obj@enms[[i]]@data[1:2]),
-      Richness, field = obj@enms[[i]]@data$Presence,
+      SpatialPoints(obj@esdms[[i]]@data[1:2]),
+      Richness, field = obj@esdms[[i]]@data$Presence,
       background = 0)
   if (all(values(Richness) %in% c(0, 1, NA)))
     stop("Observed Richness is always equal to 1, modelled richness can't be adjusted !")
@@ -185,38 +185,38 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   maxOcc <- max(occ$layer) # Reucing occ for algorithms
   occ$layer <- occ$layer/max(maxOcc)
   algo <- unlist(
-    strsplit(obj@enms[[1]]@parameters$algorithms,
+    strsplit(obj@esdms[[1]]@parameters$algorithms,
              ".", fixed = TRUE))[-1]
   if("MAXENT" %in% algo)
     algo <- algo[-which(algo == "MAXENT")]
   MEM <- ensemble_modelling(algorithms = algo,
     Occurrences = occ, Env = Env, Xcol = "x",
-    Ycol = "y", Pcol = "layer", rep = obj@enms[[1]]@parameters$rep,
-    name = "MEM", cv = obj@enms[[1]]@parameters$cv,
+    Ycol = "y", Pcol = "layer", rep = obj@esdms[[1]]@parameters$rep,
+    name = "MEM", cv = obj@esdms[[1]]@parameters$cv,
     cv.param = as.numeric(unlist(
-      strsplit(obj@enms[[1]]@parameters$cv.param,
+      strsplit(obj@esdms[[1]]@parameters$cv.param,
                "|", fixed = TRUE))[-1]),
-    metric = obj@enms[[1]]@parameters$metric,
-    axes.metric = obj@enms[[1]]@parameters$axes.metric,
+    metric = obj@esdms[[1]]@parameters$metric,
+    axes.metric = obj@esdms[[1]]@parameters$axes.metric,
     ensemble.metric = unlist(
-      strsplit(obj@enms[[1]]@parameters$ensemble.metric,
+      strsplit(obj@esdms[[1]]@parameters$ensemble.metric,
                ".", fixed = TRUE))[-1],
     ensemble.thresh = as.numeric(unlist(
-      strsplit(obj@enms[[1]]@parameters$ensemble.thresh,
+      strsplit(obj@esdms[[1]]@parameters$ensemble.thresh,
                "|", fixed = TRUE))[-1]),
     uncertainty = FALSE,
-    weight = as.logical(obj@enms[[1]]@parameters$weight),
+    weight = as.logical(obj@esdms[[1]]@parameters$weight),
     verbose = FALSE)
   MEM@projection <- MEM@projection*maxOcc
   return(MEM)
 }
 
 .PRR <- function(obj, Richness){
-  # Readjust each enm binary map
+  # Readjust each esdm binary map
   richnesses <- values(Richness)
   names(richnesses) <- seq_len(length(richnesses))
   richnesses <- as.list(richnesses)
-  probabilities <- lapply(lapply(obj@enms, FUN = slot, name = "projection"),
+  probabilities <- lapply(lapply(obj@esdms, FUN = slot, name = "projection"),
                           values)
   probabilities <- lapply(probabilities, function(x) {
     names(x) <- rep(seq_len(length(probabilities[[1]])))
@@ -224,7 +224,7 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   })
   probabilities <- lapply(probabilities, `[`, names(probabilities[[1]]))
   probabilities <- apply(do.call(rbind, probabilities), 2, as.list)
-  binaries <- lapply(lapply(obj@enms, FUN = slot, name = "binary"),
+  binaries <- lapply(lapply(obj@esdms, FUN = slot, name = "binary"),
                      values)
   binaries <- lapply(binaries, function(x) {
     names(x) <- rep(seq_len(length(binaries[[1]])))
@@ -251,8 +251,8 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   binaries <- apply(do.call(rbind, binaries), 2, as.list)
   binaries <- lapply(binaries, unlist)
   binaries <- lapply(binaries, unname)
-  mapply(function(enm, binary) {
-    values(enm@binary) <- binary
-    return(enm)
-  }, enm = obj@enms, binary = binaries, SIMPLIFY = FALSE)
+  mapply(function(esdm, binary) {
+    values(esdm@binary) <- binary
+    return(esdm)
+  }, esdm = obj@esdms, binary = binaries, SIMPLIFY = FALSE)
 }
