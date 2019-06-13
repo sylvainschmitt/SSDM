@@ -30,7 +30,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    proj = proj / proj@data@max
+    if(proj@data@max > 0) proj = proj / proj@data@max
   names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
@@ -55,7 +55,7 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(!all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    proj = proj / proj@data@max
+    if(proj@data@max > 0) proj = proj / proj@data@max
   names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
