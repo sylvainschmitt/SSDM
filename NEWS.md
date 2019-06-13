@@ -5,6 +5,7 @@ SSDM 0.2.5.9000
 ===============
 
 - #46 fixed
+- Fixed division by zero bug (NA propagation) in `project`
 
 SSDM 0.2.5
 ===============
