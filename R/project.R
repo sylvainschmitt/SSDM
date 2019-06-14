@@ -14,6 +14,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  if(length(factors)==0) factors <- NULL # avoid factors becoming an empty list
   proj = suppressWarnings(raster::predict(Env, model, factors = factors))
   # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
   #                                                                    x) {
@@ -30,7 +31,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    if(proj@data@max > 0) proj = proj / proj@data@max
+    if(proj@data@max > 0) proj = proj / proj@data@max # avoid division by zero
   names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
@@ -55,7 +56,7 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(!all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    if(proj@data@max > 0) proj = proj / proj@data@max
+    if(proj@data@max > 0) proj = proj / proj@data@max # avoid division by zero
   names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
