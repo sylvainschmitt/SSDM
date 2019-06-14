@@ -27,6 +27,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  if(length(factors)==0) factors <- NULL
   proj = suppressWarnings(raster::predict(Env, model, factors = factors))
   # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
   #                                                                    x) {
@@ -87,6 +88,7 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  if(length(factors)==0) factors <- NULL
   # project SDMs
   proj = suppressWarnings(lapply(models,FUN=function(x){raster::predict(Env, x, factors = factors)}))
   # rescaling
@@ -116,6 +118,7 @@ setMethod("project","Stacked.SDM",function(obj,Env,...){
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+  if(length(factors)==0) factors <- NULL
   esdms <- list() # temporary object with ESDM by species (for use with get_model and predict)
   sum.algo.ensemble <- list() # temporary object for storing resulting ensembles
   species.names <- names(obj@esdms)
