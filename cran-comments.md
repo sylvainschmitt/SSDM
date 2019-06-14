@@ -13,6 +13,4 @@ There were no NOTEs, ERRORs or WARNINGs.
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Fixed dependency compatibility with raster 2.9-5
-* Changed maintainter mail adress (permanent adress)
-* Removed rgdal from vignette builder as asked by mail
+* Fixed a major bug from version 0.2.4 due to dependency compatibility with raster 2.9-5
