@@ -99,7 +99,7 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
     names(proj[[i]]) = "Projection"
     obj@sdms[[i]]@projection = proj[[i]]
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
-      obj@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@sdms[[i]]@evaluation$threshold,0, obj@sdms[[i]],evaluation$threshold,Inf,1))
+      obj@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@sdms[[i]]@evaluation$threshold,0, obj@sdms[[i]]@evaluation$threshold,Inf,1))
   }
   # sum SDMs (use ensemble function with minimal.outputs)
   ensemble.args <- list(verbose=FALSE)
