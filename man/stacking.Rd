@@ -6,17 +6,17 @@
 \alias{stacking,Ensemble.SDM-method}
 \title{Stack different ensemble SDMs in an SSDM}
 \usage{
-stacking(enm, ..., name = NULL, method = "pSSDM", rep.B = 1000,
+stacking(esdm, ..., name = NULL, method = "pSSDM", rep.B = 1000,
   Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
   eval = TRUE, verbose = TRUE, GUI = FALSE)
 
-\S4method{stacking}{Ensemble.SDM}(enm, ..., name = NULL,
+\S4method{stacking}{Ensemble.SDM}(esdm, ..., name = NULL,
   method = "pSSDM", rep.B = 1000, Env = NULL, range = NULL,
   endemism = c("WEI", "Binary"), eval = TRUE, verbose = TRUE,
   GUI = FALSE)
 }
 \arguments{
-\item{enm, ...}{character. Ensemble SDMs to be stacked.}
+\item{esdm, ...}{character. Ensemble SDMs to be stacked.}
 
 \item{name}{character. Optional name given to the final SSDM produced (by
 default 'Species.SDM').}

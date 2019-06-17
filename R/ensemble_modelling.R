@@ -390,7 +390,7 @@ ensemble_modelling <- function(algorithms,
   algo[["ensemble.thresh"]] <- ensemble.thresh
   algo["weight"] <- weight
   algo["verbose"] <- verbose
-  enm <- do.call(ensemble, algo)
+  esdm <- do.call(ensemble, algo)
   if (verbose) {
     cat(sprintf("Ensemble modelling done for %s %s \n\n", spname, format(Sys.time(),
                                                                          "%Y-%m-%d %T")))
@@ -399,21 +399,21 @@ ensemble_modelling <- function(algorithms,
     incProgress(1/(length(algorithms) + 1), detail = "Ensemble SDM built")
   }
 
-  if (!is.null(enm)) {
+  if (!is.null(esdm)) {
     # Parameters
     text.algorithms <- character()
     for (i in seq_len(length(algorithms))) {
       text.algorithms <- paste0(text.algorithms, ".", algorithms[i])
     }
-    enm@parameters$algorithms <- text.algorithms
-    enm@parameters$rep <- rep
+    esdm@parameters$algorithms <- text.algorithms
+    esdm@parameters$rep <- rep
 
     # Saving
     if (save) {
       if (verbose) {
         cat("#### Saving ##### \n\n")
       }
-      save.enm(enm, path = path)
+      save.esdm(esdm, path = path)
     }
   }
 
@@ -421,7 +421,7 @@ ensemble_modelling <- function(algorithms,
   if (tmp) {
     unlink("./.models", recursive = TRUE, force = TRUE)
   }
-  rm(list = ls()[-which(ls() == "enm")])
+  rm(list = ls()[-which(ls() == "esdm")])
   gc()
-  return(enm)
+  return(esdm)
 }

@@ -35,16 +35,16 @@ NULL
 #' @export
 setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
   choices = list()
-  for (i in seq_len(length(x@enms))) {choices[[i]] = strsplit(x@enms[[i]]@name, '.Ensemble.SDM', fixed = TRUE)[[1]][1]}
-  if (inherits(x@enms[[1]], 'Algorithm.SDM')) {full = FALSE} else {full = TRUE}
+  for (i in seq_len(length(x@esdms))) {choices[[i]] = strsplit(x@esdms[[i]]@name, '.Ensemble.SDM', fixed = TRUE)[[1]][1]}
+  if (inherits(x@esdms[[1]], 'Algorithm.SDM')) {full = FALSE} else {full = TRUE}
 
   ui <- dashboardPage(
     dashboardHeader(title = x@name, titleWidth = 450),
     dashboardSidebar(
       sidebarMenu(
         menuItem("Stacked species", tabName = "stack", icon = icon("dashboard")),
-        menuItem("Ensemble model", tabName = "enm", icon = icon("pagelines")),
-        selectInput('enmchoice', 'Species:', choices, selected = NULL, multiple = FALSE,
+        menuItem("Ensemble model", tabName = "esdm", icon = icon("pagelines")),
+        selectInput('esdmchoice', 'Species:', choices, selected = NULL, multiple = FALSE,
                     selectize = TRUE, width = NULL, size = NULL)
       )
     ),
@@ -86,42 +86,42 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                 )
         ),
         # Main page end #
-        # ENM page beginning #
-        tabItem(tabName = 'enm',
+        # ESDM page beginning #
+        tabItem(tabName = 'esdm',
                 fluidRow(
                   tabBox(title = 'Maps',
-                         tabPanel( actionButton('enmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
+                         tabPanel( actionButton('esdmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
                                    plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)),
                                    title = 'Habitat suitability'),
                          tabPanel(plotOutput('niche'),
-                                  textOutput('enm.binary.info'),
+                                  textOutput('esdm.binary.info'),
                                   title = 'Binary map'),
-                         tabPanel(plotOutput('enm.uncertainty'), title = 'Uncertainty'),
-                         tabPanel(tableOutput('enm.summary'), title = 'Summary')
+                         tabPanel(plotOutput('esdm.uncertainty'), title = 'Uncertainty'),
+                         tabPanel(tableOutput('esdm.summary'), title = 'Summary')
                   ),
                   tabBox(title = 'Variable importance',
-                         tabPanel(plotOutput('enm.varimp.barplot'),
-                                  textOutput('enm.varimp.info'),
+                         tabPanel(plotOutput('esdm.varimp.barplot'),
+                                  textOutput('esdm.varimp.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table'),
-                         tabPanel(tableOutput('enmvarimplegend'), title = 'Legend')
+                         tabPanel(tableOutput('esdm.varimp.table'), title = 'Table'),
+                         tabPanel(tableOutput('esdmvarimplegend'), title = 'Legend')
                   )
                 ),
                 fluidRow(
                   tabBox(title = 'Model evaluation',
-                         tabPanel(plotOutput('enm.evaluation.barplot'),
-                                  textOutput('enm.evaluation.info'),
+                         tabPanel(plotOutput('esdm.evaluation.barplot'),
+                                  textOutput('esdm.evaluation.info'),
                                   title = 'Barplot'),
-                         tabPanel(tableOutput('enm.evaluation.table'), title = 'Table')
+                         tabPanel(tableOutput('esdm.evaluation.table'), title = 'Table')
                   ),
 
                   tabBox(title = 'Algorithm correlation',
-                         tabPanel(plotOutput('enm.algo.corr.heatmap'), title = 'Heatmap'),
-                         tabPanel(tableOutput('enm.algo.corr.table'), title = 'Table')
+                         tabPanel(plotOutput('esdm.algo.corr.heatmap'), title = 'Heatmap'),
+                         tabPanel(tableOutput('esdm.algo.corr.table'), title = 'Table')
                   )
                 )
         )
-        # ENM page ending #
+        # esdm page ending #
       )
     )
   )
@@ -223,7 +223,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
                                                         strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                         'rep =',
                                                         strsplit(x@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-      summary$Summary = c(x@parameters$data, length(x@enms), algo.info, x@parameters$rep, PA, x@parameters$cv, cv.param)
+      summary$Summary = c(x@parameters$data, length(x@esdms), algo.info, x@parameters$rep, PA, x@parameters$cv, cv.param)
       if(!is.null(x@parameters$sp.nb.origin)) {
         summary = rbind(summary,
                         data.frame(Summary = x@parameters$sp.nb.origin, row.names = 'Original number of species'))
@@ -274,7 +274,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     })
     # Main page ending #
 
-    # ENM beginning #
+    # ESDM beginning #
     # Maps
     # Single zoomable plot
     observeEvent(input$proba_dblclick, {
@@ -288,63 +288,63 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
         ranges$y <- NULL
       }
     })
-    observeEvent(input$enmunzoom, {
+    observeEvent(input$esdmunzoom, {
       ranges$x <- NULL
       ranges$y <- NULL
     })
     output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(x@enms[[which(choices == input$enmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@enms[[which(choices == input$enmchoice)]]@projection}
+      if (!is.null(ranges$x)) {proba = crop(x@esdms[[which(choices == input$esdmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@esdms[[which(choices == input$esdmchoice)]]@projection}
       spplot(proba,
-           main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
+           main = paste('AUC :',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$Kappa,3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)),
-           sp.layout=list(SpatialPoints(data.frame(X = x@enms[[which(choices == input$enmchoice)]]@data$X[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)],
-                                                   Y = x@enms[[which(choices == input$enmchoice)]]@data$Y[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence == 1)])),
+           sp.layout=list(SpatialPoints(data.frame(X = x@esdms[[which(choices == input$esdmchoice)]]@data$X[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)],
+                                                   Y = x@esdms[[which(choices == input$esdmchoice)]]@data$Y[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)])),
                           pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
-      niche.map = x@enms[[which(choices == input$enmchoice)]]@binary
+      niche.map = x@esdms[[which(choices == input$esdmchoice)]]@binary
       if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
       spplot(niche.map,
-           main = paste('AUC :',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@enms[[which(choices == input$enmchoice)]]@evaluation$Kappa,3)),
+           main = paste('AUC :',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$Kappa,3)),
            xlab = 'Longitude (\u02DA)',
            ylab = 'Latitude (\u02DA)',
            col.regions = rev(terrain.colors(10000)))
       })
-    output$enm.uncertainty <- renderPlot({
-      if (!is.null(ranges$x)) {uncert.map = crop(x@enms[[which(choices == input$enmchoice)]]@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@enms[[which(choices == input$enmchoice)]]@uncertainty}
+    output$esdm.uncertainty <- renderPlot({
+      if (!is.null(ranges$x)) {uncert.map = crop(x@esdms[[which(choices == input$esdmchoice)]]@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@esdms[[which(choices == input$esdmchoice)]]@uncertainty}
       spplot(uncert.map,
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)))
       })
     # Evaluation
-    output$enm.evaluation.barplot <- renderPlot({
-      for (i in seq_len(length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.SDM', fixed = TRUE)[[1]][1]}
-      for (i in seq_len(length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
-      evaluation = x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation
+    output$esdm.evaluation.barplot <- renderPlot({
+      for (i in seq_len(length(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)))) {row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i]), '.SDM', fixed = TRUE)[[1]][1]}
+      for (i in seq_len(length(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)))) {row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
+      evaluation = x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation
       evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
       table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
       barplot(table, col=c("darkblue","red","green"), names.arg = row.names(evaluation), beside=TRUE)
       legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
     })
-    output$enm.evaluation.table <- renderTable({
-      for (i in seq_len(length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
-      for (i in seq_len(length(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)))) {row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
-      x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation[c(2,4:8)]
+    output$esdm.evaluation.table <- renderTable({
+      for (i in seq_len(length(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)))) {row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i] = strsplit(as.character(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+      for (i in seq_len(length(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)))) {row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i] = tail(strsplit(as.character(row.names(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
+      x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation[c(2,4:8)]
     })
     # Algorithms correlation
-    output$enm.algo.corr.table <- renderTable({
-      if (length(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation) > 0) {
-        x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation[upper.tri(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation, diag = TRUE)] = NA
-        x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation
+    output$esdm.algo.corr.table <- renderTable({
+      if (length(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation) > 0) {
+        x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation[upper.tri(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation, diag = TRUE)] = NA
+        x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation
       }
     })
-    output$enm.algo.corr.heatmap <- renderPlot({
-      if (length(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation) > 0) {
-        x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation[upper.tri(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation, diag = TRUE)] = NA
-        m <- as.matrix(x@enms[[which(choices == input$enmchoice)]]@algorithm.correlation)
+    output$esdm.algo.corr.heatmap <- renderPlot({
+      if (length(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation) > 0) {
+        x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation[upper.tri(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation, diag = TRUE)] = NA
+        m <- as.matrix(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation)
         heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
                   cellnote = round(m,3), notecol = "black", notecex = 2,
                   trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
@@ -352,85 +352,85 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       }
     })
     # Variable importance
-    output$enm.varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(x@enms[[which(choices == input$enmchoice)]]@variable.importance))
+    output$esdm.varimp.barplot <- renderPlot({
+      varimp = as.data.frame(t(x@esdms[[which(choices == input$esdmchoice)]]@variable.importance))
       names(varimp) = 'Axes.evaluation'
       barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2, ylab = 'Variable relative contribution (%)')
     })
-    output$enm.varimp.table <- renderTable({x@enms[[which(choices == input$enmchoice)]]@variable.importance})
-    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@enms[[which(choices == input$enmchoice)]]@variable.importance)), 'Variable' = names(x@enms[[which(choices == input$enmchoice)]]@variable.importance))})
+    output$esdm.varimp.table <- renderTable({x@esdms[[which(choices == input$esdmchoice)]]@variable.importance})
+    output$varimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(x@esdms[[which(choices == input$esdmchoice)]]@variable.importance)), 'Variable' = names(x@esdms[[which(choices == input$esdmchoice)]]@variable.importance))})
     # Parameters
-    output$enm.summary <- renderTable({
+    output$esdm.summary <- renderTable({
       summary = data.frame(matrix(nrow = 8, ncol = 1))
       names(summary) = 'Summary'
       row.names(summary) = c('Occurrences type', 'Occurrences number', 'Final number of species', 'Original algorithms', 'Number of repetitions',
                              'Pseudo-absences selection', 'Cross validation method', 'Cross validation parameters')
       algo.info = character()
-      for (i in seq_len(length(strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
-        algo.info = paste(algo.info, strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
+      for (i in seq_len(length(strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
+        algo.info = paste(algo.info, strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
       }
-      if (x@enms[[which(choices == input$enmchoice)]]@parameters$PA) {PA = 'default'}
-      if (x@enms[[which(choices == input$enmchoice)]]@parameters$data == "presence-only data set") {
-        nb.occ =  length(as.factor(x@enms[[which(choices == input$enmchoice)]]@data$Presence[which(x@enms[[which(choices == input$enmchoice)]]@data$Presence==1)])) / sum(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation$kept.model)
+      if (x@esdms[[which(choices == input$esdmchoice)]]@parameters$PA) {PA = 'default'}
+      if (x@esdms[[which(choices == input$esdmchoice)]]@parameters$data == "presence-only data set") {
+        nb.occ =  length(as.factor(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence==1)])) / sum(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation$kept.model)
       } else {
-        nb.occ =  length(as.factor(x@enms[[which(choices == input$enmchoice)]]@data$Presence)) / sum(x@enms[[which(choices == input$enmchoice)]]@algorithm.evaluation$kept.model)
+        nb.occ =  length(as.factor(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence)) / sum(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.evaluation$kept.model)
       }
-      if(x@enms[[which(choices == input$enmchoice)]]@parameters$cv == 'LOO') {cv.param = 'None'}
-      if(x@enms[[which(choices == input$enmchoice)]]@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                         strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
+      if(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv == 'LOO') {cv.param = 'None'}
+      if(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                         strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                          'rep =',
-                                                         strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
+                                                         strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
       if(x@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                        strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
+                                                        strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                         'rep =',
-                                                        strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-      summary$Summary = c(x@enms[[which(choices == input$enmchoice)]]@parameters$data, nb.occ, length(x@enms), algo.info, x@enms[[which(choices == input$enmchoice)]]@parameters$rep, PA, x@enms[[which(choices == input$enmchoice)]]@parameters$cv, cv.param)
-      if(!is.null(x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin)) {
+                                                        strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
+      summary$Summary = c(x@esdms[[which(choices == input$esdmchoice)]]@parameters$data, nb.occ, length(x@esdms), algo.info, x@esdms[[which(choices == input$esdmchoice)]]@parameters$rep, PA, x@esdms[[which(choices == input$esdmchoice)]]@parameters$cv, cv.param)
+      if(!is.null(x@esdms[[which(choices == input$esdmchoice)]]@parameters$sp.nb.origin)) {
         summary = rbind(summary,
-                        data.frame(Summary = x@enms[[which(choices == input$enmchoice)]]@parameters$sp.nb.origin, row.names = 'Original number of species'))
+                        data.frame(Summary = x@esdms[[which(choices == input$esdmchoice)]]@parameters$sp.nb.origin, row.names = 'Original number of species'))
       }
       summary
     })
-    output$enm.binary.info <- renderText({
-      x@enms[[which(choices == input$enmchoice)]]@parameters$metric = switch(x@enms[[which(choices == input$enmchoice)]]@parameters$metric,
+    output$esdm.binary.info <- renderText({
+      x@esdms[[which(choices == input$esdmchoice)]]@parameters$metric = switch(x@esdms[[which(choices == input$esdmchoice)]]@parameters$metric,
                                                                              'Kappa' = 'maximizing Kappa',
                                                                              'CCR' = 'maximizing correct proportion (CCR)',
                                                                              'TSS' = 'maximizing sensitivity and specificity sum (TSS)',
                                                                              'SES' = 'equalizing sensitivity and specificity',
                                                                              'LW' = 'taking the minimum occurence prediction',
                                                                              'ROC' = 'calculating the minimum ROC plot distance')
-      text = paste('Binary map realized by', x@enms[[which(choices == input$enmchoice)]]@parameters$metric,
-                   'with a final threshold of',  round(x@enms[[which(choices == input$enmchoice)]]@evaluation$threshold, digits = 3))
+      text = paste('Binary map realized by', x@esdms[[which(choices == input$esdmchoice)]]@parameters$metric,
+                   'with a final threshold of',  round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$threshold, digits = 3))
       text
     })
-    output$enm.varimp.info <- renderText({
+    output$esdm.varimp.info <- renderText({
       varimp.info = 'Axes evaluated with the variation of '
-      for (i in seq_len(length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric))) {
+      for (i in seq_len(length(x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric))) {
         if (i == 1) {
-          varimp.info = paste(varimp.info, x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i])
-        } else if (i == length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric) && i != 1) {
-          varimp.info = paste(varimp.info, 'and', x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i], '.')
+          varimp.info = paste(varimp.info, x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric[i])
+        } else if (i == length(x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric[i], '.')
         } else {
-          varimp.info = paste(varimp.info, ',', x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric[i])
+          varimp.info = paste(varimp.info, ',', x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric[i])
         }
       }
       varimp.info
     })
-    output$enm.evaluation.info <- renderText({
+    output$esdm.evaluation.info <- renderText({
       evaluation.info = 'Models evaluated with'
-      for (i in seq_len(length(strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
+      for (i in seq_len(length(strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
         if (i == 1) {
-          evaluation.info = paste(evaluation.info, strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
-        } else if (i == length(x@enms[[which(choices == input$enmchoice)]]@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste(evaluation.info, 'and', strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
+          evaluation.info = paste(evaluation.info, strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+        } else if (i == length(x@esdms[[which(choices == input$esdmchoice)]]@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste(evaluation.info, 'and', strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
         } else {
-          evaluation.info = paste(evaluation.info, ',', strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@enms[[which(choices == input$enmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+          evaluation.info = paste(evaluation.info, ',', strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],'(>',strsplit(x@esdms[[which(choices == input$esdmchoice)]]@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
         }
       }
-      if (x@enms[[which(choices == input$enmchoice)]]@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      if (x@esdms[[which(choices == input$esdmchoice)]]@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
       evaluation.info
     })
-    # ENM end #
+    # ESDM end #
   }
 
   shinyApp(ui, server)

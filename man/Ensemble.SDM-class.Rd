@@ -19,7 +19,9 @@ support vector machines). This S4 class is returned by
 
 \item{\code{algorithm.correlation}}{data frame. Between-algorithm correlation matrix.}
 
-\item{\code{algorithm.evaluation}}{data frame. Evaluation of the ensemble SDM (available
+\item{\code{algorithm.evaluation}}{data frame. Evaluation of the ensemble SDM (available}
+
+\item{\code{sdms}}{list. Individual SDMs used to create the ESDM.
 metrics include AUC, Kappa, sensitivity, specificity and proportion of
 correctly predicted occurrences) and identification of the optimal threshold
 to convert the habitat suitability map into a binary presence/absence map.}

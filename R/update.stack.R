@@ -69,7 +69,7 @@ setMethod('update', 'Stacked.SDM',
                        GUI = GUI)
 
             stack <- object
-            # New ENM creation
+            # New ESDM creation
             if (verbose) {
               cat("New species ensemble distribution model creation...\n")
             }
@@ -80,13 +80,13 @@ setMethod('update', 'Stacked.SDM',
                          strat = strsplit(stack@parameters$PA, ".", fixed = TRUE)[[1]][2])
             }
             if (!is.null(Spname)) {
-              enm.name <- Spname
+              esdm.name <- Spname
             } else {
-              enm.name <- "new_Specie"
+              esdm.name <- "new_Specie"
             }
-            ENM <- ensemble_modelling(strsplit(stack@parameters$algorithms, ".", fixed = TRUE)[[1]][-1],
+            ESDM <- ensemble_modelling(strsplit(stack@parameters$algorithms, ".", fixed = TRUE)[[1]][-1],
                                       Occurrences, Env, Xcol, Ycol, Pcol, rep = as.numeric(stack@parameters$rep),
-                                      enm.name, save = FALSE, path = getwd(), PA, cv = stack@parameters$cv,
+                                      esdm.name, save = FALSE, path = getwd(), PA, cv = stack@parameters$cv,
                                       cv.param = as.numeric(strsplit(stack@parameters$cv.param, "|", fixed = TRUE)[[1]][-1]),
                                       thresh = thresh, metric = stack@parameters$metric, axes.metric = stack@parameters$axes.metric,
                                       uncertainity = stack@uncertainity@data@haveminmax, tmp = tmp,
@@ -105,12 +105,12 @@ setMethod('update', 'Stacked.SDM',
               cat("Check if the species already exist...\n")
             }
             if (!is.null(Spname)) {
-              i <- which(names(stack@enms) == paste0(Spname, ".Ensemble.SDM"))
+              i <- which(names(stack@esdms) == paste0(Spname, ".Ensemble.SDM"))
               if (verbose) {
                 cat(Spname, "replacement\n")
               }
               if (length(i) > 0) {
-                stack@enms[[i]] <- NULL
+                stack@esdms[[i]] <- NULL
               } else {
                 stack@parameters$sp.nb.origin <- stack@parameters$sp.nb.origin +
                   1
@@ -126,14 +126,14 @@ setMethod('update', 'Stacked.SDM',
             if (verbose) {
               cat("New stacking...\n")
             }
-            enms <- list()
-            for (i in seq_len(stack@enms)) {
-              enms[[i]] <- stack@enms[[i]]
+            esdms <- list()
+            for (i in seq_len(stack@esdms)) {
+              esdms[[i]] <- stack@esdms[[i]]
             }
-            enms["method"] <- stack@parameters$method
-            enms["endemism"] <- strsplit(stack@parameters$endemism, "|", fixed = "T")[[1]]
-            enms["rep.B"] <- stack@parameters$rep.B
-            newstack <- do.call(stacking, enms)
+            esdms["method"] <- stack@parameters$method
+            esdms["endemism"] <- strsplit(stack@parameters$endemism, "|", fixed = "T")[[1]]
+            esdms["rep.B"] <- stack@parameters$rep.B
+            newstack <- do.call(stacking, esdms)
             if (verbose) {
               cat("   done.\n")
             }
