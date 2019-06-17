@@ -27,7 +27,11 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   factors[sapply(factors, is.null)] <- NULL
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
+<<<<<<<<< Temporary merge branch 1
+  if(length(factors)==0) factors <- NULL # avoid factors becoming an empty list
+=========
   if(length(factors)==0) factors <- NULL
+>>>>>>>>> Temporary merge branch 2
   proj = suppressWarnings(raster::predict(Env, model, factors = factors))
   # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
   #                                                                    x) {
@@ -53,7 +57,6 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   return(obj)
 })
 
-#' @rdname project
 #' @export
 setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   model = get_model(obj, Env, ...)
