@@ -15,8 +15,8 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL, verbose = 
   }
 
   # Mask defining
-  if (PA$strat == '2nd') {
-    if(verbose) {cat('   second far selection \n')}
+  if (PA$strat == 'disk') {
+    if(verbose) {cat('   disk selection \n')}
     circles = list()
     for (i in seq_len(length(obj@data$X))) {
       x = obj@data$X[i]
