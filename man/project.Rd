@@ -4,28 +4,31 @@
 \name{project}
 \alias{project}
 \alias{project,Algorithm.SDM-method}
-\alias{project,MAXENT.SDM-method}
 \alias{project,Ensemble.SDM-method}
-\title{Project model into a new environment}
+\alias{project,Stacked.SDM-method}
+\title{Project model into environment}
 \usage{
 project(obj, Env, ...)
 
 \S4method{project}{Algorithm.SDM}(obj, Env, ...)
 
-\S4method{project}{MAXENT.SDM}(obj, Env, ...)
-
 \S4method{project}{Ensemble.SDM}(obj, Env, ...)
+
+\S4method{project}{Stacked.SDM}(obj, Env, ...)
 }
 \arguments{
 \item{obj}{Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.}
 
 \item{Env}{Raster stack. Updated environmental rasters to be used for projection.}
 
-\item{...}{}
+\item{...}{Additional arguments for internal use.}
 }
 \value{
-A raster (Algorithm.SDM), raster stack (Ensemble.SDM), biodiversity map/mean raster (Stacked.SDM)
+Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
 }
 \description{
-This is a method to project existing SDMs, ESDMs or SSDMs to a new environment. The function uses any S4 .SDM class object and either returns the object with updated projection slots or only returns the projection as rasters (if minimal.outputs = TRUE)
+This is a collection of methods to project SDMs, ESDMs or SSDMs into the supplied environment. The function is used internally to calculate the input for the projection slot of .SDM classes but can also be used to project existing .SDM objects (see Details).
+}
+\details{
+The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with.
 }
