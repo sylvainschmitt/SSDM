@@ -31,19 +31,6 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
   if(length(factors)==0) factors <- NULL
   proj = suppressWarnings(raster::predict(Env, model, factors = factors))
-  # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
-  #                                                                    x) {
-  #   x = as.data.frame(x)
-  #   for (i in seq_len(length(Env@layers))) {
-  #     if (Env[[i]]@data@isfactor) {
-  #       x[, i] = as.factor(x[, i])
-  #       x[, i] = droplevels(x[, i])
-  #       levels(x[, i]) = Env[[i]]@data@attributes[[1]]$ID
-  #     }
-  #   }
-  #   return(predict(model, x))
-  # }))
-  # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
     if(proj@data@max) proj = proj / proj@data@max
