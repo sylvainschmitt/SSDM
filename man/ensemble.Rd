@@ -65,7 +65,7 @@ evaluation, algorithm correlation matrix and variable importance).
 \details{
 ensemble.metric (metric(s) used to select the best SDMs that will be
  included in the ensemble SDM) can be chosen from among: \describe{
- \item{AUC}{Area under the receiving operating characteristic (ROC) curve}
+ \item{AUC}{Area under the receiver operating characteristic (ROC) curve}
  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
  from the confusion matrix} \item{specificity}{Specificity from the confusion
  matrix} \item{prop.correct}{Proportion of correctly predicted occurrences

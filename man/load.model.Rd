@@ -2,11 +2,11 @@
 % Please edit documentation in R/load_model.R
 \name{load.model}
 \alias{load.model}
-\alias{load_enm}
+\alias{load_esdm}
 \alias{load_stack}
 \title{Load ensemble SDMs and SSDMs.}
 \usage{
-load_enm(name, path = getwd())
+load_esdm(name, path = getwd())
 
 load_stack(name = "Stack", path = getwd(), GUI = FALSE)
 }

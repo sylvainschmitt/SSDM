@@ -33,7 +33,7 @@ NULL
 #'
 #'@details ensemble.metric (metric(s) used to select the best SDMs that will be
 #'  included in the ensemble SDM) can be chosen from among: \describe{
-#'  \item{AUC}{Area under the receiving operating characteristic (ROC) curve}
+#'  \item{AUC}{Area under the receiver operating characteristic (ROC) curve}
 #'  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
 #'  from the confusion matrix} \item{specificity}{Specificity from the confusion
 #'  matrix} \item{prop.correct}{Proportion of correctly predicted occurrences
@@ -75,13 +75,14 @@ setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
 setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
                                                 ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
                                                 verbose = TRUE, GUI = FALSE) {
-  # Check agruments
+  # Check arguments
   .checkargs(name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
              weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose,
              GUI = GUI)
 
   models <- list(x, ...)
-  enm <- Ensemble.SDM()
+  esdm <- Ensemble.SDM()
+  sdms <- models
 
   # Algorithm ensemble model creation
   if (verbose) {
@@ -128,6 +129,17 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
     }
     return(NULL)
   } else {
+    # Extract indices of models that met the threshold
+    ind <- 0
+    selection.indices <- c()
+    for (i in seq_len(length(sdms))) {
+      if (all(sdms[[i]]@evaluation[,which(names(sdms[[i]]@evaluation) %in% ensemble.metric)] > ensemble.thresh)) {
+        ind <- ind+1
+        selection.indices[ind] <- i
+        }
+    }
+    # Store individual models
+    esdm@sdms <- sdms[c(selection.indices)]
 
     # Sum of algorithm ensemble
     if (verbose) {
@@ -154,20 +166,20 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       } else {
         name <- "Specie."
       }
-      enm@name <- paste0(name, "Ensemble.SDM")
+      esdm@name <- paste0(name, "Ensemble.SDM")
 
       # Projection
-      enm@projection <- sum.algo.ensemble@projection
-      enm@binary <- sum.algo.ensemble@binary
+      esdm@projection <- sum.algo.ensemble@projection
+      esdm@binary <- sum.algo.ensemble@binary
       if (verbose) {
         cat("   done \n")
       }
 
       # Data
-      enm@data <- algo.ensemble[[1]]@data
+      esdm@data <- algo.ensemble[[1]]@data
       if (length(algo.ensemble) > 1) {
         for (i in 2:length(algo.ensemble)) {
-          enm@data <- rbind(enm@data, algo.ensemble[[i]]@data)
+          esdm@data <- rbind(esdm@data, algo.ensemble[[i]]@data)
         }
       }
 
@@ -175,7 +187,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       if (verbose) {
         cat("Model evaluation...")
       }
-      enm@evaluation <- sum.algo.ensemble@evaluation
+      esdm@evaluation <- sum.algo.ensemble@evaluation
       if (verbose) {
         cat("   done \n")
       }
@@ -184,7 +196,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       if (verbose) {
         cat("Axes evaluation...")
       }
-      enm@variable.importance <- sum.algo.ensemble@variable.importance
+      esdm@variable.importance <- sum.algo.ensemble@variable.importance
       if (verbose) {
         cat("   done \n")
       }
@@ -199,14 +211,14 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       # Algorithms Correlation
       if (!(uncertainty)) {
         if (verbose) {
-          cat("Algorithm correlation computing is unactivated \n")
+          cat("Algorithm correlation computing is deactivated \n")
         }
       }
       if (uncertainty && length(projections@layers) > 1) {
         if (verbose) {
           cat("Algorithms correlation...")
         }
-        enm@algorithm.correlation <- as.data.frame(layerStats(projections,
+        esdm@algorithm.correlation <- as.data.frame(layerStats(projections,
                                                               "pearson", na.rm = TRUE)$`pearson correlation coefficient`)
         if (verbose) {
           cat("   done \n")
@@ -216,15 +228,15 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       # uncertainty map
       if (!(uncertainty)) {
         if (verbose) {
-          cat("Uncertainty mapping is unactivated \n")
+          cat("Uncertainty mapping is deactivated \n")
         }
       }
       if (uncertainty && length(projections@layers) > 1) {
         if (verbose) {
           cat("uncertainty mapping...")
         }
-        enm@uncertainty <- calc(projections, var)
-        names(enm@uncertainty) <- "uncertainty map"
+        esdm@uncertainty <- calc(projections, var)
+        names(esdm@uncertainty) <- "uncertainty map"
         if (verbose) {
           cat("   done \n")
         }
@@ -235,19 +247,19 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         if (verbose) {
           cat("Algorithms evaluation...")
         }
-        enm@algorithm.evaluation <- algo.ensemble[[1]]@evaluation
-        row.names(enm@algorithm.evaluation)[1] <- algo.ensemble[[1]]@name
+        esdm@algorithm.evaluation <- algo.ensemble[[1]]@evaluation
+        row.names(esdm@algorithm.evaluation)[1] <- algo.ensemble[[1]]@name
         if (length(algo.ensemble) > 1) {
           for (i in 2:length(algo.ensemble)) {
-            enm@algorithm.evaluation <- rbind(enm@algorithm.evaluation,
+            esdm@algorithm.evaluation <- rbind(esdm@algorithm.evaluation,
                                               algo.ensemble[[i]]@evaluation)
-            row.names(enm@algorithm.evaluation)[i] <- algo.ensemble[[i]]@name
+            row.names(esdm@algorithm.evaluation)[i] <- algo.ensemble[[i]]@name
           }
         }
-        enm@algorithm.evaluation$kept.model <- algo.ensemble[[1]]@parameters$kept.model
+        esdm@algorithm.evaluation$kept.model <- algo.ensemble[[1]]@parameters$kept.model
         if (length(algo.ensemble) > 1) {
           for (i in 2:length(algo.ensemble)) {
-            enm@algorithm.evaluation$kept.model[[i]] <- algo.ensemble[[i]]@parameters$kept.model
+            esdm@algorithm.evaluation$kept.model[[i]] <- algo.ensemble[[i]]@parameters$kept.model
           }
         }
       } else {
@@ -256,7 +268,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       }
 
       # Parameters
-      enm@parameters <- algo.ensemble[[1]]@parameters
+      esdm@parameters <- algo.ensemble[[1]]@parameters
       text.ensemble.metric <- character()
       text.ensemble.thresh <- character()
       for (i in seq_len(length(ensemble.metric))) {
@@ -265,16 +277,16 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         text.ensemble.thresh <- paste0(text.ensemble.thresh, "|",
                                        ensemble.thresh[i])
       }
-      enm@parameters$ensemble.metric <- text.ensemble.metric
-      enm@parameters$ensemble.thresh <- text.ensemble.thresh
-      enm@parameters$weight <- weight
+      esdm@parameters$ensemble.metric <- text.ensemble.metric
+      esdm@parameters$ensemble.thresh <- text.ensemble.thresh
+      esdm@parameters$weight <- weight
     }
 
     if (verbose) {
       cat("   done \n")
     }
 
-    return(enm)
+    return(esdm)
   }
 })
 

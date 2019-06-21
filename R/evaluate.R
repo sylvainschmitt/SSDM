@@ -292,12 +292,12 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
 setMethod("evaluate", "Stacked.SDM", function(obj, ...){
 
   # Observed composition
-  obs <- lapply(obj@enms, function(x){
+  obs <- lapply(obj@esdms, function(x){
     x <- x@data[x@data$Presence == 1,1:2]
   })
   obs <- mapply(function(x, n){
     x['species'] <- n ; return(x)
-  }, n = lapply(strsplit(names(obj@enms), '.', fixed = TRUE), function(x){x[[1]]}),
+  }, n = lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}),
   x= obs, SIMPLIFY = FALSE)
   obs <- do.call('rbind', obs)
   obs <- with(obs, table(paste(X, Y), species))
@@ -311,10 +311,10 @@ setMethod("evaluate", "Stacked.SDM", function(obj, ...){
   names(XY) <- c('X','Y')
 
   # Predicted composition
-  pred <- stack(lapply(obj@enms, function(x){
+  pred <- stack(lapply(obj@esdms, function(x){
     x@binary
   }))
-  names(pred) <- unlist(lapply(strsplit(names(obj@enms), '.', fixed = TRUE), function(x){x[[1]]}))
+  names(pred) <- unlist(lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}))
   pred <- extract(pred, XY)
 
   # Confusion matrix
@@ -327,7 +327,7 @@ setMethod("evaluate", "Stacked.SDM", function(obj, ...){
   )
 
   # Evaluation indices
-  n <- dim(conf)[2] # Renmaing to follow Pottier et al, 2013
+  n <- dim(conf)[2] # Renaming according to Pottier et al, 2013
   a <- conf$TP
   b <- conf$FP
   c <- conf$FN
