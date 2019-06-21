@@ -1,6 +1,14 @@
 NEWS
 ================
 
+SSDM 0.2.6.9001
+===============
+
+- insertion of slot @sdms & @esdms in Ensemble.SDM & Stacked.SDM classes
+- renaming all enm references to esdm
+- addition of project methods for ESDMs and SSDMs (including description, test unit, and user input check for environmental data)
+
+
 SSDM 0.2.6
 ===============
 
