@@ -15,7 +15,8 @@ project(obj, Env, ...)
 
 \S4method{project}{MAXENT.SDM}(obj, Env, ...)
 
-\S4method{project}{Ensemble.SDM}(obj, Env, ...)
+\S4method{project}{Ensemble.SDM}(obj, Env, cores = 1, verbose = TRUE,
+  ...)
 
 \S4method{project}{Stacked.SDM}(obj, Env, ...)
 }

@@ -11,6 +11,7 @@ NULL
 #'
 #' @param obj Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
+#' @param cores Number of cores to use for parallel computing when projecting ESDM or SSDM objects.
 #' @param ... Additional arguments for internal use.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. Therefore, the layer names need to match the variable names, otherwise the functions gives an error.
 #' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a Raster (Algorithm.SDM), a RasterStack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
@@ -73,7 +74,8 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
+setMethod("project", "Ensemble.SDM", function(obj, Env, cores=1,...) {
+  .checkargs(cores = cores)
   models = lapply(obj@sdms,FUN=get_model)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -83,9 +85,26 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
   if(length(factors)==0) factors <- NULL
   # project SDMs
-  proj = suppressWarnings(lapply(models,FUN=function(x){raster::predict(Env, x, factors = factors)}))
-  # rescaling
-  proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+    # Parallelization
+    
+  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    cat("Opening clusters,", cores, "cores \n")
+
+    if ((parallel::detectCores() - 1) < cores) {
+      warning("It seems you attributed more cores than your CPU have !")
+    }
+    cl <- parallel::makeCluster(cores, outfile = "")
+    cat("Exporting environment to clusters \n")
+    parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()), ls(envir = environment())), envir = environment())
+    proj = suppressWarnings(parallel::parLapply(cl, models, fun=function(x){raster::predict(Env, x, factors = factors)}))
+    # rescaling
+    proj = parallel::parLapply(cl, proj, fun=function(x) reclassify(x, c(-Inf, 0, 0)))
+    parallel::stopCluster(cl)
+    cat("Closed clusters \n")
+  } else stop("Number of cores needs to be greater than zero")
+  
+  # Parallelization end  
+    
   for(i in 1:length(models)){
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
       if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max
@@ -106,7 +125,8 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project","Stacked.SDM",function(obj,Env,...){
+setMethod("project","Stacked.SDM",function(obj,Env,cores=1,...){
+  .checkargs(cores=cores)
   # get factors in Env
   if(all(names(Env) %in% colnames(obj@esdms[[1]]@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -115,33 +135,73 @@ setMethod("project","Stacked.SDM",function(obj,Env,...){
   names(factors) <- unlist(sapply(seq_len(length(Env@layers)), function(i)
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
   if(length(factors)==0) factors <- NULL
-  esdms <- list() # temporary object with ESDM by species (for use with get_model and predict)
+  models <- list() # temporary object with ESDM by species (for use with get_model and predict)
   sum.algo.ensemble <- list() # temporary object for storing resulting ensembles
   species.names <- names(obj@esdms)
-  for(j in 1:length(obj@esdms)){
+    for(j in 1:length(obj@esdms)){
     # get ESDMs by species
-    esdms[[j]] <- lapply(obj@esdms[[j]]@sdms,FUN=get_model)
-    # project SDMs
-    proj = suppressWarnings(lapply(esdms[[j]],FUN=function(x){raster::predict(Env, x, factors = factors)}))
-    # rescaling
-    proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
-    for(i in 1:length(obj@esdms[[j]]@sdms)){
-      if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-        if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max # if zero is the maximum, then this leads to an NA map, which will propagate throughout the projections
-      names(proj[[i]]) = "Projection"
-      obj@esdms[[j]]@sdms[[i]]@projection = proj[[i]]
-      if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
-        obj@esdms[[j]]@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,0, obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,Inf,1))
+    models[[j]] <- lapply(obj@esdms[[j]]@sdms,FUN=SSDM:::get_model)
     }
-    # sum SDMs (to do - use ensemble function with minimal.outputs)
-    #ensemble.args <- list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])
-    sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])))
-    sum.algo.ensemble[[j]]@name <- species.names[j]
-    obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
-    obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
-    obj@esdms[[j]]@uncertainty <- sum.algo.ensemble[[j]]@uncertainty
-  } # end project ESDMs
   
+  #### Parallelization
+  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    cat("Opening clusters,", cores, "cores \n")
+    if ((parallel::detectCores() - 1) < cores) {
+      warning("It seems you attributed more cores than your CPU have !")
+    }
+      cl <- parallel::makeCluster(cores, outfile = "")
+      cat("Exporting environment to clusters \n")
+      parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()), ls(envir = environment())), envir = environment())
+      esdms <- parallel::parLapply(cl, models, fun = function(sdms){
+        # project SDMs
+        proj = suppressWarnings(lapply(sdms,FUN=function(x){raster::predict(Env, x, factors = factors)}))
+        # rescaling
+        proj = lapply(proj, FUN=function(x) raster::reclassify(x, c(-Inf, 0, 0)))
+        return(proj)
+      })
+      parallel::stopCluster(cl)
+    } else stop("Number of cores needs to be greater than zero")
+      for(j in 1:length(obj@esdms)){
+        for(i in 1:length(obj@esdms[[j]]@sdms)){
+          if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
+            if(esdms[[j]][[i]]@data@max>0) esdms[[j]][[i]] = esdms[[j]][[i]] / esdms[[j]][[i]]@data@max # if zero is the maximum, then this leads to an NA map, which will propagate throughout the projections
+            names(esdms[[j]][[i]]) = "Projection"
+            obj@esdms[[j]]@sdms[[i]]@projection = esdms[[j]][[i]]
+            if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
+              obj@esdms[[j]]@sdms[[i]]@binary <- reclassify(esdms[[j]][[i]], c(-Inf,obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,0, obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,Inf,1))
+        }
+        # sum SDMs (to do - use ensemble function with minimal.outputs)
+        #ensemble.args <- list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])
+        sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])))
+        sum.algo.ensemble[[j]]@name <- species.names[j]
+        obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
+        obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
+        obj@esdms[[j]]@uncertainty <- sum.algo.ensemble[[j]]@uncertainty
+      } # end project ESDMs
+      
+
+  ### original code   
+  #   # project SDMs
+  #   proj = suppressWarnings(lapply(esdms[[j]],FUN=function(x){raster::predict(Env, x, factors = factors)}))
+  #   # rescaling
+  #   proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+  #   for(i in 1:length(obj@esdms[[j]]@sdms)){
+  #     if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
+  #       if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max # if zero is the maximum, then this leads to an NA map, which will propagate throughout the projections
+  #     names(proj[[i]]) = "Projection"
+  #     obj@esdms[[j]]@sdms[[i]]@projection = proj[[i]]
+  #     if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
+  #       obj@esdms[[j]]@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,0, obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,Inf,1))
+  #   }
+  #   # sum SDMs (to do - use ensemble function with minimal.outputs)
+  #   #ensemble.args <- list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])
+  #   sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])))
+  #   sum.algo.ensemble[[j]]@name <- species.names[j]
+  #   obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
+  #   obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
+  #   obj@esdms[[j]]@uncertainty <- sum.algo.ensemble[[j]]@uncertainty
+  # } # end project ESDMs
+  # 
   # stack ESDMs (To do - enable minimal.outputs)
   #stack.args <- list(verbose=FALSE,method=obj@parameters[,which(names(obj@parameters)=="method")])
   ensemble.stack <- do.call(stacking, c(sum.algo.ensemble,list(verbose=FALSE,method=obj@parameters[,which(names(obj@parameters)=="method")])))
