@@ -9,7 +9,7 @@ NULL
 #'
 #' @param obj Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
-#' @param ... 
+#' @param ... Additional arguments for internal use.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
 #' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
 #' @name project
@@ -54,6 +54,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   return(obj)
 })
 
+#' @rdname project
 #' @export
 setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   model = get_model(obj, Env, ...)

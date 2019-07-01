@@ -152,6 +152,17 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                   )
                                 )
                         ),
+                        tabItem('forecasting',
+                                fluidRow(
+                                  box(
+                                    p(HTML("Before proceeding please make sure: <ul><li> to load the environmental rasters used for projection (if you have not done so, go to the tab <b>Load >> new data</b> and load new environmental rasters </li><li> to have a model loaded (either created in current session through <b>Modelling</b> or loaded through <b>Load >> previous model</b>)</li></ul>" )),
+                                    h1(' '),
+                                    actionButton('project','Project'),
+                                    textOutput('projcheck'),
+                                    width=12
+                                    )
+                                )
+                        ),
 
                         ### Results Page ###
                         tabItem('stack',
@@ -189,24 +200,24 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                   )
                                 )
                         ),
-                        tabItem('stackenm',
+                        tabItem('stackesdm',
                                 fluidRow(
                                   tabBox(title = 'Maps',
-                                         tabPanel(actionButton('enmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL),
+                                         tabPanel(actionButton('esdmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL),
                                                   plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)),
                                                   title = 'Habitat suitability'),
                                          tabPanel(plotOutput('niche'),
-                                                  textOutput('enm.binary.info'),
+                                                  textOutput('esdm.binary.info'),
                                                   title = 'Binary map'),
-                                         tabPanel(plotOutput('enm.uncertainty'), title = 'Uncertainty'),
-                                         tabPanel(tableOutput('enm.summary'), title = 'Summary')
+                                         tabPanel(plotOutput('esdm.uncertainty'), title = 'Uncertainty'),
+                                         tabPanel(tableOutput('esdm.summary'), title = 'Summary')
                                   ),
                                   tabBox(title = 'Variable importance',
-                                         tabPanel(plotOutput('enm.varimp.barplot'),
-                                                  textOutput('enm.varimp.info'),
+                                         tabPanel(plotOutput('esdm.varimp.barplot'),
+                                                  textOutput('esdm.varimp.info'),
                                                   title = 'Barplot'),
-                                         tabPanel(tableOutput('enm.varimp.table'), title = 'Table'),
-                                         tabPanel(tableOutput('enmvarimplegend'), title = 'Legend')
+                                         tabPanel(tableOutput('esdm.varimp.table'), title = 'Table'),
+                                         tabPanel(tableOutput('esdmvarimplegend'), title = 'Legend')
                                   )
                                 ),
                                 uiOutput('algoevalcorr')
