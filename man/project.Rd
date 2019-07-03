@@ -4,6 +4,7 @@
 \name{project}
 \alias{project}
 \alias{project,Algorithm.SDM-method}
+\alias{project,MAXENT.SDM-method}
 \alias{project,Ensemble.SDM-method}
 \alias{project,Stacked.SDM-method}
 \title{Project model into environment}
@@ -11,6 +12,8 @@
 project(obj, Env, ...)
 
 \S4method{project}{Algorithm.SDM}(obj, Env, ...)
+
+\S4method{project}{MAXENT.SDM}(obj, Env, ...)
 
 \S4method{project}{Ensemble.SDM}(obj, Env, ...)
 
@@ -21,7 +24,7 @@ project(obj, Env, ...)
 
 \item{Env}{Raster stack. Updated environmental rasters to be used for projection.}
 
-\item{...}{}
+\item{...}{Additional arguments for internal use.}
 }
 \value{
 Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
