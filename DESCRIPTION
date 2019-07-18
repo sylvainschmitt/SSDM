@@ -34,7 +34,8 @@ Imports:
     shinydashboard (>= 0.5.1),
     gplots (>= 0.1.0),
     shinyFiles (>= 0.7.0),
-    spThin (>= 0.1.0)
+    spThin (>= 0.1.0),
+    poibin (>= 1.3.0)
 Depends:
     R (>= 3.2.2)
 Collate:
