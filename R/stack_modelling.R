@@ -1,4 +1,4 @@
-#' @include Algorithm.SDM.R ensemble.R Ensemble.SDM.R checkargs.R
+#' @include Algorithm.SDM.R ensemble.R Ensemble.SDM.R ensemble_modelling.R checkargs.R
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
@@ -81,7 +81,7 @@ NULL
 #'  user interface).
 #'@param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'  used all the available CPU cores.
+#'  use all the available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -134,8 +134,7 @@ NULL
 #'  habitat suitability maps, \strong{Bernoulli} drawing repeatedly from a
 #'  Bernoulli distribution, \strong{bSSDM} sum the binary map obtained with the
 #'  thresholding (depending on the metric, see metric parameter),
-#'  \strong{MaximumLikelihood} adjust species richness of the model by linear
-#'  regression, \strong{PRR.MEM} model richness with a macroecological model
+#'  \strong{MaximumLikelihood} adjust species richness using maximum likelihood parameter estimates on the logit-transformed occurrence probabilities (see Calabrese et al. (2014)), \strong{PRR.MEM} model richness with a macroecological model
 #'  (MEM) and adjust each ESDM binary map by ranking habitat suitability and
 #'  keeping as much as predicted richness of the MEM, \strong{PRR.pSSDM} model
 #'  richness with a pSSDM and adjust each ESDM binary map by ranking habitat

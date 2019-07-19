@@ -208,9 +208,9 @@
 
   # Stacking
   if (!inherits(method, "character") || !(method %in% c("pSSDM", "Bernoulli", "bSSDM",
-                                                        "MaximumLikelyhood",
+                                                        "MaximumLikelihood",
                                                         "PRR.MEM", "PRR.pSSDM"))) {
-    stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelyhood, PRR.MEM, or PRR.pSSDM (see help).")
+    stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelihood, PRR.MEM, or PRR.pSSDM (see help).")
   }
   if (method == "Bernoulli" && !inherits(rep.B, "numeric") && abs(rep.B - round(rep.B)) !=
       0 && rep.B < 1) {

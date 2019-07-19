@@ -27,11 +27,11 @@ project(obj, Env, ...)
 \item{...}{Additional arguments for internal use.}
 }
 \value{
-Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a Raster (Algorithm.SDM), a RasterStack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
+Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
 }
 \description{
 This is a collection of methods to project SDMs, ESDMs or SSDMs into the supplied environment. The function is used internally to calculate the input for the projection slot of .SDM classes but can also be used to project existing .SDM objects (see Details).
 }
 \details{
-The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. Therefore, the layer names need to match the variable names, otherwise the functions gives an error.
+The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with.
 }

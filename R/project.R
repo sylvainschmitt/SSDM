@@ -1,6 +1,4 @@
 #' @include Algorithm.SDM.R
-#' @include Ensemble.SDM.R
-#' @include Stacked.SDM.R
 #' @import methods
 #' @importFrom raster raster stack extract predict reclassify layerStats calc
 NULL
@@ -12,9 +10,9 @@ NULL
 #' @param obj Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
 #' @param ... Additional arguments for internal use.
-#' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. Therefore, the layer names need to match the variable names, otherwise the functions gives an error.
-#' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a Raster (Algorithm.SDM), a RasterStack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
-#' @rdname project
+#' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
+#' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
+#' @name project
 #' @export
 setGeneric("project", function(obj, Env, ...) {
   return(standardGeneric("project"))
@@ -32,6 +30,19 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
   if(length(factors)==0) factors <- NULL
   proj = suppressWarnings(raster::predict(Env, model, factors = factors))
+  # proj = suppressWarnings(raster::predict(Env, model, fun = function(model,
+  #                                                                    x) {
+  #   x = as.data.frame(x)
+  #   for (i in seq_len(length(Env@layers))) {
+  #     if (Env[[i]]@data@isfactor) {
+  #       x[, i] = as.factor(x[, i])
+  #       x[, i] = droplevels(x[, i])
+  #       levels(x[, i]) = Env[[i]]@data@attributes[[1]]$ID
+  #     }
+  #   }
+  #   return(predict(model, x))
+  # }))
+  # Rescaling projection
   proj = reclassify(proj, c(-Inf, 0, 0))
   if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
     if(proj@data@max) proj = proj / proj@data@max

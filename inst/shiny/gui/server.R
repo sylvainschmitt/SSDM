@@ -10,8 +10,8 @@ library(gplots)
 serverWD <- function(working.directory){
   function(input, output, session) {
     ### Server data ###
-    data <- reactiveValues(Env = stack(), Occ = data.frame(), dir = getwd(), ENM = NULL, enms = list(), Stack = NULL)
-    result <- reactiveValues(ENM = NULL)
+    data <- reactiveValues(Env = stack(), Occ = data.frame(), dir = getwd(), ESDM = NULL, esdms = list(), Stack = NULL)
+    result <- reactiveValues(ESDM = NULL)
 
     ### Menu ###
     output$menu <- renderMenu({
@@ -30,13 +30,16 @@ serverWD <- function(working.directory){
                                selected = 'Stack modelling')
           )
         },
-        if(!is.null(data$Stack) || !is.null(data$ENM)) {
-          if(inherits(data$ENM,'Algorithm.SDM')) {tabname = 'Algorithm SDM'} else {tabname = 'Ensemble SDM'}
+        if(length(data$Env) > 0 & any(length(data$Stack) > 0, length(data$ESDM) > 0)){
+          menuItem('Model forecasting',tabName='forecasting')
+        },
+        if(!is.null(data$Stack) || !is.null(data$ESDM)) {
+          if(inherits(data$ESDM,'Algorithm.SDM')) {tabname = 'Algorithm SDM'} else {tabname = 'Ensemble SDM'}
           menuItem('Results',
                    if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
-                   menuItem(tabname, tabName = "stackenm", icon = icon("pagelines")),
-                   if(!is.null(data$Stack)){selectInput('enmchoice', 'Species:', data$enms, selectize = TRUE)},
-                   if(!inherits(data$ENM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
+                   menuItem(tabname, tabName = "stackesdm", icon = icon("pagelines")),
+                   if(!is.null(data$Stack)){selectInput('esdmchoice', 'Species:', data$esdms, selectize = TRUE)},
+                   if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
           )
         },
         menuItem('Quit', tabName = 'quitpage')
@@ -310,7 +313,7 @@ serverWD <- function(working.directory){
       }
       name = input$prevmodel$path[[length(input$prevmodel$path)]][1]
       if (input$model.type == 'Ensemble SDM') {
-        a = try(load_enm(name, path))
+        a = try(load_esdm(name, path))
       }
       if (input$model.type == 'SSDM') {
         a = try(withProgress(message = 'Model loading', load_stack(name, path, GUI = TRUE)))
@@ -320,9 +323,9 @@ serverWD <- function(working.directory){
       } else {
         output$prevmodelbug <- renderText(' ')
         if (input$model.type == 'Ensemble SDM') {
-          data$ENM = a
-          if(!is.null(data$ENM)){result$ENM = data$ENM}
-          output$model.preview <- renderPlot({spplot(data$ENM@projection,
+          data$ESDM = a
+          if(!is.null(data$ESDM)){result$ESDM = data$ESDM}
+          output$model.preview <- renderPlot({spplot(data$ESDM@projection,
                                                      main = 'Habitat suitability map',
                                                      xlab = 'Longitude (\u02DA)',
                                                      ylab = 'Latitude (\u02DA)',
@@ -330,7 +333,7 @@ serverWD <- function(working.directory){
         }
         if (input$model.type == 'SSDM') {
           data$Stack = a
-          for (i in seq_len(length(names(data$Stack@enms)))) {data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
+          for (i in seq_len(length(names(data$Stack@esdms)))) {data$esdms[[i]] = strsplit(names(data$Stack@esdms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
           output$model.preview <- renderPlot({spplot(data$Stack@diversity.map,
                                                      main = data$Stack@name,
                                                      xlab = 'Longitude (\u02DA)',
@@ -498,10 +501,10 @@ serverWD <- function(working.directory){
       validate(
         need(length(input$algo) > 0, 'Choose algorithm(s) to be run !')
       )
-      data$ENM = NULL
+      data$ESDM = NULL
       data$Stack = NULL
-      data$enms = list()
-      result$ENM = NULL
+      data$esdms = list()
+      result$ESDM = NULL
       output$modelprev = renderPlot({plot.new()})
       output$modelfailed = renderText({''})
       if (input$Pcol == 'None') {Pcol = NULL} else {Pcol = input$Pcol}
@@ -545,7 +548,7 @@ serverWD <- function(working.directory){
         } else {
           Occ = data$Occ
         }
-        data$ENM = withProgress(message = 'SDM',
+        data$ESDM = withProgress(message = 'SDM',
                                 modelling(algo,
                                           Occ, data$Env,
                                           Xcol = input$Xcol,
@@ -573,12 +576,12 @@ serverWD <- function(working.directory){
                                           trees = algoparam$trees,
                                           finalleave = algoparam$finalleave,
                                           algocv = algoparam$cv))
-        output$modelprev = renderPlot(spplot(data$ENM@projection,
+        output$modelprev = renderPlot(spplot(data$ESDM@projection,
                                              main = 'Habitat suitability map',
                                              xlab = 'Longitude (\u02DA)',
                                              ylab = 'Latitude (\u02DA)',
                                              col.regions = rev(terrain.colors(10000))))
-        result$ENM = data$ENM
+        result$ESDM = data$ESDM
       }
       if(!inherits(input$uncert,'logical')) {uncert = TRUE} else {uncert = input$uncert}
       if(input$modellingchoice == 'Ensemble modelling'){
@@ -587,7 +590,7 @@ serverWD <- function(working.directory){
         } else {
           Occ = data$Occ
         }
-        data$ENM = withProgress(message = 'Ensemble SDM',
+        data$ESDM = withProgress(message = 'Ensemble SDM',
                                 ensemble_modelling(algo,
                                                    Occ, data$Env,
                                                    Xcol = input$Xcol,
@@ -618,13 +621,13 @@ serverWD <- function(working.directory){
                                                    trees = algoparam$trees,
                                                    finalleave = algoparam$finalleave,
                                                    algocv = algoparam$cv))
-        if(!is.null(data$ENM)){
-          output$modelprev = renderPlot(spplot(data$ENM@projection,
+        if(!is.null(data$ESDM)){
+          output$modelprev = renderPlot(spplot(data$ESDM@projection,
                                                main = 'Habitat suitability map',
                                                xlab = 'Longitude (\u02DA)',
                                                ylab = 'Latitude (\u02DA)',
                                                col.regions = rev(terrain.colors(10000))))
-          result$ENM = data$ENM
+          result$ESDM = data$ESDM
         } else {
           output$modelfailed = renderText('No ensemble SDM were kept, maybe you should try lower ensemble threshold(s) ?')
         }
@@ -678,7 +681,7 @@ serverWD <- function(working.directory){
                                                xlab = 'Longitude (\u02DA)',
                                                ylab = 'Latitude (\u02DA)',
                                                col.regions = rev(terrain.colors(10000))))
-          for (i in seq_len(length(names(data$Stack@enms)))) {data$enms[[i]] = strsplit(names(data$Stack@enms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
+          for (i in seq_len(length(names(data$Stack@esdms)))) {data$esdms[[i]] = strsplit(names(data$Stack@esdms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
         } else {
           output$modelfailed = renderText('You have less than two remaining ensemble SDMs, maybe you should try lower ensemble threshold(s) ?')
         }
@@ -776,7 +779,7 @@ serverWD <- function(working.directory){
                                                                  strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                  'rep =',
                                                                  strsplit(data$Stack@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-      summary$Summary = c(data$Stack@parameters$data, length(data$Stack@enms), algo.info, data$Stack@parameters$rep, PA, data$Stack@parameters$cv, cv.param)
+      summary$Summary = c(data$Stack@parameters$data, length(data$Stack@esdms), algo.info, data$Stack@parameters$rep, PA, data$Stack@parameters$cv, cv.param)
       if(!is.null(data$Stack@parameters$sp.nb.origin)) {
         summary = rbind(summary,
                         data.frame(Summary = data$Stack@parameters$sp.nb.origin, row.names = 'Original number of species'))
@@ -820,18 +823,18 @@ serverWD <- function(working.directory){
       evaluation.info
     })
 
-    ## ENM Stack Result ##
-    observeEvent(input$enmchoice, {
+    ## ESDM Stack Result ##
+    observeEvent(input$esdmchoice, {
       if(!is.null(data$Stack)){
-        # print(data$enms)
-        # print(input$enmchoice)
-        if(length(data$enms) > 0){result$ENM = data$Stack@enms[[which(data$enms == input$enmchoice)]]}
+        # print(data$esdms)
+        # print(input$esdmchoice)
+        if(length(data$esdms) > 0){result$ESDM = data$Stack@esdms[[which(data$esdms == input$esdmchoice)]]}
       }
     })
     observeEvent(input$proba_dblclick, {
       brush <- input$proba_brush
       if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(result$ENM@projection, c(ranges$x, ranges$y))} else {ref = result$ENM@projection}
+        if(!is.null(ranges$x)){ref = crop(result$ESDM@projection, c(ranges$x, ranges$y))} else {ref = result$ESDM@projection}
         ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
         ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
       } else {
@@ -839,39 +842,39 @@ serverWD <- function(working.directory){
         ranges$y <- NULL
       }
     })
-    observeEvent(input$enmunzoom, {
+    observeEvent(input$esdmunzoom, {
       ranges$x <- NULL
       ranges$y <- NULL
     })
     output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(result$ENM@projection, c(ranges$x, ranges$y))} else {proba = result$ENM@projection}
+      if (!is.null(ranges$x)) {proba = crop(result$ESDM@projection, c(ranges$x, ranges$y))} else {proba = result$ESDM@projection}
       spplot(proba,
-             main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
+             main = paste('AUC :',round(result$ESDM@evaluation$AUC,3),'  Kappa',round(result$ESDM@evaluation$Kappa,3)),
              xlab = 'Longitude (\u02DA)',
              ylab = 'Latitude (\u02DA)',
              col.regions = rev(terrain.colors(10000)),
-             sp.layout=list(SpatialPoints(data.frame(X = result$ENM@data$X[which(result$ENM@data$Presence == 1)],
-                                                     Y = result$ENM@data$Y[which(result$ENM@data$Presence == 1)])),
+             sp.layout=list(SpatialPoints(data.frame(X = result$ESDM@data$X[which(result$ESDM@data$Presence == 1)],
+                                                     Y = result$ESDM@data$Y[which(result$ESDM@data$Presence == 1)])),
                             pch = 16, cex = 0.7, col = 'black'))
     })
     output$niche <- renderPlot({
-      niche.map = reclassify(result$ENM@projection, c(-Inf,result$ENM@evaluation$threshold,0, result$ENM@evaluation$threshold,Inf,1))
+      niche.map = reclassify(result$ESDM@projection, c(-Inf,result$ESDM@evaluation$threshold,0, result$ESDM@evaluation$threshold,Inf,1))
       if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
       spplot(niche.map,
-             main = paste('AUC :',round(result$ENM@evaluation$AUC,3),'  Kappa',round(result$ENM@evaluation$Kappa,3)),
+             main = paste('AUC :',round(result$ESDM@evaluation$AUC,3),'  Kappa',round(result$ESDM@evaluation$Kappa,3)),
              col.regions = rev(terrain.colors(10000)))
     })
-    output$enm.uncertainty <- renderPlot({
-      if(!inherits(result$ENM,'Algorithm.SDM')) {
-        if (!is.null(ranges$x)) {uncert.map = crop(result$ENM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = result$ENM@uncertainty}
+    output$esdm.uncertainty <- renderPlot({
+      if(!inherits(result$ESDM,'Algorithm.SDM')) {
+        if (!is.null(ranges$x)) {uncert.map = crop(result$ESDM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = result$ESDM@uncertainty}
         spplot(uncert.map, col.regions = rev(terrain.colors(10000)))
       }
     })
     # Evaluation
-    output$enm.evaluation.barplot <- renderPlot({
-      evaluation = result$ENM@algorithm.evaluation
+    output$esdm.evaluation.barplot <- renderPlot({
+      evaluation = result$ESDM@algorithm.evaluation
       if(!(0 %in% dim(evaluation))){
-        for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(evaluation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+        for (i in seq_len(length(row.names(result$ESDM@algorithm.evaluation)))) {row.names(evaluation)[i] = strsplit(as.character(row.names(result$ESDM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
         for (i in seq_len(length(row.names(evaluation)))) {row.names(evaluation)[i] = tail(strsplit(as.character(row.names(evaluation)[i]), '.', fixed = TRUE)[[1]], n = 1)}
         evaluation$kept.model = evaluation$kept.model / max(evaluation$kept.model)
         table <- t(cbind(evaluation$AUC, evaluation$Kappa, evaluation$kept.model))
@@ -879,28 +882,28 @@ serverWD <- function(working.directory){
         legend('bottomright', c('AUC', 'Kappa','Kept model'), fill = c("darkblue","red","green"))
       }
     })
-    output$enm.evaluation.table <- renderTable({
-      algo.eval = result$ENM@algorithm.evaluation
+    output$esdm.evaluation.table <- renderTable({
+      algo.eval = result$ESDM@algorithm.evaluation
       if(!(0 %in% dim(algo.eval))){
-        for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(result$ENM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
-        for (i in seq_len(length(row.names(result$ENM@algorithm.evaluation)))) {row.names(algo.eval)[i] = tail(strsplit(as.character(row.names(algo.eval)[i]), '.', fixed = TRUE)[[1]], n = 1)}
+        for (i in seq_len(length(row.names(result$ESDM@algorithm.evaluation)))) {row.names(algo.eval)[i] = strsplit(as.character(row.names(result$ESDM@algorithm.evaluation)[i]), '.SDM')[[1]][1]}
+        for (i in seq_len(length(row.names(result$ESDM@algorithm.evaluation)))) {row.names(algo.eval)[i] = tail(strsplit(as.character(row.names(algo.eval)[i]), '.', fixed = TRUE)[[1]], n = 1)}
         algo.eval[c(2,4:8)]
       }
     })
 
     # Algorithms correlation
-    output$enm.algo.corr.table <- renderTable({
-      correlation = result$ENM@algorithm.correlation
-      for (i in seq_len(length(row.names(result$ENM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+    output$esdm.algo.corr.table <- renderTable({
+      correlation = result$ESDM@algorithm.correlation
+      for (i in seq_len(length(row.names(result$ESDM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ESDM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
       names(correlation) = row.names(correlation)
       if (length(correlation) > 0) {
         correlation[upper.tri(correlation, diag = TRUE)] = NA
         correlation
       }
     })
-    output$enm.algo.corr.heatmap <- renderPlot({
-      correlation = result$ENM@algorithm.correlation
-      for (i in seq_len(length(row.names(result$ENM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ENM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
+    output$esdm.algo.corr.heatmap <- renderPlot({
+      correlation = result$ESDM@algorithm.correlation
+      for (i in seq_len(length(row.names(result$ESDM@algorithm.correlation)))) {row.names(correlation)[i] = strsplit(as.character(row.names(result$ESDM@algorithm.correlation)[i]), '.SDM')[[1]][1]}
       names(correlation) = row.names(correlation)
       if (length(correlation) > 0) {
         correlation[upper.tri(correlation, diag = TRUE)] = NA
@@ -913,60 +916,60 @@ serverWD <- function(working.directory){
     })
     # Algo Eval Corr UI
     output$algoevalcorr <- renderUI({
-      if(!inherits(result$ENM,'Algorithm.SDM')) {
+      if(!inherits(result$ESDM,'Algorithm.SDM')) {
         fluidRow(
           tabBox(title = 'Model evaluation',
-                 tabPanel(plotOutput('enm.evaluation.barplot'),
-                          textOutput('enm.evaluation.info'),
+                 tabPanel(plotOutput('esdm.evaluation.barplot'),
+                          textOutput('esdm.evaluation.info'),
                           title = 'Barplot'),
-                 tabPanel(tableOutput('enm.evaluation.table'), title = 'Table')
+                 tabPanel(tableOutput('esdm.evaluation.table'), title = 'Table')
           ),
 
           tabBox(title = 'Algorithm correlation',
-                 tabPanel(plotOutput('enm.algo.corr.heatmap'), title = 'Heatmap'),
-                 tabPanel(tableOutput('enm.algo.corr.table'), title = 'Table')
+                 tabPanel(plotOutput('esdm.algo.corr.heatmap'), title = 'Heatmap'),
+                 tabPanel(tableOutput('esdm.algo.corr.table'), title = 'Table')
           )
         )
       }
     })
     # Variable importance
-    output$enm.varimp.barplot <- renderPlot({
-      varimp = as.data.frame(t(result$ENM@variable.importance))
+    output$esdm.varimp.barplot <- renderPlot({
+      varimp = as.data.frame(t(result$ESDM@variable.importance))
       names(varimp) = 'Axes.evaluation'
       barplot(varimp$Axes.evaluation, names.arg = abbreviate(row.names(varimp)), las = 2, ylab = 'Variable relative contribution (%)')
     })
-    output$enm.varimp.table <- renderTable({result$ENM@variable.importance})
-    output$enmvarimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(result$ENM@variable.importance)), 'Variable' = names(result$ENM@variable.importance))})
+    output$esdm.varimp.table <- renderTable({result$ESDM@variable.importance})
+    output$esdmvarimplegend <- renderTable({data.frame('Abbreviation' = abbreviate(names(result$ESDM@variable.importance)), 'Variable' = names(result$ESDM@variable.importance))})
     # Parameters
-    output$enm.summary <- renderTable({
-      if(!inherits(result$ENM,'Algorithm.SDM')) {
+    output$esdm.summary <- renderTable({
+      if(!inherits(result$ESDM,'Algorithm.SDM')) {
         summary = data.frame(matrix(nrow = 7, ncol = 1))
         names(summary) = 'Summary'
         row.names(summary) = c('Type of occurrences', 'Number of occurrences', 'Originally selected algorithms', 'Number of repetitions',
                                'Pseudo-absence selection method', 'Cross-validation method', 'Cross-validation parameters')
         algo.info = character()
-        for (i in seq_len(length(strsplit(result$ENM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
-          algo.info = paste(algo.info, strsplit(result$ENM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
+        for (i in seq_len(length(strsplit(result$ESDM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1]))) {
+          algo.info = paste(algo.info, strsplit(result$ESDM@parameters$algorithms, '.', fixed = TRUE)[[1]][-1][i])
         }
-        if (result$ENM@parameters$PA) {PA = 'default'}
-        if (result$ENM@parameters$data == "presence-only data set") {
-          nb.occ =  length(as.factor(result$ENM@data$Presence[which(result$ENM@data$Presence==1)])) / sum(result$ENM@algorithm.evaluation$kept.model)
+        if (result$ESDM@parameters$PA) {PA = 'default'}
+        if (result$ESDM@parameters$data == "presence-only data set") {
+          nb.occ =  length(as.factor(result$ESDM@data$Presence[which(result$ESDM@data$Presence==1)])) / sum(result$ESDM@algorithm.evaluation$kept.model)
         } else {
-          nb.occ =  length(as.factor(result$ENM@data$Presence)) / sum(result$ENM@algorithm.evaluation$kept.model)
+          nb.occ =  length(as.factor(result$ESDM@data$Presence)) / sum(result$ESDM@algorithm.evaluation$kept.model)
         }
-        if(result$ENM@parameters$cv == 'LOO') {cv.param = 'None'}
-        if(result$ENM@parameters$cv == 'holdout') {cv.param = paste('fraction =',
-                                                                    strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
+        if(result$ESDM@parameters$cv == 'LOO') {cv.param = 'None'}
+        if(result$ESDM@parameters$cv == 'holdout') {cv.param = paste('fraction =',
+                                                                    strsplit(result$ESDM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                     'rep =',
-                                                                    strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-        if(result$ENM@parameters$cv == 'k-fold') {cv.param = paste('k =',
-                                                                   strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
+                                                                    strsplit(result$ESDM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
+        if(result$ESDM@parameters$cv == 'k-fold') {cv.param = paste('k =',
+                                                                   strsplit(result$ESDM@parameters$cv.param, '|', fixed = TRUE)[[1]][2],
                                                                    'rep =',
-                                                                   strsplit(result$ENM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
-        summary$Summary = c(result$ENM@parameters$data, nb.occ, algo.info, result$ENM@parameters$rep, PA, result$ENM@parameters$cv, cv.param)
-        if(!is.null(result$ENM@parameters$sp.nb.origin)) {
+                                                                   strsplit(result$ESDM@parameters$cv.param, '|', fixed = TRUE)[[1]][3])}
+        summary$Summary = c(result$ESDM@parameters$data, nb.occ, algo.info, result$ESDM@parameters$rep, PA, result$ESDM@parameters$cv, cv.param)
+        if(!is.null(result$ESDM@parameters$sp.nb.origin)) {
           summary = rbind(summary,
-                          data.frame(Summary = result$ENM@parameters$sp.nb.origin, row.names = 'Original number of species'))
+                          data.frame(Summary = result$ESDM@parameters$sp.nb.origin, row.names = 'Original number of species'))
         }
         summary
       }
@@ -974,8 +977,8 @@ serverWD <- function(working.directory){
         data.frame('Not computed')
       }
     })
-    output$enm.binary.info <- renderText({
-      metric = switch(result$ENM@parameters$metric,
+    output$esdm.binary.info <- renderText({
+      metric = switch(result$ESDM@parameters$metric,
                       'Kappa' = 'maximizing the Kappa',
                       'CCR' = 'maximizing the proportion of correctly predicted occurrences (CCR)',
                       'TSS' = 'maximizing the sensitivity and specificity sum (TSS)',
@@ -983,34 +986,34 @@ serverWD <- function(working.directory){
                       'LW' = 'using the lowest occurrence prediction probability',
                       'ROC' = 'minimizing the distance between the ROC plot and the upper left corner')
       text = paste('Binary map realized by', metric,
-                   'with a final threshold of',  round(result$ENM@evaluation$threshold, digits = 3))
+                   'with a final threshold of',  round(result$ESDM@evaluation$threshold, digits = 3))
       text
     })
-    output$enm.varimp.info <- renderText({
+    output$esdm.varimp.info <- renderText({
       varimp.info = 'Variable relative contribution evaluated with '
-      for (i in seq_len(length(result$ENM@parameters$axes.metric))) {
+      for (i in seq_len(length(result$ESDM@parameters$axes.metric))) {
         if (i == 1) {
-          varimp.info = paste(varimp.info, result$ENM@parameters$axes.metric[i])
-        } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
-          varimp.info = paste(varimp.info, 'and', result$ENM@parameters$axes.metric[i], '.')
+          varimp.info = paste(varimp.info, result$ESDM@parameters$axes.metric[i])
+        } else if (i == length(result$ESDM@parameters$axes.metric) && i != 1) {
+          varimp.info = paste(varimp.info, 'and', result$ESDM@parameters$axes.metric[i], '.')
         } else {
-          varimp.info = paste(varimp.info, ',', result$ENM@parameters$axes.metric[i])
+          varimp.info = paste(varimp.info, ',', result$ESDM@parameters$axes.metric[i])
         }
       }
       varimp.info
     })
-    output$enm.evaluation.info <- renderText({
+    output$esdm.evaluation.info <- renderText({
       evaluation.info = 'Models evaluated with'
-      for (i in seq_len(length(strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
+      for (i in seq_len(length(strsplit(result$ESDM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1]))) {
         if (i == 1) {
-          evaluation.info = paste0(evaluation.info, ' ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
-        } else if (i == length(result$ENM@parameters$axes.metric) && i != 1) {
-          evaluation.info = paste0(evaluation.info, ' and ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
+          evaluation.info = paste0(evaluation.info, ' ', strsplit(result$ESDM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ESDM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+        } else if (i == length(result$ESDM@parameters$axes.metric) && i != 1) {
+          evaluation.info = paste0(evaluation.info, ' and ', strsplit(result$ESDM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ESDM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')','.')
         } else {
-          evaluation.info = paste0(evaluation.info, ' , ', strsplit(result$ENM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ENM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
+          evaluation.info = paste0(evaluation.info, ' , ', strsplit(result$ESDM@parameters$ensemble.metric, '.', fixed = TRUE)[[1]][-1][i],' (>',strsplit(result$ESDM@parameters$ensemble.thresh, '|', fixed = TRUE)[[1]][-1][i],')')
         }
       }
-      if (result$ENM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
+      if (result$ESDM@parameters$weight) {evaluation.info = paste(evaluation.info, ', and then weighted with the previous metrics means')}
       evaluation.info
     })
 
@@ -1039,10 +1042,43 @@ serverWD <- function(working.directory){
       for(i in 2:length(input$save$path)){
         path = paste0(path, '/', input$save$path[[i]][1])
       }
-      if(!is.null(data$ENM) && is.null(data$Stack)) {save.enm(data$ENM, name = data$ENM@name, path, verbose = FALSE, GUI = TRUE)}
+      if(!is.null(data$ESDM) && is.null(data$Stack)) {save.esdm(data$ESDM, name = data$ESDM@name, path, verbose = FALSE, GUI = TRUE)}
       if(!is.null(data$Stack)) {save.stack(data$Stack, name = data$Stack@name, path, verbose = FALSE, GUI = TRUE)}
     })
 
+    ### Model forecasting
+    
+    observeEvent(input$project,{
+      output$projcheck <- renderText({
+        validate(
+          need(!is.null(data$Env) &  (!is.null(data$ESDM) | !is.null(data$Stack)), "Environmental data and model must both be provided")
+        )
+        validate(
+          need(
+            if(!is.null(data$ESDM)){all(names(data$Env) %in% colnames(data$ESDM@data))} | if(!is.null(data$Stack)){all(names(data$Env) %in% colnames(data$Stack@variable.importance))}, "Provided environmental variables do not match training variables. Please check your raster selection."
+            )
+        )
+        validate(
+          need(
+            is.null(data$ESDM) | is.null(data$Stack), "Several models loaded. Please restart with only one model."
+          )
+        )
+        print("Projecting...")})
+      #updateTabItems(session, "SSDM", selected="stack")
+    
+      if(!is.null(data$ESDM) & is.null(data$Stack)){
+        data$ESDM <- project(data$ESDM,data$Env)
+        updateTabItems(session, "SSDM", selected="stackesdm")
+      }
+      if(is.null(data$ESDM) & !is.null(data$Stack)){
+        data$Stack <- project(data$Stack,data$Env)
+        updateTabItems(session, "SSDM", selected="stack")
+      }
+      
+
+    })
+    
+    
     ### Quit Menu ###
 
     ## quitl page ##

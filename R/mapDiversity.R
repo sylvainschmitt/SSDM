@@ -1,7 +1,8 @@
 #' @include Ensemble.SDM.R checkargs.R
 #' @importFrom sp Polygon Polygons SpatialPolygons SpatialPoints bbox
-#' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<-
-#' @importFrom stats lm
+#' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<- Which setValues
+#' @importFrom stats lm optim
+#' @importFrom poibin dpoibin
 NULL
 
 #' Map Diversity
@@ -126,22 +127,41 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     diversity.map <- sum(diversity.map)/length(esdms)/rep.B
   }
 
-  if (method == "MaximumLikelihood") {
-    # Maximum likelihood (Calabrese et al, 2014)
+  if(method=="MaximumLikelihood") {
+    # Species richness adjustment by using maximum likelihood estimates for parameters on the logit-transformed occurrence probabilities (Calabrese et al, 2014)
     if (verbose)
-      cat("\n Local species richness computed by maximum likelihood adjustment. \n")
-    diversity.map <- mapDiversity(obj, method = 'bSSDM',
-                                  verbose = FALSE)$diversity.map
+      cat("\n Local species richness computed by maximum likelihood adjustment with Calabrese bias correction. \n")
+    # create empty map (keeping extent and resolution of projections)
+    diversity.map <- setValues(obj@esdms[[1]]@projection,NA)
+    # get observed richness (vector)
     Richness <- .richness(obj)
-    SSDM_Richness <- values(mask(diversity.map, Richness))
-    SSDM_Richness <- SSDM_Richness[-which(is.na(SSDM_Richness))]
-    Richness <- values(Richness)
-    Richness <- Richness[-which(is.na(Richness))]
-    fit <- lm(Richness ~ SSDM_Richness)
-    a <- fit$coefficients[1]
-    b <- fit$coefficients[2]
-    diversity.map <- a + b * diversity.map
+    ind_notNA <- Which(!is.na(Richness),cells=TRUE)
+    obs.sr <- Richness[ind_notNA]
+    # get predicted richness (site-by-species occurrence probabilities)
+    pred.prob <- as.data.frame(sapply(obj@esdms, function(x) x@projection[ind_notNA]))
+    ### Start of code from Damaris Zurell/Justin Calabrese (minor edits)
+    # helper functions and maximum likelihood function
+    logit = function(x) {x=ifelse(x<0.0001,0.0001,ifelse(x>0.9999,.9999,x));   ;log(x/(1 - x))}
+    invlogit = function(x) {exp(x)/(1+exp(x))}
+    
+    nLL.Calabrese <- function(par,sr,probs) {
+      bysite <- function(j) {
+        logit.probs <- logit(as.numeric(probs[j,]))
+        corr.probs <- invlogit( logit.probs + par[1]*sr[j] + par[2] )
+        log(dpoibin(sr[j],as.numeric(corr.probs)))
+      }
+      - sum(sapply(seq_len(length(sr)),bysite)) 	# optim performs minimization, so for maximum likelihood we need to invert
+    }
+    
+  # find the maximum likelihood estimates for adjustment parameters
+    adj.par <- optim(par=c(0,0), fn=nLL.Calabrese, sr=obs.sr, probs=pred.prob) 
+  # adjust the predicted probabilities, transform back with invlogit and stack
+    corr.sr <- rowSums(apply(pred.prob,2,FUN=function(x){invlogit(logit(x)+adj.par$par[1]*obs.sr+adj.par$par[2])}))
+    ### End of code from Damaris Zurell/Justin Calabrese
+    
+    diversity.map[ind_notNA] <- corr.sr
   }
+  
 
   if (method == "PRR.MEM") {
     # Probability ranking with MEM (SESAM, D'Amen et al, 2015)
