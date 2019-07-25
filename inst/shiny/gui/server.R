@@ -17,7 +17,7 @@ serverWD <- function(working.directory){
     output$menu <- renderMenu({
       sidebarMenu(
         id = 'actions',
-        menuItem('Welcome page', tabName = 'welcomepage', selected = TRUE),
+        menuItem('Welcome page', tabName = 'welcomepage',selected=TRUE),
         menuItem('Load',
                  menuSubItem('New data', tabName = 'newdata'),
                  menuSubItem('Previous model', tabName = 'previousmodel')
@@ -39,7 +39,10 @@ serverWD <- function(working.directory){
                    if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
                    menuItem(tabname, tabName = "stackesdm", icon = icon("pagelines")),
                    if(!is.null(data$Stack)){selectInput('esdmchoice', 'Species:', data$esdms, selectize = TRUE)},
-                   if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
+                   if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save model', tabName = "save", icon = icon("floppy-o"))},
+                   if(!is.null(data$ESDM) | !is.null(data$Stack)) {
+                     menuItem('Save projection', tabName = "savem", icon = icon("floppy-o"))
+                     }
           )
         },
         menuItem('Quit', tabName = 'quitpage')
@@ -1018,6 +1021,65 @@ serverWD <- function(working.directory){
     })
 
     ### Save Menu ###
+    ## Save maps
+    # select map to save
+    output$speciesSave.sel <- renderUI({
+      if(!is.null(data$Stack)){
+      specieschoices <- reactive({c("all",names(data$Stack@esdms))})
+      }
+      if(is.null(data$Stack) & !is.null(data$ESDM)){
+        specieschoices <-reactive({data$ESDM@name}) 
+      }
+      selectInput('speciesSave', 'Species:', specieschoices())
+      })
+    
+    observeEvent(input$speciesSave,{
+      if(input$speciesSave == "all"){
+        mapchoices <- list("Diversity map" = "diversity.map", "Endemism map"="endemism.map")}
+      if(input$speciesSave != "all" & !is.null(input$speciesSave)){
+        mapchoices <- list("Ensemble map" = "projection")}
+      if(input$uncert == TRUE){
+        mapchoices <- c(mapchoices,"Uncertainty map" = "uncertainty")
+      }
+      output$mapSave.sel <- renderUI({
+        selectInput('mapSave','Map type:', mapchoices)
+      })
+    })
+    
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = TRUE)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', disks), filetypes=c(''))
+    } else {
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
+    }
+    observeEvent(input$savemaps, {
+      path = switch(input$savem$root,
+                    'wd' = working.directory,
+                    'home' = '/home',
+                    'root' = '/',
+                    input$savem$root)
+      for(i in 2:length(input$savem$path)){
+        path = paste0(path, '/', input$savem$path[[i]][1])
+      }
+      if(grepl("Ensemble",input$speciesSave) & !is.null(data$ESDM)) {
+        # path <- "/home/lukas/Bilder/output/"
+        writeRaster(eval(parse(text=paste0("data$ESDM@",input$mapSave))), filename = paste0(path,"/",data$ESDM@name,"_",input$mapSave), format="GTiff",overwrite=TRUE)}
+      if(grepl("Ensemble",input$speciesSave) & !is.null(data$Stack)) {
+        #path <- "/home/lukas/Bilder/output"
+        writeRaster(eval(parse(text=paste0("data$Stack@esdms$",input$speciesSave,"@",input$mapSave))), filename = paste0(path,"/",input$speciesSave,"_",input$mapSave), format="GTiff",overwrite=TRUE)
+      }
+      if(input$speciesSave == "all") {
+        # path <- "/home/lukas/Bilder/output/"
+        writeRaster(eval(parse(text=paste0("data$Stack@",input$mapSave))), filename = paste0(path,"/",data$Stack@name,"_",input$mapSave), format="GTiff")}
+        }
+    )
 
     ## Save model page ##
     if(Sys.info()[['sysname']] == 'Linux') {
@@ -1068,11 +1130,11 @@ serverWD <- function(working.directory){
     
       if(!is.null(data$ESDM) & is.null(data$Stack)){
         data$ESDM <- project(data$ESDM,data$Env)
-        updateTabItems(session, "SSDM", selected="stackesdm")
+        updateTabItems(session, "actions", selected="stackesdm")
       }
       if(is.null(data$ESDM) & !is.null(data$Stack)){
         data$Stack <- project(data$Stack,data$Env)
-        updateTabItems(session, "SSDM", selected="stack")
+        updateTabItems(session, "actions", selected="stack")
       }
       
 

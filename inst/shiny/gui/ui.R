@@ -27,7 +27,8 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                         tabItem('newdata',
                                 fluidPage(
                                   fluidRow(
-                                    box(title = 'Environmental variable', height = 600,
+                                    box(title = 'Environmental variables', height = 600,
+                                        p('Load environmental rasters for model building or model forecasting'),
                                         uiOutput('Envbug'),
                                         shinyFilesButton('envfiles', 'Raster selection', 'Please select rasters', FALSE, multiple = TRUE),
                                         uiOutput('factors'),
@@ -155,7 +156,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                         tabItem('forecasting',
                                 fluidRow(
                                   box(
-                                    p(HTML("Before proceeding please make sure: <ul><li> to load the environmental rasters used for projection (if you have not done so, go to the tab <b>Load >> new data</b> and load new environmental rasters </li><li> to have a model loaded (either created in current session through <b>Modelling</b> or loaded through <b>Load >> previous model</b>)</li></ul>" )),
+                                    p(HTML("Before proceeding please make sure: <ul><li> to load the environmental rasters you want to use for projection (if you have not done so, go to the tab <b>Load >> new data</b> and load a new set of environmental rasters </li><li> to have a model loaded (either created in current session through <b>Modelling</b> or loaded through <b>Load >> previous model</b>)</li></ul>" )),
                                     h1(' '),
                                     actionButton('project','Project'),
                                     textOutput('projcheck'),
@@ -227,9 +228,25 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                         tabItem('save',
                                 fluidPage(
                                   fluidRow(
-                                    box(title = 'Save results',
+                                    box(title = 'Save model',
+                                        p('saves the created model (including projection maps)'),
                                         shinyDirButton('save', 'Folder selection', 'Please select folder to save the model', FALSE),
                                         actionButton('savemodel', 'save', icon = icon('floppy-o'))
+                                    )
+                                  )
+                                )
+                        ),
+                        
+                        ## Save maps ##
+                        tabItem('savem',
+                                fluidPage(
+                                  fluidRow(
+                                    box(title = 'Save maps',
+                                        p('saves only maps (not models)'),
+                                        uiOutput("speciesSave.sel"),
+                                        uiOutput("mapSave.sel"),
+                                        shinyDirButton('savem', 'Folder selection', 'Please select folder to save the maps', FALSE),
+                                        actionButton('savemaps', 'save', icon = icon('floppy-o'))
                                     )
                                   )
                                 )
