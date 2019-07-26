@@ -41,7 +41,7 @@ serverWD <- function(working.directory){
                    if(!is.null(data$Stack)){selectInput('esdmchoice', 'Species:', data$esdms, selectize = TRUE)},
                    if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save model', tabName = "save", icon = icon("floppy-o"))},
                    if(!is.null(data$ESDM) | !is.null(data$Stack)) {
-                     menuItem('Save projection', tabName = "savem", icon = icon("floppy-o"))
+                     menuItem('Save maps', tabName = "savem", icon = icon("floppy-o"))
                      }
           )
         },
@@ -86,10 +86,14 @@ serverWD <- function(working.directory){
     }
     observeEvent(input$envfiles,{
       if(!is.integer(input$envfiles)){
-          load.var$vars = lapply(input$envfiles$files, function(x) x[[2]])
+          load.var$vars = lapply(input$envfiles$files, function(x) x[[length(x)]])
           names(load.var$vars) <- unlist(load.var$vars)
       }
     })
+    output$envnames <- renderTable({
+      matrix(names(data$Env),dimnames=list(c(1:length(names(data$Env))),c("Selected data")))
+      })
+      
     output$factors <- renderUI({
       selectInput('factors', 'Categorical', load.var$vars, multiple = TRUE, selectize = TRUE)
     })
@@ -164,6 +168,7 @@ serverWD <- function(working.directory){
           }
         })
       }
+      updateTabItems(session, "actions", selected = "newdata")
     })
 
     # Occurrences loading
@@ -266,6 +271,7 @@ serverWD <- function(working.directory){
         output$Occbug <- renderUI(p(' '))
         data$Occ = a
       }
+      updateTabItems(session, "actions", selected = "newdata")
     })
     output$occ <- renderDataTable({if(length(data$Occ) > 0) {data$Occ}})
 
@@ -829,8 +835,6 @@ serverWD <- function(working.directory){
     ## ESDM Stack Result ##
     observeEvent(input$esdmchoice, {
       if(!is.null(data$Stack)){
-        # print(data$esdms)
-        # print(input$esdmchoice)
         if(length(data$esdms) > 0){result$ESDM = data$Stack@esdms[[which(data$esdms == input$esdmchoice)]]}
       }
     })
@@ -1110,24 +1114,13 @@ serverWD <- function(working.directory){
 
     ### Model forecasting
     
+    output$projcheck <- renderText({
+      if(is.null(data$Env) |  (is.null(data$ESDM) & is.null(data$Stack))){"Environmental data and model must both be provided"}
+      else if(!is.null(data$ESDM)){if(!all(colnames(data$ESDM@data) %in% names(data$Env))){"Provided environmental variables do not match variables used model training. Please check your raster selection."}}
+      else if(!is.null(data$Stack)){if(!all(colnames(data$Stack@variable.importance) %in% names(data$Env))){"Provided environmental variables do not match variables used for model training. Please check your raster selection."}}
+      else if(!is.null(data$ESDM)){if(!is.null(data$Stack)){"Several models loaded. Please restart with only one model."}}
+     })
     observeEvent(input$project,{
-      output$projcheck <- renderText({
-        validate(
-          need(!is.null(data$Env) &  (!is.null(data$ESDM) | !is.null(data$Stack)), "Environmental data and model must both be provided")
-        )
-        validate(
-          need(
-            if(!is.null(data$ESDM)){all(names(data$Env) %in% colnames(data$ESDM@data))} | if(!is.null(data$Stack)){all(names(data$Env) %in% colnames(data$Stack@variable.importance))}, "Provided environmental variables do not match training variables. Please check your raster selection."
-            )
-        )
-        validate(
-          need(
-            is.null(data$ESDM) | is.null(data$Stack), "Several models loaded. Please restart with only one model."
-          )
-        )
-        print("Projecting...")})
-      #updateTabItems(session, "SSDM", selected="stack")
-    
       if(!is.null(data$ESDM) & is.null(data$Stack)){
         data$ESDM <- project(data$ESDM,data$Env)
         updateTabItems(session, "actions", selected="stackesdm")
@@ -1136,14 +1129,12 @@ serverWD <- function(working.directory){
         data$Stack <- project(data$Stack,data$Env)
         updateTabItems(session, "actions", selected="stack")
       }
-      
-
     })
     
     
     ### Quit Menu ###
 
-    ## quitl page ##
+    ## quit page ##
     observeEvent(input$quitgui, {
       stopApp()
     })

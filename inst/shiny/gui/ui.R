@@ -31,6 +31,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                         p('Load environmental rasters for model building or model forecasting'),
                                         uiOutput('Envbug'),
                                         shinyFilesButton('envfiles', 'Raster selection', 'Please select rasters', FALSE, multiple = TRUE),
+                                        tableOutput('envnames'),
                                         uiOutput('factors'),
                                         p('Which variable should be considered as a categorical variable'),
                                         checkboxGroupInput('load.var.options', 'loading options', list('Normalization'), selected = 'Normalization', inline = TRUE),
@@ -159,7 +160,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                     p(HTML("Before proceeding please make sure: <ul><li> to load the environmental rasters you want to use for projection (if you have not done so, go to the tab <b>Load >> new data</b> and load a new set of environmental rasters </li><li> to have a model loaded (either created in current session through <b>Modelling</b> or loaded through <b>Load >> previous model</b>)</li></ul>" )),
                                     h1(' '),
                                     actionButton('project','Project'),
-                                    textOutput('projcheck'),
+                                    span(textOutput('projcheck'),style="color:red"),
                                     width=12
                                     )
                                 )
