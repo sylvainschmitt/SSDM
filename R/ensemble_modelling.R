@@ -1,6 +1,9 @@
 #' @include modelling.R ensemble.R Ensemble.SDM.R checkargs.R
 #' @importFrom shiny incProgress
 #' @importFrom raster writeRaster
+#' @importFrom foreach foreach %dopar%
+#' @importFrom doParallel registerDoParallel
+#' @importFrom iterators icount
 NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
@@ -288,7 +291,7 @@ ensemble_modelling <- function(algorithms,
                               # Occurrences reading
                               Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
                               # Model creation
-                              rep = 10, name = NULL, save = FALSE, path = getwd(),
+                              rep = 10, name = NULL, save = FALSE, path = getwd(), cores=1,
                               # Pseudo-absences definition
                               PA = NULL,
                               # Evaluation parameters
@@ -334,7 +337,61 @@ ensemble_modelling <- function(algorithms,
     cat(sprintf("#### Algorithms models creation for %s ##### %s \n\n",
                 spname, format(Sys.time(), "%Y-%m-%d %T")))
   }
+  
   models <- list()
+  
+  if(cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    if ((parallel::detectCores() - 1) < cores) {
+      cores <- parallel::detectCores()-1
+      warning(paste("It seems you attributed more cores than your CPU has! Automatic reduction to",cores, "cores."))
+    }
+    cl <- parallel::makeCluster(cores)
+    doParallel::registerDoParallel(cl)
+    if(verbose){
+      cat("Opening clusters,", cores, "cores \n")
+    }
+    for (i in seq_len(length(algorithms))){
+      model.name <- paste0(algorithms[i])
+      if (verbose) {
+        cat("Modelling :", model.name, "\n\n")
+      }
+      modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster"),.verbose=F) %dopar% {model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
+                               Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param,
+                               thresh = thresh, metric = metric, axes.metric = axes.metric,
+                               select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
+                               verbose = verbose, GUI = GUI))
+        
+        if (inherits(model, "try-error")) {
+          if (verbose) {
+            cat(model)
+          }
+        } else {
+          if (tmp) {
+            model@projection <- writeRaster(model@projection, paste0(tmppath,
+                                                                     "/.models/proba", j, model.name), overwrite = TRUE)
+            model@binary <- writeRaster(model@binary, paste0(tmppath,
+                                                             "/.models/bin", j, model.name), overwrite = TRUE)
+          }
+        }
+      return(model)
+    }
+          suppressWarnings({
+            models <- c(models,modelrep)
+          })
+          if (verbose) {
+            cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(), "%Y-%m-%d %T")))
+          }
+          if (GUI) {
+            incProgress(1/(length(algorithms) + 1), detail = paste(algorithms[i],
+                                                                   "SDM built"))
+          }
+    }
+    parallel::stopCluster(cl)
+    if(verbose){
+      cat("Closed clusters")
+    }
+    }
+ else {
   for (i in seq_len(length(algorithms))) {
     for (j in 1:rep) {
       model.name <- paste0(algorithms[i], ".", j)
@@ -371,7 +428,7 @@ ensemble_modelling <- function(algorithms,
       }
     }
   }
-
+}
   # Ensemble modelling
   if (verbose) {
     cat(sprintf("#### Ensemble modelling with algorithms models for %s ##### %s \n\n",

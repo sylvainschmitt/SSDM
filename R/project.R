@@ -1,6 +1,9 @@
 #' @include Algorithm.SDM.R
 #' @import methods
 #' @importFrom raster raster stack extract predict reclassify layerStats calc
+#' @importFrom foreach foreach %dopar%
+#' @importFrom doParallel registerDoParallel
+#' @importFrom itertools iSplitVector
 NULL
 
 #' Project model into environment
@@ -84,7 +87,7 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
+setMethod("project", "Ensemble.SDM", function(obj, Env, cores=1, ...) {
   models = lapply(obj@sdms,FUN=get_model)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -94,9 +97,27 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, ...) {
     if(Env[[i]]@data@isfactor) names(Env[[i]])))
   if(length(factors)==0) factors <- NULL
   # project SDMs
-  proj = suppressWarnings(lapply(models,FUN=function(x){raster::predict(Env, x, factors = factors)}))
-  # rescaling
-  proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+  
+  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    if ((parallel::detectCores() - 1) < cores) {
+      cores <- parallel::detectCores()-1
+      warning(paste("It seems you attributed more cores than your CPU has! Automatic reduction to",cores, "cores."))
+    }
+    cl <- parallel::makeCluster(cores)
+    doParallel::registerDoParallel(cl)
+    proj <- foreach::foreach(d=itertools::isplitVector(models, chunks=cores),.packages = c("raster","itertools"),.verbose=F) %dopar% lapply(d,FUN=function(x){
+      p = suppressWarnings(predict(object=Env,model=x,factors=factors))
+      # rescale
+      p = reclassify(p, c(-Inf, 0, 0))
+      return(p)
+    })
+    proj <- unlist(proj,recursive = FALSE)
+    parallel::stopCluster(cl)
+  } else {
+    proj = suppressWarnings(lapply(models,FUN=function(x){raster::predict(Env, x, factors = factors)}))
+    # rescaling
+    proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+  }
   for(i in 1:length(models)){
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
       if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max

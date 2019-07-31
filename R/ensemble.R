@@ -235,7 +235,14 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         if (verbose) {
           cat("uncertainty mapping...")
         }
-        esdm@uncertainty <- calc(projections, var)
+        if(cores>0){
+          beginCluster(cores)
+          esdm@uncertainty <- clusterR(projections, fun=function(x) calc(x, var))
+          endCluster()
+        }
+        else{
+          esdm@uncertainty <- calc(projections, var)
+        }
         names(esdm@uncertainty) <- "uncertainty map"
         if (verbose) {
           cat("   done \n")
