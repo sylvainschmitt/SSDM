@@ -1,5 +1,5 @@
 #' @include Algorithm.SDM.R checkargs.R
-#' @importFrom raster raster stack reclassify
+#' @importFrom raster raster stack reclassify beginCluster clusterR endCluster
 NULL
 
 #'Methods to assemble multiple algorithms in an ensemble SDM
@@ -26,6 +26,9 @@ NULL
 #'  \code{\link[SDMTools]{optim.thresh}}).
 #'@param uncertainty logical. If TRUE, generates an uncertainty map and
 #'  an algorithm correlation matrix.
+#'@param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI,format,na.rm  logical. Do not take those arguments into account
@@ -65,7 +68,7 @@ NULL
 #'
 #'@export
 setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
+                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, minimal.outputs=FALSE, cores=0,
                                 verbose = TRUE, GUI = FALSE) {
   return(standardGeneric("ensemble"))
 })
@@ -73,7 +76,7 @@ setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
 #' @rdname ensemble
 #' @export
 setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
+                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, minimal.outputs=FALSE, cores=0,
                                                 verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
@@ -139,7 +142,17 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         }
     }
     # Store individual models
-    esdm@sdms <- sdms[c(selection.indices)]
+    if(minimal.outputs){
+      sdmsmin <- lapply(sdms[c(selection.indices)],function(x) {
+        x@projection <- raster()
+        x@binary <- raster()
+        return(x)
+        })
+      esdm@sdms <- sdmsmin
+    }
+    else {
+      esdm@sdms <- sdms[c(selection.indices)]
+    }
 
     # Sum of algorithm ensemble
     if (verbose) {

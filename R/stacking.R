@@ -33,6 +33,8 @@ NULL
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
 #'@param eval logical. If set to true, disable stack evaluation.
+#' @param uncertainty logical. If set to TRUE, generates an uncertainty map and 
+#'  an algorithm correlation matrix.
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -112,14 +114,14 @@ NULL
 #'@rdname stacking
 #'@export
 setGeneric('stacking', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
-                                Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE,
+                                Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE, uncertainty=TRUE,
                                 verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
-                                               Env = NULL, range = NULL, endemism = c('WEI','Binary'),
-                                               eval = TRUE, verbose = TRUE, GUI = FALSE) {
+                                               Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE, uncertainty=TRUE, 
+                                               verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(esdm = esdm, name = name, method = method, rep.B = rep.B, range = range,
              endemism = endemism, eval = eval, verbose = verbose, GUI = GUI)
@@ -142,7 +144,7 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
   }
   stack <- Stacked.SDM(diversity.map = reclassify(esdm@projection[[1]], c(-Inf,Inf, 0)),
                        endemism.map = reclassify(esdm@projection[[1]], c(-Inf, Inf, 0)),
-                       uncertainty = reclassify(esdm@uncertainty, c(-Inf, Inf, NA)),
+                       uncertainty = if(!uncertainty){raster()}else{reclassify(esdm@uncertainty, c(-Inf, Inf, NA))},
                        parameters = esdm@parameters)
 
   # ESDMs

@@ -6,11 +6,12 @@
 \usage{
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL,
-  save = FALSE, path = getwd(), PA = NULL, cv = "holdout",
-  cv.param = c(0.7, 1), thresh = 1001, metric = "SES",
-  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
-  weight = TRUE, verbose = TRUE, GUI = FALSE, ...)
+  save = FALSE, path = getwd(), cores = 1, PA = NULL,
+  cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
+  metric = "SES", axes.metric = "Pearson", uncertainty = TRUE,
+  tmp = FALSE, minimal.outputs = FALSE, ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE,
+  GUI = FALSE, ...)
 }
 \arguments{
 \item{algorithms}{character. A character vector specifying the algorithm
@@ -42,6 +43,9 @@ value of 0 is absence. If NULL presence-only dataset is assumed.}
 \item{path}{character. If save is If \code{TRUE}, the path to the directory in
 which the ensemble SDM will be saved.}
 
+\item{cores}{integer. Specify the number of CPU cores used to do the
+computing. You can use \code{\link[parallel]{detectCores}}) to automatically}
+
 \item{PA}{list(nb, strat) defining the pseudo-absence selection strategy used
 in case of presence-only dataset. If PA is NULL, recommended PA selection
 strategy is used depending on the algorithm (see details below).}
@@ -67,10 +71,12 @@ an algorithm correlation matrix.}
 
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithm is saved in a temporary file to release memory. But beware: if you
-close R, temporary files will be deleted To avoid any loss you can save your
+close R, temporary files will be deleted. To avoid any loss you can save your
 ensemble SDM with \code{\link{save.model}}. Depending on number, resolution
 and extent of models, temporary files can take a lot of disk space.
 Temporary files are written in R environment temporary folder.}
+
+\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
 
 \item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
 will be included in the ensemble SDM (see details below).}

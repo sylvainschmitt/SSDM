@@ -53,10 +53,11 @@ NULL
 #'  an algorithm correlation matrix.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithms is saved in a temporary file to release memory. But beware: if
-#'  you close R, temporary files will be deleted To avoid any loss you can
+#'  you close R, temporary files will be deleted. To avoid any loss you can
 #'  save your SSDM with \code{\link{save.model}}. Depending on number,
 #'  resolution and extent of models, temporary files can take a lot of disk
 #'  space. Temporary files are written in R environment temporary folder.
+#'@param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
@@ -75,13 +76,13 @@ NULL
 #'  range restriction will be applied.
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+#'  use all the available CPU cores.
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
-#'@param cores integer. Specify the number of CPU cores used to do the
-#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'  use all the available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -289,7 +290,7 @@ stack_modelling <- function(algorithms,
                            PA = NULL,
                            # Evaluation parameters
                            cv = 'holdout', cv.param = c(0.7,1), thresh = 1001,
-                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE,
+                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, minimal.outputs= FALSE,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
@@ -297,7 +298,7 @@ stack_modelling <- function(algorithms,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
-                           verbose = TRUE, GUI = FALSE, cores = 1,
+                           verbose = TRUE, GUI = FALSE, cores = 0,
                            # Modelling parameters
                            ...) {
   # Check arguments
@@ -331,20 +332,64 @@ stack_modelling <- function(algorithms,
   }
   species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
 
-  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
-    if (verbose) {
-      cat("Opening clusters,", cores, "cores \n")
-    }
-    if ((parallel::detectCores() - 1) < cores) {
-      warning("It seems you attributed more cores than your CPU have !")
-    }
-    cl <- parallel::makeCluster(cores, outfile = "")
-    if (verbose) {
-      cat("Exporting environment to clusters \n")
-    }
-    parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
-                                            ls(envir = environment())), envir = environment())
-    esdms <- parallel::parLapply(cl, species, function(species) {
+  # if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+  #   if (verbose) {
+  #     cat("Opening clusters,", cores, "cores \n")
+  #   }
+  #   if ((parallel::detectCores() - 1) < cores) {
+  #     warning("It seems you attributed more cores than your CPU have !")
+  #   }
+  #   cl <- parallel::makeCluster(cores, outfile = "")
+  #   if (verbose) {
+  #     cat("Exporting environment to clusters \n")
+  #   }
+  #   parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
+  #                                           ls(envir = environment())), envir = environment())
+  #   esdms <- parallel::parLapply(cl, species, function(species) {
+  #     esdm.name <- species
+  #     Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
+  #                                                              Spcol)] == species)
+  #     if (verbose) {
+  #       cat("Ensemble modelling :", esdm.name, "\n\n")
+  #     }
+  #     esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+  #                                   Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
+  #                                   PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+  #                                   axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+  #                                   ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+  #                                   weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1,
+  #                                   ...))
+  #     if (GUI) {
+  #       incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
+  #                                                                    Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+  #     }
+  #     if (inherits(esdm, "try-error")) {
+  #       if (verbose) {
+  #         cat(esdm)
+  #       }
+  #       esdm <- NULL
+  #     } else {
+  #       if (tmp && !is.null(esdm)) {
+  #         esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
+  #                                                                   "/.esdms/proba", esdm.name), overwrite = TRUE)
+  #         esdm@binary <- writeRaster(esdm@binary[[1]], paste0(tmppath,
+  #                                                           "/.esdms/bin", esdm.name), overwrite = TRUE)
+  #         esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
+  #                                                                "/.esdms/uncert", esdm.name), overwrite = TRUE)
+  #       }
+  #       if (verbose) {
+  #         cat("\n\n")
+  #       }
+  #     }
+  #     return(esdm)
+  #   })
+  #   if (verbose) {
+  #     cat("Closing clusters \n")
+  #   }
+  #   parallel::stopCluster(cl)
+  # 
+  # } else {
+esdms <- lapply(species, function(species) {
       esdm.name <- species
       Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
                                                                Spcol)] == species)
@@ -356,8 +401,7 @@ stack_modelling <- function(algorithms,
                                     PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1,
-                                    ...))
+                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, minimal.outputs=minimal.outputs, ...))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
                                                                      Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
@@ -371,8 +415,6 @@ stack_modelling <- function(algorithms,
         if (tmp && !is.null(esdm)) {
           esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
                                                                     "/.esdms/proba", esdm.name), overwrite = TRUE)
-          esdm@binary <- writeRaster(esdm@binary[[1]], paste0(tmppath,
-                                                            "/.esdms/bin", esdm.name), overwrite = TRUE)
           esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
                                                                  "/.esdms/uncert", esdm.name), overwrite = TRUE)
         }
@@ -382,48 +424,7 @@ stack_modelling <- function(algorithms,
       }
       return(esdm)
     })
-    if (verbose) {
-      cat("Closing clusters \n")
-    }
-    parallel::stopCluster(cl)
-
-  } else {
-    esdms <- lapply(species, function(species) {
-      esdm.name <- species
-      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-                                                               Spcol)] == species)
-      if (verbose) {
-        cat("Ensemble modelling :", esdm.name, "\n\n")
-      }
-      esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
-                                    Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
-                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                    ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, ...))
-      if (GUI) {
-        incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
-                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
-      }
-      if (inherits(esdm, "try-error")) {
-        if (verbose) {
-          cat(esdm)
-        }
-        esdm <- NULL
-      } else {
-        if (tmp && !is.null(esdm)) {
-          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
-                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
-          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
-                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
-        }
-        if (verbose) {
-          cat("\n\n")
-        }
-      }
-      return(esdm)
-    })
-  }
+  # }
 
   esdms <- esdms[!sapply(esdms, is.null)]
 
@@ -446,6 +447,7 @@ stack_modelling <- function(algorithms,
     if (method %in% c("PRR.MEM", "PRR.pSSDM")) {
       esdms["Env"] <- Env
     }
+    esdms["uncertainty"] <- uncertainty
     if (!is.null(range)) {
       esdms["range"] <- range
     }

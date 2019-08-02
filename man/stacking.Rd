@@ -8,12 +8,12 @@
 \usage{
 stacking(esdm, ..., name = NULL, method = "pSSDM", rep.B = 1000,
   Env = NULL, range = NULL, endemism = c("WEI", "Binary"),
-  eval = TRUE, verbose = TRUE, GUI = FALSE)
+  eval = TRUE, uncertainty = TRUE, verbose = TRUE, GUI = FALSE)
 
 \S4method{stacking}{Ensemble.SDM}(esdm, ..., name = NULL,
   method = "pSSDM", rep.B = 1000, Env = NULL, range = NULL,
-  endemism = c("WEI", "Binary"), eval = TRUE, verbose = TRUE,
-  GUI = FALSE)
+  endemism = c("WEI", "Binary"), eval = TRUE, uncertainty = TRUE,
+  verbose = TRUE, GUI = FALSE)
 }
 \arguments{
 \item{esdm, ...}{character. Ensemble SDMs to be stacked.}
@@ -41,6 +41,9 @@ range restriction will be applied.}
 (see details below).}
 
 \item{eval}{logical. If set to true, disable stack evaluation.}
+
+\item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and 
+an algorithm correlation matrix.}
 
 \item{verbose}{logical. If set to true, allows the function to print text in
 the console.}

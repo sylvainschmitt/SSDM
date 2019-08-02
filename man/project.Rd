@@ -15,9 +15,12 @@ project(obj, Env, ...)
 
 \S4method{project}{MAXENT.SDM}(obj, Env, ...)
 
-\S4method{project}{Ensemble.SDM}(obj, Env, ...)
+\S4method{project}{Ensemble.SDM}(obj, Env, uncertainty = TRUE,
+  update.projection = TRUE, minimal.outputs = FALSE, cores = 0, ...)
 
-\S4method{project}{Stacked.SDM}(obj, Env, ...)
+\S4method{project}{Stacked.SDM}(obj, Env, method = NULL,
+  uncertainty = TRUE, update.projection = TRUE,
+  minimal.outputs = FALSE, cores = 0, ...)
 }
 \arguments{
 \item{obj}{Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.}
@@ -25,6 +28,20 @@ project(obj, Env, ...)
 \item{Env}{Raster stack. Updated environmental rasters to be used for projection.}
 
 \item{...}{Additional arguments for internal use.}
+
+\item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
+additionally an algorithm correlation matrix.}
+
+\item{update.projection}{logical. If TRUE, the projected rasters will replace the existing ones within the supplied .SDM object.}
+
+\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
+
+\item{cores}{integer. Specify the number of CPU cores used to do the
+computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+use all the available CPU cores.}
+
+\item{method}{character. Define the method used to create the local species
+richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.}
 }
 \value{
 Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).

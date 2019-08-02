@@ -9,10 +9,10 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   name = NULL, save = FALSE, path = getwd(), PA = NULL,
   cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
   axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
-  weight = TRUE, method = "pSSDM", metric = "SES", rep.B = 1000,
-  range = NULL, endemism = c("WEI", "Binary"), verbose = TRUE,
-  GUI = FALSE, cores = 1, ...)
+  minimal.outputs = FALSE, ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75), weight = TRUE, method = "pSSDM",
+  metric = "SES", rep.B = 1000, range = NULL, endemism = c("WEI",
+  "Binary"), verbose = TRUE, GUI = FALSE, cores = 0, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -67,10 +67,12 @@ an algorithm correlation matrix.}
 
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithms is saved in a temporary file to release memory. But beware: if
-you close R, temporary files will be deleted To avoid any loss you can
+you close R, temporary files will be deleted. To avoid any loss you can
 save your SSDM with \code{\link{save.model}}. Depending on number,
 resolution and extent of models, temporary files can take a lot of disk
 space. Temporary files are written in R environment temporary folder.}
+
+\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
 
 \item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
 will be included in the ensemble SDM (see details below).}

@@ -51,9 +51,10 @@ NULL
 #'  details below).
 #'@param uncertainty logical. If \code{TRUE}, generates an uncertainty map and
 #'  an algorithm correlation matrix.
+#'@param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithm is saved in a temporary file to release memory. But beware: if you
-#'  close R, temporary files will be deleted To avoid any loss you can save your
+#'  close R, temporary files will be deleted. To avoid any loss you can save your
 #'  ensemble SDM with \code{\link{save.model}}. Depending on number, resolution
 #'  and extent of models, temporary files can take a lot of disk space.
 #'  Temporary files are written in R environment temporary folder.
@@ -63,6 +64,8 @@ NULL
 #'  used to compute the selection.
 #'@param weight logical. If \code{TRUE}, SDMs are weighted using the ensemble
 #'  metric or, alternatively, the mean of the selection metrics.
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'@param verbose logical. If \code{TRUE}, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Do not take this argument into account (parameter for the
@@ -296,7 +299,7 @@ ensemble_modelling <- function(algorithms,
                               PA = NULL,
                               # Evaluation parameters
                               cv = 'holdout', cv.param = c(0.7,1), thresh = 1001, metric = 'SES',
-                              axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE,
+                              axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, minimal.outputs=FALSE,
                               # Assembling parameters
                               ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                               # Informations parameters
@@ -366,11 +369,12 @@ ensemble_modelling <- function(algorithms,
             cat(model)
           }
         } else {
+          ### not working yet
           if (tmp) {
             model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                     "/.models/proba", j, model.name), overwrite = TRUE)
+                                                                     "/.models/proba", model.name), overwrite = TRUE)
             model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                             "/.models/bin", j, model.name), overwrite = TRUE)
+                                                             "/.models/bin", model.name), overwrite = TRUE)
           }
         }
       return(model)
@@ -412,11 +416,12 @@ ensemble_modelling <- function(algorithms,
           cat(model)
         }
       } else {
+        ### not working yet
         if (tmp) {
           model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                   "/.models/proba", j, model.name), overwrite = TRUE)
+                                                                   "/.models/proba", model.name), overwrite = TRUE)
           model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                           "/.models/bin", j, model.name), overwrite = TRUE)
+                                                           "/.models/bin",  model.name), overwrite = TRUE)
         }
         suppressWarnings({
           models[model.name] <- model
@@ -443,9 +448,11 @@ ensemble_modelling <- function(algorithms,
   }
   algo["thresh"] <- thresh
   algo["uncertainty"] <- uncertainty
+  algo["minimal.outputs"] <- minimal.outputs
   algo[["ensemble.metric"]] <- ensemble.metric
   algo[["ensemble.thresh"]] <- ensemble.thresh
   algo["weight"] <- weight
+  algo["cores"] <- cores
   algo["verbose"] <- verbose
   esdm <- do.call(ensemble, algo)
   if (verbose) {

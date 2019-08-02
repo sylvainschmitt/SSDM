@@ -3,7 +3,7 @@
 #' @importFrom raster raster stack extract predict reclassify layerStats calc
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
-#' @importFrom itertools iSplitVector
+#' @importFrom itertools isplitVector
 NULL
 
 #' Project model into environment
@@ -12,6 +12,15 @@ NULL
 #'
 #' @param obj Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
+#' @param method character. Define the method used to create the local species
+#'  richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.
+#' @param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
+#' @param update.projection logical. If TRUE, the projected rasters will replace the existing ones within the supplied .SDM object.
+#' @param uncertainty logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
+#'  additionally an algorithm correlation matrix.
+#' @param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+#'  use all the available CPU cores.
 #' @param ... Additional arguments for internal use.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
 #' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
@@ -87,7 +96,7 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project", "Ensemble.SDM", function(obj, Env, cores=1, ...) {
+setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update.projection=TRUE, minimal.outputs=FALSE, cores=0, ...) {
   models = lapply(obj@sdms,FUN=get_model)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -105,7 +114,7 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, cores=1, ...) {
     }
     cl <- parallel::makeCluster(cores)
     doParallel::registerDoParallel(cl)
-    proj <- foreach::foreach(d=itertools::isplitVector(models, chunks=cores),.packages = c("raster","itertools"),.verbose=F) %dopar% lapply(d,FUN=function(x){
+    proj <- foreach::foreach(models=itertools::isplitVector(models, chunks=cores),.packages = c("raster","itertools"),.verbose=F) %dopar% lapply(models,FUN=function(x){
       p = suppressWarnings(predict(object=Env,model=x,factors=factors))
       # rescale
       p = reclassify(p, c(-Inf, 0, 0))
@@ -121,24 +130,28 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, cores=1, ...) {
   for(i in 1:length(models)){
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
       if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max
-    names(proj[[i]]) = "Projection"
+    names(proj[[i]]) = paste("Projection",obj@sdms[[i]]@name)
     obj@sdms[[i]]@projection = proj[[i]]
     if(all(obj@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
       obj@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@sdms[[i]]@evaluation$threshold,0, obj@sdms[[i]]@evaluation$threshold,Inf,1))
   }
-  # sum SDMs (To do - enable minimal.outputs)
-  #ensemble.args <- c(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])
-  sum.algo.ensemble <- do.call(ensemble, c(obj@sdms,list(ensemble.thresh=0,verbose=F,weight=obj@parameters[,which(names(obj@parameters)=="weight")])))
-  obj@projection <- sum.algo.ensemble@projection
-  obj@binary <- sum.algo.ensemble@binary
-  obj@uncertainty <- sum.algo.ensemble@uncertainty
-    
-  return(obj)
+  # ensemble SDMs
+  sum.algo.ensemble <- do.call(ensemble, c(obj@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, minimal.outputs=minimal.outputs, uncertainty=uncertainty)))
+
+  if(update.projection){
+    return(sum.algo.ensemble)  
+  }  
+  else {
+    projls <- list(projection=sum.algo.ensemble@projection, binary=sum.algo.ensemble@binary)
+    if(uncertainty){projls <- c(projls,uncertainty=sum.algo.ensemble@uncertainty)}
+    if(!minimal.outputs){projls <- c(projls, list(sdms=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
+    return(projls)
+  }
 })
 
 #' @rdname project
 #' @export
-setMethod("project","Stacked.SDM",function(obj,Env,...){
+setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE, update.projection=TRUE, minimal.outputs=FALSE, cores=0, ...){
   # get factors in Env
   if(all(names(Env) %in% colnames(obj@esdms[[1]]@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -150,13 +163,35 @@ setMethod("project","Stacked.SDM",function(obj,Env,...){
   esdms <- list() # temporary object with ESDM by species (for use with get_model and predict)
   sum.algo.ensemble <- list() # temporary object for storing resulting ensembles
   species.names <- names(obj@esdms)
+  
+  if ((parallel::detectCores() - 1) < cores) {
+    cores <- parallel::detectCores()-1
+    warning(paste("It seems you attributed more cores than your CPU has! Automatic reduction to",cores, "cores."))
+  }
+  
   for(j in 1:length(obj@esdms)){
     # get ESDMs by species
     esdms[[j]] <- lapply(obj@esdms[[j]]@sdms,FUN=get_model)
-    # project SDMs
-    proj = suppressWarnings(lapply(esdms[[j]],FUN=function(x){raster::predict(Env, x, factors = factors)}))
-    # rescaling
-    proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+    
+    if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+      cl <- parallel::makeCluster(cores)
+      doParallel::registerDoParallel(cl)
+      # project SDMs
+      models <- esdms[[j]]
+      proj <- foreach::foreach(models=itertools::isplitVector(models, chunks=cores),.packages = c("raster","itertools"),.verbose=F) %dopar% lapply(models,FUN=function(x){
+        p = suppressWarnings(predict(object=Env,model=x,factors=factors))
+        # rescale
+        p = reclassify(p, c(-Inf, 0, 0))
+        return(p)
+      })
+      proj <- unlist(proj,recursive = FALSE)
+      parallel::stopCluster(cl)
+      } else {
+        # project SDMs
+        proj = suppressWarnings(lapply(esdms[[j]],FUN=function(x){raster::predict(Env, x, factors = factors)}))
+        # rescaling
+        proj = lapply(proj, FUN=function(x) reclassify(x, c(-Inf, 0, 0)))
+      }
     for(i in 1:length(obj@esdms[[j]]@sdms)){
       if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs should not be rescaled
         if(proj[[i]]@data@max>0) proj[[i]] = proj[[i]] / proj[[i]]@data@max # if zero is the maximum, then this leads to an NA map, which will propagate throughout the projections
@@ -165,20 +200,31 @@ setMethod("project","Stacked.SDM",function(obj,Env,...){
       if(all(obj@esdms[[j]]@sdms[[i]]@data$Presence %in% c(0,1))) # MEMs can't produce binary
         obj@esdms[[j]]@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,0, obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,Inf,1))
     }
-    # sum SDMs (to do - use ensemble function with minimal.outputs)
-    #ensemble.args <- list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])
-    sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(verbose=FALSE,ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")])))
+    # ensemble SDMs
+    sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, minimal.outputs=minimal.outputs, uncertainty=uncertainty)))
     sum.algo.ensemble[[j]]@name <- species.names[j]
-    obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
-    obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
-    obj@esdms[[j]]@uncertainty <- sum.algo.ensemble[[j]]@uncertainty
+    # obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
+    # obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
+    # obj@esdms[[j]]@uncertainty <- sum.algo.ensemble[[j]]@uncertainty
   } # end project ESDMs
   
-  # stack ESDMs (To do - enable minimal.outputs)
-  #stack.args <- list(verbose=FALSE,method=obj@parameters[,which(names(obj@parameters)=="method")])
-  ensemble.stack <- do.call(stacking, c(sum.algo.ensemble,list(verbose=FALSE,method=obj@parameters[,which(names(obj@parameters)=="method")])))
-  obj@diversity.map <- ensemble.stack@diversity.map
-  obj@endemism.map <- ensemble.stack@endemism.map
-  obj@uncertainty <- ensemble.stack@uncertainty
-  return(obj)
+  # stack ESDMs 
+  if(is.null(method)){method <- obj@parameters[,which(names(obj@parameters)=="method")]}
+  ensemble.stack <- do.call(stacking, c(sum.algo.ensemble,list(verbose=FALSE,method=method, uncertainty=uncertainty)))
+  # obj@diversity.map <- ensemble.stack@diversity.map
+  # obj@endemism.map <- ensemble.stack@endemism.map
+  # obj@uncertainty <- ensemble.stack@uncertainty
+  if(update.projection){
+    return(ensemble.stack)
+  }
+  else {
+    projls <- list(diversity.map=ensemble.stack@diversity.map, endemism.map=ensemble.stack@endemism.map, esdms=lapply(ensemble.stack@esdms, function(x) list(projection=x@projection,binary=x@binary)))
+    if(uncertainty){
+      projls <- c(projls,uncertainty=ensemble.stack@uncertainty)
+      projls$esdms <- c(projls$esdms,list(lapply(ensemble.stack@esdms, function(x) list(uncertainty=x@uncertainty))))
+    }
+    if(!minimal.outputs){projls$esdms <- c(projls$esdms, list(sdms=lapply(ensemble.stack@esdms, function(x) lapply(x@sdms, function(y) list(projection=y@projection,binary=y@binary)))))}
+    return(projls)
+  }
+  
 })
