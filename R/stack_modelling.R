@@ -389,10 +389,10 @@ stack_modelling <- function(algorithms,
   #   parallel::stopCluster(cl)
   # 
   # } else {
-esdms <- lapply(species, function(species) {
-      esdm.name <- species
+esdms <- lapply(species, function(x) {
+      esdm.name <- x
       Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-                                                               Spcol)] == species)
+                                                               Spcol)] == x)
       if (verbose) {
         cat("Ensemble modelling :", esdm.name, "\n\n")
       }
@@ -404,7 +404,7 @@ esdms <- lapply(species, function(species) {
                                     weight = weight, verbose = verbose, GUI = FALSE, cores=cores, minimal.outputs=minimal.outputs, ...))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
-                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+                                                                     Spcol)]))) + 1), detail = paste(x, " ensemble SDM built"))
       }
       if (inherits(esdm, "try-error")) {
         if (verbose) {
@@ -476,6 +476,9 @@ esdms <- lapply(species, function(species) {
         save.stack(stack, path = path)
       }
     }
+  }
+  if(verbose){
+    cat(sprintf("\n\n #### Stack modelling %s ##### %s \n\n", "done",format(Sys.time(), "%Y-%m-%d %T")))
   }
   return(stack)
 }

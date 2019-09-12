@@ -138,8 +138,8 @@
   } else {
     for (i in seq_len(length(select.metric))) {
       if (!(select.metric[i] %in% c("AUC", "Kappa", "sensitivity", "specificity",
-                                    "prop.correct"))) {
-        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help)."))
+                                    "prop.correct","Boyce"))) {
+        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or Boyce (see help)."))
       }
     }
   }

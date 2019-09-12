@@ -125,7 +125,7 @@ evaluation table.
  \strong{prop.correct} (proportion of correctly predicted occurrences).}
  \item{select.metric}{Selection metric(s) used to select SDMs: \strong{AUC},
  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
- \strong{prop.correct} (proportion of correctly predicted occurrences).}
+ \strong{prop.correct} (proportion of correctly predicted occurrences), \strong{Boyce} (Boyce index, a measure for calibration).}
  \item{'...'}{See algorithm in detail section} }
 }
 \section{Generalized linear model (\strong{GLM}) }{
