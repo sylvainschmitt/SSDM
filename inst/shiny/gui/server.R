@@ -17,7 +17,7 @@ serverWD <- function(working.directory){
     output$menu <- renderMenu({
       sidebarMenu(
         id = 'actions',
-        menuItem('Welcome page', tabName = 'welcomepage', selected = TRUE),
+        menuItem('Welcome page', tabName = 'welcomepage',selected=TRUE),
         menuItem('Load',
                  menuSubItem('New data', tabName = 'newdata'),
                  menuSubItem('Previous model', tabName = 'previousmodel')
@@ -39,7 +39,10 @@ serverWD <- function(working.directory){
                    if(!is.null(data$Stack)){menuItem("SSDM", tabName = "stack", icon = icon("dashboard"))},
                    menuItem(tabname, tabName = "stackesdm", icon = icon("pagelines")),
                    if(!is.null(data$Stack)){selectInput('esdmchoice', 'Species:', data$esdms, selectize = TRUE)},
-                   if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save', tabName = "save", icon = icon("floppy-o"))}
+                   if(!inherits(data$ESDM,'Algorithm.SDM')) {menuItem('Save model', tabName = "save", icon = icon("floppy-o"))},
+                   if(!is.null(data$ESDM) | !is.null(data$Stack)) {
+                     menuItem('Save maps', tabName = "savem", icon = icon("floppy-o"))
+                     }
           )
         },
         menuItem('Quit', tabName = 'quitpage')
@@ -83,10 +86,14 @@ serverWD <- function(working.directory){
     }
     observeEvent(input$envfiles,{
       if(!is.integer(input$envfiles)){
-          load.var$vars = lapply(input$envfiles$files, function(x) x[[2]])
+          load.var$vars = lapply(input$envfiles$files, function(x) x[[length(x)]])
           names(load.var$vars) <- unlist(load.var$vars)
       }
     })
+    output$envnames <- renderTable({
+      matrix(names(data$Env),dimnames=list(c(1:length(names(data$Env))),c("Selected data")))
+      })
+      
     output$factors <- renderUI({
       selectInput('factors', 'Categorical', load.var$vars, multiple = TRUE, selectize = TRUE)
     })
@@ -161,6 +168,7 @@ serverWD <- function(working.directory){
           }
         })
       }
+      updateTabItems(session, "actions", selected = "newdata")
     })
 
     # Occurrences loading
@@ -263,6 +271,7 @@ serverWD <- function(working.directory){
         output$Occbug <- renderUI(p(' '))
         data$Occ = a
       }
+      updateTabItems(session, "actions", selected = "newdata")
     })
     output$occ <- renderDataTable({if(length(data$Occ) > 0) {data$Occ}})
 
@@ -826,8 +835,6 @@ serverWD <- function(working.directory){
     ## ESDM Stack Result ##
     observeEvent(input$esdmchoice, {
       if(!is.null(data$Stack)){
-        # print(data$esdms)
-        # print(input$esdmchoice)
         if(length(data$esdms) > 0){result$ESDM = data$Stack@esdms[[which(data$esdms == input$esdmchoice)]]}
       }
     })
@@ -1018,6 +1025,65 @@ serverWD <- function(working.directory){
     })
 
     ### Save Menu ###
+    ## Save maps
+    # select map to save
+    output$speciesSave.sel <- renderUI({
+      if(!is.null(data$Stack)){
+      specieschoices <- reactive({c("all",names(data$Stack@esdms))})
+      }
+      if(is.null(data$Stack) & !is.null(data$ESDM)){
+        specieschoices <-reactive({data$ESDM@name}) 
+      }
+      selectInput('speciesSave', 'Species:', specieschoices())
+      })
+    
+    observeEvent(input$speciesSave,{
+      if(input$speciesSave == "all"){
+        mapchoices <- list("Diversity map" = "diversity.map", "Endemism map"="endemism.map")}
+      if(input$speciesSave != "all" & !is.null(input$speciesSave)){
+        mapchoices <- list("Ensemble map" = "projection")}
+      if(input$uncert == TRUE){
+        mapchoices <- c(mapchoices,"Uncertainty map" = "uncertainty")
+      }
+      output$mapSave.sel <- renderUI({
+        selectInput('mapSave','Map type:', mapchoices)
+      })
+    })
+    
+    if(Sys.info()[['sysname']] == 'Linux') {
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
+    } else if (Sys.info()[['sysname']] == 'Windows') {
+      d = system('wmic logicaldisk get caption', intern = TRUE)
+      disks = c()
+      for(i in 2:(length(d)-1)){
+        disks = c(disks, substr(d[i],1,2))
+      }
+      names(disks) = disks
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', disks), filetypes=c(''))
+    } else {
+      shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', home = '/user', root = '/'), filetypes=c(''))
+    }
+    observeEvent(input$savemaps, {
+      path = switch(input$savem$root,
+                    'wd' = working.directory,
+                    'home' = '/home',
+                    'root' = '/',
+                    input$savem$root)
+      for(i in 2:length(input$savem$path)){
+        path = paste0(path, '/', input$savem$path[[i]][1])
+      }
+      if(grepl("Ensemble",input$speciesSave) & !is.null(data$ESDM)) {
+        # path <- "/home/lukas/Bilder/output/"
+        writeRaster(eval(parse(text=paste0("data$ESDM@",input$mapSave))), filename = paste0(path,"/",data$ESDM@name,"_",input$mapSave), format="GTiff",overwrite=TRUE)}
+      if(grepl("Ensemble",input$speciesSave) & !is.null(data$Stack)) {
+        #path <- "/home/lukas/Bilder/output"
+        writeRaster(eval(parse(text=paste0("data$Stack@esdms$",input$speciesSave,"@",input$mapSave))), filename = paste0(path,"/",input$speciesSave,"_",input$mapSave), format="GTiff",overwrite=TRUE)
+      }
+      if(input$speciesSave == "all") {
+        # path <- "/home/lukas/Bilder/output/"
+        writeRaster(eval(parse(text=paste0("data$Stack@",input$mapSave))), filename = paste0(path,"/",data$Stack@name,"_",input$mapSave), format="GTiff")}
+        }
+    )
 
     ## Save model page ##
     if(Sys.info()[['sysname']] == 'Linux') {
@@ -1048,40 +1114,27 @@ serverWD <- function(working.directory){
 
     ### Model forecasting
     
+    output$projcheck <- renderText({
+      if(is.null(data$Env) |  (is.null(data$ESDM) & is.null(data$Stack))){"Environmental data and model must both be provided"}
+      else if(!is.null(data$ESDM)){if(!all(colnames(data$ESDM@data) %in% names(data$Env))){"Provided environmental variables do not match variables used model training. Please check your raster selection."}}
+      else if(!is.null(data$Stack)){if(!all(colnames(data$Stack@variable.importance) %in% names(data$Env))){"Provided environmental variables do not match variables used for model training. Please check your raster selection."}}
+      else if(!is.null(data$ESDM)){if(!is.null(data$Stack)){"Several models loaded. Please restart with only one model."}}
+     })
     observeEvent(input$project,{
-      output$projcheck <- renderText({
-        validate(
-          need(!is.null(data$Env) &  (!is.null(data$ESDM) | !is.null(data$Stack)), "Environmental data and model must both be provided")
-        )
-        validate(
-          need(
-            if(!is.null(data$ESDM)){all(names(data$Env) %in% colnames(data$ESDM@data))} | if(!is.null(data$Stack)){all(names(data$Env) %in% colnames(data$Stack@variable.importance))}, "Provided environmental variables do not match training variables. Please check your raster selection."
-            )
-        )
-        validate(
-          need(
-            is.null(data$ESDM) | is.null(data$Stack), "Several models loaded. Please restart with only one model."
-          )
-        )
-        print("Projecting...")})
-      #updateTabItems(session, "SSDM", selected="stack")
-    
       if(!is.null(data$ESDM) & is.null(data$Stack)){
         data$ESDM <- project(data$ESDM,data$Env)
-        updateTabItems(session, "SSDM", selected="stackesdm")
+        updateTabItems(session, "actions", selected="stackesdm")
       }
       if(is.null(data$ESDM) & !is.null(data$Stack)){
         data$Stack <- project(data$Stack,data$Env)
-        updateTabItems(session, "SSDM", selected="stack")
+        updateTabItems(session, "actions", selected="stack")
       }
-      
-
     })
     
     
     ### Quit Menu ###
 
-    ## quitl page ##
+    ## quit page ##
     observeEvent(input$quitgui, {
       stopApp()
     })
