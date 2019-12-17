@@ -45,7 +45,7 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL, verbose = 
   # Pseudo-Absences selection
   mask_inds <- Which(!is.na(Mask),cells=TRUE)
   if(PA$nb > length(mask_inds)){
-    PA$n <- length(mask_inds)
+    PA$nb <- length(mask_inds)
     if(verbose) {cat('Number of requested pseudo-absences exceeds number of cells, lowered to number of cells \n')}
   }
   

@@ -118,8 +118,7 @@ setMethod("get_model", "MAXENT.SDM", function(obj, Env, ...) {
       factors <- c(factors, names(obj@data)[i])
     }
   }
-  model <- maxent(x = obj@data[,which(!colnames(obj@data)%in%c("X","Y","Presence"))], p = obj@data[which(obj@data$Presence == 1),
-                                        1:2], a = obj@data[which(obj@data$Presence == 0), 1:2], factors = factors)
+  model <- maxent(x = obj@data[,which(!colnames(obj@data)%in%c("X","Y","Presence"))], p = obj@data$Presence, factors = factors)
   return(model)
 })
 
