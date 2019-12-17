@@ -9,7 +9,7 @@ ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   save = FALSE, path = getwd(), cores = 1, PA = NULL,
   cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
   metric = "SES", axes.metric = "Pearson", uncertainty = TRUE,
-  tmp = FALSE, minimal.outputs = FALSE, ensemble.metric = c("AUC"),
+  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE,
   GUI = FALSE, ...)
 }
@@ -69,14 +69,13 @@ details below).}
 \item{uncertainty}{logical. If \code{TRUE}, generates an uncertainty map and
 an algorithm correlation matrix.}
 
-\item{tmp}{logical. If set to true, the habitat suitability map of each
-algorithm is saved in a temporary file to release memory. But beware: if you
+\item{tmp}{logical or character. If \code{FALSE}, no temporary rasters are written (this could quickly fill up your working memory, if many replicates are modelled). If \code{TRUE}, temporary rasters are written to the „tmp“ directory of your R environment. If \code{character}, temporary rasters are written to a custom path. But beware: if you
 close R, temporary files will be deleted. To avoid any loss you can save your
 ensemble SDM with \code{\link{save.model}}. Depending on number, resolution
 and extent of models, temporary files can take a lot of disk space.
-Temporary files are written in R environment temporary folder.}
+Temporary files are written to the R environment temporary folder.}
 
-\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
+\item{SDM.projections}{logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).}
 
 \item{ensemble.metric}{character. Metric(s) used to select the best SDMs that
 will be included in the ensemble SDM (see details below).}

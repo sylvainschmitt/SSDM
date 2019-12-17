@@ -15,7 +15,7 @@ test_that("modelling works", {
   expect_equal(dim(model@data), c(1057, 6))
   model = evaluate(model, cv = "holdout", cv.param = c(0.7, 2), thresh = 1001,
                    metric = "SES", Env)
-  expect_equal(dim(model@evaluation), c(1, 7))
+  expect_equal(dim(model@evaluation), c(1, 8))
   model = project(model, Env)
   expect_equal(all(is.na(values(model@projection))), FALSE)
   model = evaluate.axes(model, cv.param = c(0.7, 2), thresh = 1001, metric = "SES",

@@ -11,16 +11,17 @@
 \usage{
 project(obj, Env, ...)
 
-\S4method{project}{Algorithm.SDM}(obj, Env, ...)
+\S4method{project}{Algorithm.SDM}(obj, Env, update.projections = TRUE,
+  ...)
 
-\S4method{project}{MAXENT.SDM}(obj, Env, ...)
+\S4method{project}{MAXENT.SDM}(obj, Env, update.projections = TRUE, ...)
 
 \S4method{project}{Ensemble.SDM}(obj, Env, uncertainty = TRUE,
-  update.projection = TRUE, minimal.outputs = FALSE, cores = 0, ...)
+  update.projections = TRUE, SDM.projections = FALSE, cores = 0, ...)
 
 \S4method{project}{Stacked.SDM}(obj, Env, method = NULL,
-  uncertainty = TRUE, update.projection = TRUE,
-  minimal.outputs = FALSE, cores = 0, ...)
+  uncertainty = TRUE, update.projections = TRUE,
+  SDM.projections = FALSE, cores = 0, ...)
 }
 \arguments{
 \item{obj}{Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.}
@@ -29,12 +30,12 @@ project(obj, Env, ...)
 
 \item{...}{Additional arguments for internal use.}
 
+\item{update.projections}{logical. If TRUE (default), the original .SDM object will be returned with the difference, that the projected rasters will replace the existing ones inside the respective projection slots. If FALSE, the projected rasters will be returned as a separate raster object (for single models) or a list of rasters (for ensembles and stacks).}
+
 \item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
 additionally an algorithm correlation matrix.}
 
-\item{update.projection}{logical. If TRUE, the projected rasters will replace the existing ones within the supplied .SDM object.}
-
-\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
+\item{SDM.projections}{logical. If FALSE (default), the projections of the Algorithm.SDMs will not be returned (only applies to Ensemble.SDMs and Stack.SDMs).}
 
 \item{cores}{integer. Specify the number of CPU cores used to do the
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically
@@ -44,7 +45,7 @@ use all the available CPU cores.}
 richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.}
 }
 \value{
-Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
+Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
 }
 \description{
 This is a collection of methods to project SDMs, ESDMs or SSDMs into the supplied environment. The function is used internally to calculate the input for the projection slot of .SDM classes but can also be used to project existing .SDM objects (see Details).

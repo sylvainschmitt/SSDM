@@ -95,7 +95,7 @@ test_that('uncertainty argument checking works',{
 
 #### tmp ####
 test_that('tmp argument checking works',{
-  expect_error(.checkargs(tmp = 'TRUE'))
+  expect_error(.checkargs(tmp = 0))
 })
 
 #### ensemble.metric ####

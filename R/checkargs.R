@@ -77,8 +77,8 @@
                                           PA$nb < 1)) {
     stop("PA$nb should be an integer > 0.")
   }
-  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk"))) {
-    stop("PA$strat should be random or disk (see help).")
+  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk","geobuffer"))) {
+    stop("PA$strat should be random, disk or geobuffer (see help).")
   }
 
   # rep
@@ -138,8 +138,8 @@
   } else {
     for (i in seq_len(length(select.metric))) {
       if (!(select.metric[i] %in% c("AUC", "Kappa", "sensitivity", "specificity",
-                                    "prop.correct","Boyce"))) {
-        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or Boyce (see help)."))
+                                    "prop.correct","calibration"))) {
+        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
   }
@@ -166,8 +166,8 @@
   if (!inherits(uncertainty, "logical")) {
     stop("uncertainty parameter should be a logical (True or False).")
   }
-  if (!inherits(tmp, "logical")) {
-    stop("tmp parameter should be a logical (True or False).")
+  if (!inherits(tmp, c("logical","character"))) {
+    stop("tmp parameter should be a logical (True or False) or character (file path).")
   }
   if (!inherits(save, "logical")) {
     stop("save parameter should be a logical (True or False).")
@@ -188,8 +188,8 @@
   } else {
     for (i in seq_len(length(ensemble.metric))) {
       if (!(ensemble.metric[i] %in% c("AUC", "Kappa", "sensitivity",
-                                      "specificity", "prop.correct"))) {
-        stop(paste("ensemble.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help)."))
+                                      "specificity", "prop.correct","calibration"))) {
+        stop(paste("ensemble.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
   }

@@ -51,13 +51,12 @@ NULL
 #'  details below).
 #'@param uncertainty logical. If \code{TRUE}, generates an uncertainty map and
 #'  an algorithm correlation matrix.
-#'@param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
-#'@param tmp logical. If set to true, the habitat suitability map of each
-#'  algorithm is saved in a temporary file to release memory. But beware: if you
+#'@param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
+#'@param tmp logical or character. If \code{FALSE}, no temporary rasters are written (this could quickly fill up your working memory, if many replicates are modelled). If \code{TRUE}, temporary rasters are written to the „tmp“ directory of your R environment. If \code{character}, temporary rasters are written to a custom path. But beware: if you
 #'  close R, temporary files will be deleted. To avoid any loss you can save your
 #'  ensemble SDM with \code{\link{save.model}}. Depending on number, resolution
 #'  and extent of models, temporary files can take a lot of disk space.
-#'  Temporary files are written in R environment temporary folder.
+#'  Temporary files are written to the R environment temporary folder.
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
@@ -299,7 +298,7 @@ ensemble_modelling <- function(algorithms,
                               PA = NULL,
                               # Evaluation parameters
                               cv = 'holdout', cv.param = c(0.7,1), thresh = 1001, metric = 'SES',
-                              axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, minimal.outputs=FALSE,
+                              axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, SDM.projections=FALSE,
                               # Assembling parameters
                               ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                               # Informations parameters
@@ -324,10 +323,16 @@ ensemble_modelling <- function(algorithms,
       stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
     }
   }
-  if (tmp) {
+  if (isTRUE(tmp)) {
     tmppath <- get("tmpdir", envir = .PkgEnv)
     if (!("/.models" %in% list.dirs(path)))
       (dir.create(paste0(tmppath, "/.models")))
+  }
+  if(is.character(tmp)){
+    tmppath <- tmp
+    if (!("/.models" %in% list.dirs(path)))
+      (dir.create(paste0(tmppath, "/.models")))
+    tmp <- TRUE
   }
 
   # Algorithms models creation
@@ -358,7 +363,8 @@ ensemble_modelling <- function(algorithms,
       if (verbose) {
         cat("Modelling :", model.name, "\n\n")
       }
-      modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster"),.verbose=F) %dopar% {model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
+      modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster"),.verbose=verbose) %dopar% {
+        model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
                                Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param,
                                thresh = thresh, metric = metric, axes.metric = axes.metric,
                                select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
@@ -369,12 +375,12 @@ ensemble_modelling <- function(algorithms,
             cat(model)
           }
         } else {
-          ### not working yet
-          if (tmp) {
+          ### needs further testing
+          if (tmp & !is.null(model)) {
             model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                     "/.models/proba", model.name), overwrite = TRUE)
+                                                                     "/.models/proba", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), overwrite = TRUE)
             model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                             "/.models/bin", model.name), overwrite = TRUE)
+                                                             "/.models/bin", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), overwrite = TRUE)
           }
         }
       return(model)
@@ -417,11 +423,11 @@ ensemble_modelling <- function(algorithms,
         }
       } else {
         ### not working yet
-        if (tmp) {
+        if (tmp & !is.null(model)) {
           model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                   "/.models/proba", model.name), overwrite = TRUE)
+                                                                   "/.models/proba",j,model.name), overwrite = TRUE)
           model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                           "/.models/bin",  model.name), overwrite = TRUE)
+                                                           "/.models/bin",j,model.name), overwrite = TRUE)
         }
         suppressWarnings({
           models[model.name] <- model
@@ -448,7 +454,7 @@ ensemble_modelling <- function(algorithms,
   }
   algo["thresh"] <- thresh
   algo["uncertainty"] <- uncertainty
-  algo["minimal.outputs"] <- minimal.outputs
+  algo["SDM.projections"] <- SDM.projections
   algo[["ensemble.metric"]] <- ensemble.metric
   algo[["ensemble.thresh"]] <- ensemble.thresh
   algo["weight"] <- weight

@@ -9,13 +9,13 @@
 \usage{
 ensemble(x, ..., name = NULL, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001,
-  uncertainty = TRUE, minimal.outputs = FALSE, cores = 0,
+  uncertainty = TRUE, SDM.projections = FALSE, cores = 0,
   verbose = TRUE, GUI = FALSE)
 
 \S4method{ensemble}{Algorithm.SDM}(x, ..., name = NULL,
   ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
   weight = TRUE, thresh = 1001, uncertainty = TRUE,
-  minimal.outputs = FALSE, cores = 0, verbose = TRUE, GUI = FALSE)
+  SDM.projections = FALSE, cores = 0, verbose = TRUE, GUI = FALSE)
 
 \S4method{sum}{Algorithm.SDM}(x, ..., name = NULL,
   ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
@@ -44,7 +44,7 @@ interval threshold values between 0 and 1 (see
 \item{uncertainty}{logical. If TRUE, generates an uncertainty map and
 an algorithm correlation matrix.}
 
-\item{minimal.outputs}{logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).}
+\item{SDM.projections}{logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).}
 
 \item{cores}{integer. Specify the number of CPU cores used to do the
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically}
@@ -75,7 +75,7 @@ ensemble.metric (metric(s) used to select the best SDMs that will be
  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
  from the confusion matrix} \item{specificity}{Specificity from the confusion
  matrix} \item{prop.correct}{Proportion of correctly predicted occurrences
- from the confusion matrix} }
+ from the confusion matrix} \item{calibration}{Calibration metric (Naimi & Araujo 2016)} }
 }
 \examples{
 \dontrun{

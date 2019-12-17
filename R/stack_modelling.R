@@ -57,7 +57,7 @@ NULL
 #'  save your SSDM with \code{\link{save.model}}. Depending on number,
 #'  resolution and extent of models, temporary files can take a lot of disk
 #'  space. Temporary files are written in R environment temporary folder.
-#'@param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
+#'@param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
@@ -290,7 +290,7 @@ stack_modelling <- function(algorithms,
                            PA = NULL,
                            # Evaluation parameters
                            cv = 'holdout', cv.param = c(0.7,1), thresh = 1001,
-                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, minimal.outputs= FALSE,
+                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, SDM.projections= FALSE,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
@@ -401,7 +401,7 @@ esdms <- lapply(species, function(x) {
                                     PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, minimal.outputs=minimal.outputs, ...))
+                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, SDM.projections = SDM.projections, ...))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
                                                                      Spcol)]))) + 1), detail = paste(x, " ensemble SDM built"))

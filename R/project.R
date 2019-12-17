@@ -14,8 +14,8 @@ NULL
 #' @param Env Raster stack. Updated environmental rasters to be used for projection.
 #' @param method character. Define the method used to create the local species
 #'  richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.
-#' @param minimal.outputs logical. If TRUE, the 'sdms' slot will not contain any rasters (for memory saving purposes).
-#' @param update.projection logical. If TRUE, the projected rasters will replace the existing ones within the supplied .SDM object.
+#' @param SDM.projections logical. If FALSE (default), the projections of the Algorithm.SDMs will not be returned (only applies to Ensemble.SDMs and Stack.SDMs).
+#' @param update.projections logical. If TRUE (default), the original .SDM object will be returned with the difference, that the projected rasters will replace the existing ones inside the respective projection slots. If FALSE, the projected rasters will be returned as a separate raster object (for single models) or a list of rasters (for ensembles and stacks).
 #' @param uncertainty logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
 #'  additionally an algorithm correlation matrix.
 #' @param cores integer. Specify the number of CPU cores used to do the
@@ -23,7 +23,7 @@ NULL
 #'  use all the available CPU cores.
 #' @param ... Additional arguments for internal use.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
-#' @return Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
+#' @return Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
 #' @name project
 #' @export
 setGeneric("project", function(obj, Env, ...) {
@@ -32,7 +32,7 @@ setGeneric("project", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
+setMethod("project", "Algorithm.SDM", function(obj, Env, update.projections=TRUE,...) {
   model = get_model(obj, ...)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -63,12 +63,18 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, ...) {
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
   obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
                                    obj@evaluation$threshold,Inf,1))
-  return(obj)
+  
+  if(!update.projections){
+    return(obj@projection)
+  } else {
+    return(obj)
+  }
+
 })
 
 #' @rdname project
 #' @export
-setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
+setMethod("project", "MAXENT.SDM", function(obj, Env, update.projections=TRUE, ...) {
   model = get_model(obj, Env, ...)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   proj = raster::predict(Env, model, fun = function(model, x) {
@@ -91,12 +97,16 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, ...) {
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
     obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
                                      obj@evaluation$threshold,Inf,1))
-  return(obj)
+  if(!update.projections){
+    return(obj@projection)
+  } else{
+    return(obj)
+  }
 })
 
 #' @rdname project
 #' @export
-setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update.projection=TRUE, minimal.outputs=FALSE, cores=0, ...) {
+setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update.projections=TRUE, SDM.projections=FALSE, cores=0, ...) {
   models = lapply(obj@sdms,FUN=get_model)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -136,22 +146,22 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
       obj@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@sdms[[i]]@evaluation$threshold,0, obj@sdms[[i]]@evaluation$threshold,Inf,1))
   }
   # ensemble SDMs
-  sum.algo.ensemble <- do.call(ensemble, c(obj@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, minimal.outputs=minimal.outputs, uncertainty=uncertainty)))
+  sum.algo.ensemble <- do.call(ensemble, c(obj@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, SDM.projections=SDM.projections, uncertainty=uncertainty)))
 
-  if(update.projection){
+  if(update.projections){
     return(sum.algo.ensemble)  
   }  
   else {
     projls <- list(projection=sum.algo.ensemble@projection, binary=sum.algo.ensemble@binary)
     if(uncertainty){projls <- c(projls,uncertainty=sum.algo.ensemble@uncertainty)}
-    if(!minimal.outputs){projls <- c(projls, list(sdms=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
+    if(SDM.projections){projls <- c(projls, list(sdms=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
     return(projls)
   }
 })
 
 #' @rdname project
 #' @export
-setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE, update.projection=TRUE, minimal.outputs=FALSE, cores=0, ...){
+setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE, update.projections=TRUE, SDM.projections=FALSE, cores=0, ...){
   # get factors in Env
   if(all(names(Env) %in% colnames(obj@esdms[[1]]@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -201,7 +211,7 @@ setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE
         obj@esdms[[j]]@sdms[[i]]@binary <- reclassify(proj[[i]], c(-Inf,obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,0, obj@esdms[[j]]@sdms[[i]]@evaluation$threshold,Inf,1))
     }
     # ensemble SDMs
-    sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, minimal.outputs=minimal.outputs, uncertainty=uncertainty)))
+    sum.algo.ensemble[[j]] <- do.call(ensemble, c(obj@esdms[[j]]@sdms,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, SDM.projections=SDM.projections, uncertainty=uncertainty)))
     sum.algo.ensemble[[j]]@name <- species.names[j]
     # obj@esdms[[j]]@projection <- sum.algo.ensemble[[j]]@projection
     # obj@esdms[[j]]@binary <- sum.algo.ensemble[[j]]@binary
@@ -214,7 +224,7 @@ setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE
   # obj@diversity.map <- ensemble.stack@diversity.map
   # obj@endemism.map <- ensemble.stack@endemism.map
   # obj@uncertainty <- ensemble.stack@uncertainty
-  if(update.projection){
+  if(update.projections){
     return(ensemble.stack)
   }
   else {
@@ -223,7 +233,7 @@ setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE
       projls <- c(projls,uncertainty=ensemble.stack@uncertainty)
       projls$esdms <- c(projls$esdms,list(lapply(ensemble.stack@esdms, function(x) list(uncertainty=x@uncertainty))))
     }
-    if(!minimal.outputs){projls$esdms <- c(projls$esdms, list(sdms=lapply(ensemble.stack@esdms, function(x) lapply(x@sdms, function(y) list(projection=y@projection,binary=y@binary)))))}
+    if(SDM.projections){projls$esdms <- c(projls$esdms, list(sdms=lapply(ensemble.stack@esdms, function(x) lapply(x@sdms, function(y) list(projection=y@projection,binary=y@binary)))))}
     return(projls)
   }
   

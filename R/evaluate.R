@@ -100,6 +100,8 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
         roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
+        caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+        roweval$calibration <- caleval@statistic
         if (i == 1) {
           evaluation <- roweval
         } else {
@@ -143,6 +145,8 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
                                                metric)]])
           roweval <- accuracy(evaldata$Presence, predicted.values,
                               threshold)
+          caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+          roweval$calibration <- caleval@statistic
           if (i == 1 && j == 1) {
             evaluation <- roweval
           } else {
@@ -164,6 +168,8 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
       threshold <- optim.thresh(data$Presence, predicted.values, thresh)
       threshold <- mean(threshold[[which(names(threshold) == metric)]])
       evaluation <- accuracy(data$Presence, predicted.values, threshold)
+      caleval <- sdm::calibration(data$Presence,predicted.values, nbin=20, weight=TRUE)
+      evaluation$calibration <- caleval@statistic
     }
     obj@evaluation <- evaluation[1, ]
     for (i in seq_len(length(evaluation))) {
@@ -218,6 +224,8 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
         roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
+        caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+        roweval$calibration <- caleval@statistic
         if (i == 1) {
           evaluation <- roweval
         } else {
@@ -267,6 +275,8 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
                                                metric)]])
           roweval <- accuracy(evaldata$Presence, predicted.values,
                               threshold)
+          caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+          roweval$calibration <- caleval@statistic
           if (i == 1 && j == 1) {
             evaluation <- roweval
           } else {

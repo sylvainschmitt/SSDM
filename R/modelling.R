@@ -1,7 +1,6 @@
 #' @include Algorithm.SDM.R checkargs.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
-#' @importFrom ecospat ecospat.boyce
 NULL
 
 #'Build an SDM using a single algorithm
@@ -98,7 +97,7 @@ NULL
 #'  \strong{prop.correct} (proportion of correctly predicted occurrences).}
 #'  \item{select.metric}{Selection metric(s) used to select SDMs: \strong{AUC},
 #'  \strong{Kappa}, \strong{sensitivity}, \strong{specificity}, and
-#'  \strong{prop.correct} (proportion of correctly predicted occurrences), \strong{Boyce} (Boyce index, a measure for calibration).}
+#'  \strong{prop.correct} (proportion of correctly predicted occurrences), \strong{calibration} (calibration statistic as used by Naimi & Araujo 2016).}
 #'  \item{'...'}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
@@ -303,7 +302,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
     cat("   done. \n\n")
   }
   if (GUI) {
-    incProgress(1/5, detail = "Data ckecked")
+    incProgress(1/5, detail = "Data checked")
   }
 
   # Pseudo - absences selection
@@ -328,7 +327,6 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
     cat("Model evaluation...\n")
   }
   model <- evaluate(model, cv, cv.param, thresh, metric, Env, ...)
-  model@evaluation$Boyce <- 1 # ugly: set Boyce to 1, so it passes the first test
   if (verbose) {
     cat("   done. \n\n")
   }
@@ -351,55 +349,29 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
     if (verbose) {
       cat("Model projection...\n")
     }
-      model <- project(model, Env, ...)
+    model <- project(model, Env, ...)
     if (verbose) {
       cat("   done. \n\n")
     }
     if (GUI) {
       incProgress(1/5, detail = "SDM projected")
     }
-    # Boyce index calculation
-      if(verbose){
-        cat("Model calibration...\n")
-      }
-        boyce <- ecospat::ecospat.boyce(fit=model@projection,obs=model@data[which(model@data$Presence==1),c(1,2)],res=10,PEplot = FALSE)
-      model@evaluation$Boyce <- boyce$Spearman.cor
-      if (verbose) {
-        cat("   done. \n\n")
-      }
-     testboyce <- TRUE
-     if("Boyce" %in% select.metric){
-       if(model@evaluation$Boyce < select.thresh[which(select.metric=="Boyce")]){
-         testboyce <- FALSE
-       }
-     }
-     if(testboyce){
-       # Axes evaluation
-       if (verbose) {
-         cat("Model axes contribution evaluation...\n")
-       }
-       model <- evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric,
-                              Env, ...)
-       if (verbose) {
-         cat("   done. \n\n")
-       }
-       if (GUI) {
-         incProgress(1/5, detail = "SDM axes contribution evaluated")
-       }
-       rm(list = ls()[-which(ls() == "model")])
-       gc()
-       return(model)
-       } else {
-       if (verbose) {
-         cat("Model has been rejected, NULL is returned ! \n")
-       }
-       if (GUI) {
-         incProgress(2/5, detail = "SDM rejected")
-       }
-       rm(list = ls())
-       gc()
-       return(NULL)
-     }
+    
+    # Axes evaluation
+    if (verbose) {
+      cat("Model axes contribution evaluation...\n")
+    }
+    model <- evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric,
+                           Env, ...)
+    if (verbose) {
+      cat("   done. \n\n")
+    }
+    if (GUI) {
+      incProgress(1/5, detail = "SDM axes contribution evaluated")
+    }
+    rm(list = ls()[-which(ls() == "model")])
+    gc()
+    return(model)
   } else {
     if (verbose) {
       cat("Model has been rejected, NULL is returned ! \n")
