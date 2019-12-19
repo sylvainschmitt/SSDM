@@ -89,7 +89,7 @@ setMethod("get_model", "CTA.SDM", function(obj, final.leave = 1, algocv = 3,
 })
 
 setMethod("get_model", "GBM.SDM", function(obj, trees = 2500, final.leave = 1,
-                                           algocv = 3, thresh.shrink = 0.001, n.cores = NULL, ...) {
+                                           algocv = 3, thresh.shrink = 0.001, n.cores = 1, ...) {
   data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
                                                              "Y"))]
   if (all(data$Presence %in% c(0, 1)))
