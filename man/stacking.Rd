@@ -40,12 +40,12 @@ range restriction will be applied.}
 \item{endemism}{character. Define the method used to create an endemism map
 (see details below).}
 
-\item{eval}{logical. If set to true, disable stack evaluation.}
+\item{eval}{logical. If set to FALSE, disable stack evaluation.}
 
 \item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and 
 an algorithm correlation matrix.}
 
-\item{verbose}{logical. If set to true, allows the function to print text in
+\item{verbose}{logical. If set to TRUE, allows the function to print text in
 the console.}
 
 \item{GUI}{logical. Don't take that argument into account (parameter for the

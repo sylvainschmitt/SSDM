@@ -17,11 +17,13 @@ project(obj, Env, ...)
 \S4method{project}{MAXENT.SDM}(obj, Env, update.projections = TRUE, ...)
 
 \S4method{project}{Ensemble.SDM}(obj, Env, uncertainty = TRUE,
-  update.projections = TRUE, SDM.projections = FALSE, cores = 0, ...)
+  update.projections = TRUE, SDM.projections = FALSE, cores = 0,
+  minimal.memory = FALSE, tmp = FALSE, ...)
 
 \S4method{project}{Stacked.SDM}(obj, Env, method = NULL,
   uncertainty = TRUE, update.projections = TRUE,
-  SDM.projections = FALSE, cores = 0, ...)
+  SDM.projections = FALSE, cores = 0, minimal.memory = FALSE,
+  tmp = FALSE, ...)
 }
 \arguments{
 \item{obj}{Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.}
@@ -30,7 +32,7 @@ project(obj, Env, ...)
 
 \item{...}{Additional arguments for internal use.}
 
-\item{update.projections}{logical. If TRUE (default), the original .SDM object will be returned with the difference, that the projected rasters will replace the existing ones inside the respective projection slots. If FALSE, the projected rasters will be returned as a separate raster object (for single models) or a list of rasters (for ensembles and stacks).}
+\item{update.projections}{logical. If TRUE (default), the original .SDM object will be returned with updated projection slots. If FALSE, the projected rasters will be returned as a list of rasters.}
 
 \item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
 additionally an algorithm correlation matrix.}

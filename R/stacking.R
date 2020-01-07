@@ -32,10 +32,10 @@ NULL
 #'  range restriction will be applied.
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
-#'@param eval logical. If set to true, disable stack evaluation.
+#'@param eval logical. If set to FALSE, disable stack evaluation.
 #' @param uncertainty logical. If set to TRUE, generates an uncertainty map and 
 #'  an algorithm correlation matrix.
-#'@param verbose logical. If set to true, allows the function to print text in
+#'@param verbose logical. If set to TRUE, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
@@ -209,38 +209,40 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
     cat(" done. \n")
 
   # uncertainty map
-  if (verbose) {
-    cat("   uncertainty mapping...")
-  }
-  uncertainities <- stack()
-  for (i in seq_len(length(esdms))) {
-    a <- try(esdms[[i]]@uncertainty)
-    if (inherits(a, "try-error")) {
-      if (verbose) {
-        cat("Ensemble model", esdms[[i]]@name, "uncertainty map not computed")
-      }
-    } else {
-      b <- try(stack(uncertainities, a))
-      if (inherits(b, "try-error")) {
+  if(uncertainty){
+    if (verbose) {
+      cat("   uncertainty mapping...")
+    }
+    uncertainties <- stack()
+    for (i in seq_len(length(esdms))) {
+      a <- try(esdms[[i]]@uncertainty)
+      if (inherits(a, "try-error")) {
         if (verbose) {
-          cat("Ensemble model", esdms[[i]]@name, ":", b)
+          cat("Ensemble model", esdms[[i]]@name, "uncertainty map not computed")
         }
       } else {
-        uncertainities <- b
+        b <- try(stack(uncertainties, a))
+        if (inherits(b, "try-error")) {
+          if (verbose) {
+            cat("Ensemble model", esdms[[i]]@name, ":", b)
+          }
+        } else {
+          uncertainties <- b
+        }
       }
     }
-  }
-  a <- try(calc(uncertainities, mean))
-  if (inherits(a, "try-error")) {
-    if (verbose) {
-      cat("No uncertainty map to do uncertainty mapping")
+    a <- try(calc(uncertainties, mean))
+    if (inherits(a, "try-error")) {
+      if (verbose) {
+        cat("No uncertainty map to do uncertainty mapping")
+      }
+    } else {
+      stack@uncertainty <- a
+      names(stack@uncertainty) <- "uncertainty"
     }
-  } else {
-    stack@uncertainty <- a
-    names(stack@uncertainty) <- "uncertainty"
-  }
-  if (verbose) {
-    cat(" done. \n")
+    if (verbose) {
+      cat(" done. \n")
+    }
   }
 
   # endemism map
@@ -248,7 +250,7 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
     cat("   endemism mapping...")
   }
   if (is.null(endemism)) {
-    "unactivated"
+    "deactivated"
   } else {
     for (i in seq_len(length(esdms))) {
       if (endemism[2] == "NbOcc") {
@@ -279,7 +281,7 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
 
   # variable Importance
   if (verbose) {
-    cat("   comparing variable importnace...")
+    cat("   comparing variable importance...")
   }
   stack@variable.importance <- esdm@variable.importance
   for (i in 2:length(esdms)) {
@@ -366,17 +368,18 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
     stack@algorithm.evaluation <- rbind(stack@algorithm.evaluation, esdms[[i]]@algorithm.evaluation)
   }
   stack@algorithm.evaluation$algo <- "algo"
-  for (i in seq_len(length(row.names(stack@algorithm.evaluation)))) {
-    stack@algorithm.evaluation$algo[i] <- strsplit(row.names(stack@algorithm.evaluation),
-                                                   ".", fixed = TRUE)[[i]][2]
-  }
-  stack@algorithm.evaluation <- aggregate.data.frame(stack@algorithm.evaluation[-9],
+  stack@algorithm.evaluation$algo <- unlist(regmatches(row.names(stack@algorithm.evaluation), gregexpr(algos, row.names(stack@algorithm.evaluation))))
+  # for (i in seq_len(length(row.names(stack@algorithm.evaluation)))) {
+  #   stack@algorithm.evaluation$algo[i] <- strsplit(row.names(stack@algorithm.evaluation),
+  #                                                  ".", fixed = TRUE)[[i]][2]
+  # }
+  stack@algorithm.evaluation <- aggregate.data.frame(stack@algorithm.evaluation[-which(names(stack@algorithm.evaluation) ==
+                                                                                         "algo")],
                                                      by = list(stack@algorithm.evaluation[, which(names(stack@algorithm.evaluation) ==
                                                                                                     "algo")]), FUN = mean)
   row.names(stack@algorithm.evaluation) <- stack@algorithm.evaluation$Group.1
   stack@algorithm.evaluation <- stack@algorithm.evaluation[-1]
-  stack@algorithm.evaluation <- stack@algorithm.evaluation[-which(names(stack@algorithm.evaluation) ==
-                                                                    "algo")]
+
   if (verbose) {
     cat(" done. \n")
   }
