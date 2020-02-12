@@ -1,7 +1,8 @@
 #' @include Algorithm.SDM.R
 #' @include Stacked.SDM.R
+#' @include optim.thresh.R
+#' @include accuracy.R
 #' @import methods
-#' @importFrom SDMTools optim.thresh accuracy
 #' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 #' @importFrom raster reclassify rasterize extract stack
@@ -20,8 +21,7 @@ NULL
 #' @param cv.param numeric. Parameters associated to the method of
 #'  cross-validation used to evaluate the SDM (see details below).
 #' @param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
+#'  interval threshold values between 0 and 1.
 #' @param metric character. Metric(s) used to select the best SDMs that will be
 #'  included in the ensemble SDM (see details below).
 #' @param Env raster object. Stacked raster object of environmental variables
@@ -47,7 +47,7 @@ NULL
 #' }
 #'
 #' @references Pottier, J., Dubuis, A., Pellissier, L., Maiorano, L., Rossier,
-#'   L., Randin, C. F., Guisan, A. (2013). The accuracy of plant assemblage
+#'   L., Randin, C. F., Guisan, A. (2013). The .accuracy of plant assemblage
 #'   prediction from species distribution models varies along environmental
 #'   gradients. Global Ecology and Biogeography, 22(1), 52-63.
 #'   https://doi.org/10.1111/j.1466-8238.2012.00790.x
@@ -96,10 +96,10 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
         trainobj@data <- traindata
         model <- get_model(trainobj, ...)
         predicted.values <- predict(model, evaldata)
-        threshold <- optim.thresh(evaldata$Presence, predicted.values,
+        threshold <- .optim.thresh(evaldata$Presence, predicted.values,
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
+        roweval <- .accuracy(evaldata$Presence, predicted.values, threshold)
         if (i == 1) {
           evaluation <- roweval
         } else {
@@ -137,11 +137,11 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
           trainobj@data <- traindata
           model <- get_model(trainobj, ...)
           predicted.values <- predict(model, evaldata)
-          threshold <- optim.thresh(evaldata$Presence, predicted.values,
+          threshold <- .optim.thresh(evaldata$Presence, predicted.values,
                                     thresh)
           threshold <- mean(threshold[[which(names(threshold) ==
                                                metric)]])
-          roweval <- accuracy(evaldata$Presence, predicted.values,
+          roweval <- .accuracy(evaldata$Presence, predicted.values,
                               threshold)
           if (i == 1 && j == 1) {
             evaluation <- roweval
@@ -161,9 +161,9 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
         model <- get_model(trainobj, ...)
         predicted.values[j] <- predict(model, evaldata)
       }
-      threshold <- optim.thresh(data$Presence, predicted.values, thresh)
+      threshold <- .optim.thresh(data$Presence, predicted.values, thresh)
       threshold <- mean(threshold[[which(names(threshold) == metric)]])
-      evaluation <- accuracy(data$Presence, predicted.values, threshold)
+      evaluation <- .accuracy(data$Presence, predicted.values, threshold)
     }
     obj@evaluation <- evaluation[1, ]
     for (i in seq_len(length(evaluation))) {
@@ -214,10 +214,10 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
         trainobj@data <- traindata
         model <- get_model(trainobj, Env)
         predicted.values <- predict(model, evaldata)
-        threshold <- optim.thresh(evaldata$Presence, predicted.values,
+        threshold <- .optim.thresh(evaldata$Presence, predicted.values,
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
+        roweval <- .accuracy(evaldata$Presence, predicted.values, threshold)
         if (i == 1) {
           evaluation <- roweval
         } else {
@@ -261,11 +261,11 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
           trainobj@data <- traindata
           model <- get_model(trainobj, Env)
           predicted.values <- predict(model, evaldata)
-          threshold <- optim.thresh(evaldata$Presence, predicted.values,
+          threshold <- .optim.thresh(evaldata$Presence, predicted.values,
                                     thresh)
           threshold <- mean(threshold[[which(names(threshold) ==
                                                metric)]])
-          roweval <- accuracy(evaldata$Presence, predicted.values,
+          roweval <- .accuracy(evaldata$Presence, predicted.values,
                               threshold)
           if (i == 1 && j == 1) {
             evaluation <- roweval
@@ -292,12 +292,12 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
 setMethod("evaluate", "Stacked.SDM", function(obj, ...){
 
   # Observed composition
-  obs <- lapply(obj@enms, function(x){
+  obs <- lapply(obj@esdms, function(x){
     x <- x@data[x@data$Presence == 1,1:2]
   })
   obs <- mapply(function(x, n){
     x['species'] <- n ; return(x)
-  }, n = lapply(strsplit(names(obj@enms), '.', fixed = TRUE), function(x){x[[1]]}),
+  }, n = lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}),
   x= obs, SIMPLIFY = FALSE)
   obs <- do.call('rbind', obs)
   obs <- with(obs, table(paste(X, Y), species))
@@ -311,10 +311,10 @@ setMethod("evaluate", "Stacked.SDM", function(obj, ...){
   names(XY) <- c('X','Y')
 
   # Predicted composition
-  pred <- stack(lapply(obj@enms, function(x){
+  pred <- stack(lapply(obj@esdms, function(x){
     x@binary
   }))
-  names(pred) <- unlist(lapply(strsplit(names(obj@enms), '.', fixed = TRUE), function(x){x[[1]]}))
+  names(pred) <- unlist(lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}))
   pred <- extract(pred, XY)
 
   # Confusion matrix
@@ -327,7 +327,7 @@ setMethod("evaluate", "Stacked.SDM", function(obj, ...){
   )
 
   # Evaluation indices
-  n <- dim(conf)[2] # Renmaing to follow Pottier et al, 2013
+  n <- dim(conf)[2] # Renaming according to Pottier et al, 2013
   a <- conf$TP
   b <- conf$FP
   c <- conf$FN

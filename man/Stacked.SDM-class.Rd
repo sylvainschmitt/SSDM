@@ -33,7 +33,7 @@ the SSDM.}
 
 \item{\code{algorithm.correlation}}{data frame. Between-algorithm correlation matrix.}
 
-\item{\code{enms}}{list. List of ensemble SDMs used in the SSDM.}
+\item{\code{esdms}}{list. List of ensemble SDMs used in the SSDM.}
 
 \item{\code{parameters}}{data frame. Parameters used to build the SSDM.}
 

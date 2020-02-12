@@ -1,4 +1,4 @@
-#' @include Algorithm.SDM.R ensemble.R Ensemble.SDM.R checkargs.R
+#' @include Algorithm.SDM.R ensemble.R Ensemble.SDM.R ensemble_modelling.R checkargs.R
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
@@ -81,7 +81,7 @@ NULL
 #'  user interface).
 #'@param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'  used all the available CPU cores.
+#'  use all the available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -134,8 +134,7 @@ NULL
 #'  habitat suitability maps, \strong{Bernoulli} drawing repeatedly from a
 #'  Bernoulli distribution, \strong{bSSDM} sum the binary map obtained with the
 #'  thresholding (depending on the metric, see metric parameter),
-#'  \strong{MaximumLikelihood} adjust species richness of the model by linear
-#'  regression, \strong{PRR.MEM} model richness with a macroecological model
+#'  \strong{MaximumLikelihood} adjust species richness using maximum likelihood parameter estimates on the logit-transformed occurrence probabilities (see Calabrese et al. (2014)), \strong{PRR.MEM} model richness with a macroecological model
 #'  (MEM) and adjust each ESDM binary map by ranking habitat suitability and
 #'  keeping as much as predicted richness of the MEM, \strong{PRR.pSSDM} model
 #'  richness with a pSSDM and adjust each ESDM binary map by ranking habitat
@@ -322,8 +321,8 @@ stack_modelling <- function(algorithms,
   }
   if (tmp) {
     tmppath <- get("tmpdir", envir = .PkgEnv)
-    if (!("/.enms" %in% list.dirs(tmppath)))
-      (dir.create(paste0(tmppath, "/.enms")))
+    if (!("/.esdms" %in% list.dirs(tmppath)))
+      (dir.create(paste0(tmppath, "/.esdms")))
   }
 
   # Ensemble models creation
@@ -345,15 +344,15 @@ stack_modelling <- function(algorithms,
     }
     parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
                                             ls(envir = environment())), envir = environment())
-    enms <- parallel::parLapply(cl, species, function(species) {
-      enm.name <- species
+    esdms <- parallel::parLapply(cl, species, function(species) {
+      esdm.name <- species
       Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
                                                                Spcol)] == species)
       if (verbose) {
-        cat("Ensemble modelling :", enm.name, "\n\n")
+        cat("Ensemble modelling :", esdm.name, "\n\n")
       }
-      enm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
-                                    Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
+      esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+                                    Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
                                     PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
@@ -363,25 +362,25 @@ stack_modelling <- function(algorithms,
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
                                                                      Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
       }
-      if (inherits(enm, "try-error")) {
+      if (inherits(esdm, "try-error")) {
         if (verbose) {
-          cat(enm)
+          cat(esdm)
         }
-        enm <- NULL
+        esdm <- NULL
       } else {
-        if (tmp && !is.null(enm)) {
-          enm@projection <- writeRaster(enm@projection[[1]], paste0(tmppath,
-                                                                    "/.enms/proba", enm.name), overwrite = TRUE)
-          enm@binary <- writeRaster(enm@binary[[1]], paste0(tmppath,
-                                                            "/.enms/bin", enm.name), overwrite = TRUE)
-          enm@uncertainty <- writeRaster(enm@uncertainty, paste0(tmppath,
-                                                                 "/.enms/uncert", enm.name), overwrite = TRUE)
+        if (tmp && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
+                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
+          esdm@binary <- writeRaster(esdm@binary[[1]], paste0(tmppath,
+                                                            "/.esdms/bin", esdm.name), overwrite = TRUE)
+          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
+                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
         }
         if (verbose) {
           cat("\n\n")
         }
       }
-      return(enm)
+      return(esdm)
     })
     if (verbose) {
       cat("Closing clusters \n")
@@ -389,15 +388,15 @@ stack_modelling <- function(algorithms,
     parallel::stopCluster(cl)
 
   } else {
-    enms <- lapply(species, function(species) {
-      enm.name <- species
+    esdms <- lapply(species, function(species) {
+      esdm.name <- species
       Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
                                                                Spcol)] == species)
       if (verbose) {
-        cat("Ensemble modelling :", enm.name, "\n\n")
+        cat("Ensemble modelling :", esdm.name, "\n\n")
       }
-      enm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
-                                    Ycol, Pcol, rep = rep, name = enm.name, save = FALSE, path = path,
+      esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+                                    Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
                                     PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
@@ -406,30 +405,30 @@ stack_modelling <- function(algorithms,
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
                                                                      Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
       }
-      if (inherits(enm, "try-error")) {
+      if (inherits(esdm, "try-error")) {
         if (verbose) {
-          cat(enm)
+          cat(esdm)
         }
-        enm <- NULL
+        esdm <- NULL
       } else {
-        if (tmp && !is.null(enm)) {
-          enm@projection <- writeRaster(enm@projection[[1]], paste0(tmppath,
-                                                                    "/.enms/proba", enm.name), overwrite = TRUE)
-          enm@uncertainty <- writeRaster(enm@uncertainty, paste0(tmppath,
-                                                                 "/.enms/uncert", enm.name), overwrite = TRUE)
+        if (tmp && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
+                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
+          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
+                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
         }
         if (verbose) {
           cat("\n\n")
         }
       }
-      return(enm)
+      return(esdm)
     })
   }
 
-  enms <- enms[!sapply(enms, is.null)]
+  esdms <- esdms[!sapply(esdms, is.null)]
 
   # Species stacking
-  if (length(enms) < 2) {
+  if (length(esdms) < 2) {
     if (verbose) {
       stop("Less than two species models were retained, you should lower the ensemble threshold value (ensemble.thresh parameter).")
     } else {
@@ -440,19 +439,19 @@ stack_modelling <- function(algorithms,
       cat("#### Species stacking with ensemble models ##### \n\n")
     }
     if (!is.null(name)) {
-      enms["name"] <- name
+      esdms["name"] <- name
     }
-    enms["method"] <- method
-    enms["rep.B"] <- rep.B
+    esdms["method"] <- method
+    esdms["rep.B"] <- rep.B
     if (method %in% c("PRR.MEM", "PRR.pSSDM")) {
-      enms["Env"] <- Env
+      esdms["Env"] <- Env
     }
     if (!is.null(range)) {
-      enms["range"] <- range
+      esdms["range"] <- range
     }
-    enms$endemism <- endemism
-    enms["verbose"] <- verbose
-    stack <- do.call(stacking, enms)
+    esdms$endemism <- endemism
+    esdms["verbose"] <- verbose
+    stack <- do.call(stacking, esdms)
   }
 
   if (!is.null(stack)) {

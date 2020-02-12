@@ -15,7 +15,7 @@ NULL
 #'algorithm correlation matrix and variable importance), and a list of ensemble
 #'SDMs for each species (see \code{\link{ensemble_modelling}}).
 #'
-#'@param enm,... character. Ensemble SDMs to be stacked.
+#'@param esdm,... character. Ensemble SDMs to be stacked.
 #'@param name character. Optional name given to the final SSDM produced (by
 #'  default 'Species.SDM').
 #'@param method character. Define the method used to create the local species
@@ -111,44 +111,44 @@ NULL
 #'
 #'@rdname stacking
 #'@export
-setGeneric('stacking', function(enm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
+setGeneric('stacking', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
                                 Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE,
                                 verbose = TRUE, GUI = FALSE) {return(standardGeneric('stacking'))})
 
 #' @rdname stacking
 #' @export
-setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
+setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
                                                Env = NULL, range = NULL, endemism = c('WEI','Binary'),
                                                eval = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
-  .checkargs(enm = enm, name = name, method = method, rep.B = rep.B, range = range,
+  .checkargs(esdm = esdm, name = name, method = method, rep.B = rep.B, range = range,
              endemism = endemism, eval = eval, verbose = verbose, GUI = GUI)
 
-  enms <- list(enm, ...)
-  if (length(enms) < 2) {
+  esdms <- list(esdm, ...)
+  if (length(esdms) < 2) {
     stop("You neeed more than one ensemble SDM to do stackings")
   }
   names <- c()
-  for (i in seq_len(length(enms))) {
-    if (enms[[i]]@name %in% names) {
+  for (i in seq_len(length(esdms))) {
+    if (esdms[[i]]@name %in% names) {
       stop("Ensemble models can't have the same name, you need to rename one of ",
-           enms[[i]]@name)
+           esdms[[i]]@name)
     } else {
-      names <- c(names, enms[[i]]@name)
+      names <- c(names, esdms[[i]]@name)
     }
   }
   if (verbose) {
     cat("Stack creation... \n")
   }
-  stack <- Stacked.SDM(diversity.map = reclassify(enm@projection[[1]], c(-Inf,Inf, 0)),
-                       endemism.map = reclassify(enm@projection[[1]], c(-Inf, Inf, 0)),
-                       uncertainty = reclassify(enm@uncertainty, c(-Inf, Inf, NA)),
-                       parameters = enm@parameters)
+  stack <- Stacked.SDM(diversity.map = reclassify(esdm@projection[[1]], c(-Inf,Inf, 0)),
+                       endemism.map = reclassify(esdm@projection[[1]], c(-Inf, Inf, 0)),
+                       uncertainty = reclassify(esdm@uncertainty, c(-Inf, Inf, NA)),
+                       parameters = esdm@parameters)
 
-  # ENMS
-  for (i in seq_len(length(enms))) {
+  # ESDMs
+  for (i in seq_len(length(esdms))) {
     suppressWarnings({
-      stack@enms[enms[[i]]@name] <- enms[[i]]
+      stack@esdms[esdms[[i]]@name] <- esdms[[i]]
     })
   }
 
@@ -169,10 +169,10 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     cat("   range restriction...")
   }
   if (!is.null(range)) {
-    for (j in seq_len(length(enms))) {
-      nbocc <- length(as.factor(enms[[j]]@data$Presence[enms[[j]]@data$Presence ==
-                                                          1]))/sum(enms[[j]]@algorithm.evaluation$kept.model)
-      occ <- enms[[j]]@data[1:nbocc, ]
+    for (j in seq_len(length(esdms))) {
+      nbocc <- length(as.factor(esdms[[j]]@data$Presence[esdms[[j]]@data$Presence ==
+                                                          1]))/sum(esdms[[j]]@algorithm.evaluation$kept.model)
+      occ <- esdms[[j]]@data[1:nbocc, ]
       occ <- occ[which(occ$Presence == 1), 1:2]
       circles <- list()
       for (i in seq_len(length(occ[, 1]))) {
@@ -186,9 +186,9 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
         circles[i] <- circle
       }
       sc <- SpatialPolygons(list(Polygons(circles, "Circles")))
-      enms[[j]]@projection <- mask(enms[[j]]@projection, sc, updatevalue = 0)
-      # thresh = enms[[j]]@evaluation$threshold enms[[j]]@projection =
-      # reclassify(enms[[j]]@projection, c(-Inf,thresh,0, thresh,Inf,1))
+      esdms[[j]]@projection <- mask(esdms[[j]]@projection, sc, updatevalue = 0)
+      # thresh = esdms[[j]]@evaluation$threshold esdms[[j]]@projection =
+      # reclassify(esdms[[j]]@projection, c(-Inf,thresh,0, thresh,Inf,1))
     }
   }
   if (verbose) {
@@ -200,8 +200,8 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     cat("   diversity mapping...")
   diversity <- mapDiversity(stack, method, rep.B, verbose, Env)
   stack@diversity.map <- diversity$diversity.map
-  if(!is.null(diversity$enms))
-    stack@enms <- diversity$enms
+  if(!is.null(diversity$esdms))
+    stack@esdms <- diversity$esdms
   names(stack@diversity.map) <- "diversity"
   if (verbose)
     cat(" done. \n")
@@ -211,17 +211,17 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
     cat("   uncertainty mapping...")
   }
   uncertainities <- stack()
-  for (i in seq_len(length(enms))) {
-    a <- try(enms[[i]]@uncertainty)
+  for (i in seq_len(length(esdms))) {
+    a <- try(esdms[[i]]@uncertainty)
     if (inherits(a, "try-error")) {
       if (verbose) {
-        cat("Ensemble model", enms[[i]]@name, "uncertainty map not computed")
+        cat("Ensemble model", esdms[[i]]@name, "uncertainty map not computed")
       }
     } else {
       b <- try(stack(uncertainities, a))
       if (inherits(b, "try-error")) {
         if (verbose) {
-          cat("Ensemble model", enms[[i]]@name, ":", b)
+          cat("Ensemble model", esdms[[i]]@name, ":", b)
         }
       } else {
         uncertainities <- b
@@ -248,19 +248,19 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if (is.null(endemism)) {
     "unactivated"
   } else {
-    for (i in seq_len(length(enms))) {
+    for (i in seq_len(length(esdms))) {
       if (endemism[2] == "NbOcc") {
-        endweight <- length(as.factor(enms[[i]]@data$Presence[enms[[i]]@data$Presence ==
-                                                                1]))/sum(enms[[i]]@algorithm.evaluation$kept.model)
+        endweight <- length(as.factor(esdms[[i]]@data$Presence[esdms[[i]]@data$Presence ==
+                                                                1]))/sum(esdms[[i]]@algorithm.evaluation$kept.model)
       } else if (endemism[2] == "Binary") {
-        endweight <- sum(values(reclassify(enms[[i]]@projection, c(-Inf,
-                                                                   enms[[i]]@evaluation$threshold, 0, enms[[i]]@evaluation$threshold,
+        endweight <- sum(values(reclassify(esdms[[i]]@projection, c(-Inf,
+                                                                   esdms[[i]]@evaluation$threshold, 0, esdms[[i]]@evaluation$threshold,
                                                                    Inf, 1))), na.rm = TRUE)
       }
       if (endemism[1] == "WEI") {
-        stack@endemism.map <- stack@endemism.map + enms[[i]]@projection/endweight
+        stack@endemism.map <- stack@endemism.map + esdms[[i]]@projection/endweight
       } else if (endemism[1] == "CWEI") {
-        stack@endemism.map <- stack@endemism.map + overlay(enms[[i]]@projection,
+        stack@endemism.map <- stack@endemism.map + overlay(esdms[[i]]@projection,
                                                            stack@diversity.map, fun = function(x, y) {
                                                              y <- round(y)
                                                              x[which(y > 0)] <- x[which(y > 0)]/endweight/y[which(y >
@@ -279,9 +279,9 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if (verbose) {
     cat("   comparing variable importnace...")
   }
-  stack@variable.importance <- enm@variable.importance
-  for (i in 2:length(enms)) {
-    a <- try(rbind(stack@variable.importance, enms[[i]]@variable.importance))
+  stack@variable.importance <- esdm@variable.importance
+  for (i in 2:length(esdms)) {
+    a <- try(rbind(stack@variable.importance, esdms[[i]]@variable.importance))
     if (inherits(a, "try-error")) {
       cat(a)
     } else {
@@ -303,24 +303,24 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if (verbose) {
     cat("   comparing algorithms correlation...")
   }
-  algo <- c()  # Listing all algorithms presents in enms and renaming enms row and columns
-  for (i in seq_len(length(enms))) {
-    if (length(enms[[i]]@algorithm.correlation) == 0) {
+  algo <- c()  # Listing all algorithms presents in esdms and renaming esdms row and columns
+  for (i in seq_len(length(esdms))) {
+    if (length(esdms[[i]]@algorithm.correlation) == 0) {
       if (verbose) {
-        cat("\n", enms[[i]]@name, "algorithms correlation has not been computed. \n")
+        cat("\n", esdms[[i]]@name, "algorithms correlation has not been computed. \n")
       }
     } else {
-      for (j in seq_len(length(enms[[i]]@algorithm.correlation))) {
-        if (length(strsplit(names(enms[[i]]@algorithm.correlation)[j],
+      for (j in seq_len(length(esdms[[i]]@algorithm.correlation))) {
+        if (length(strsplit(names(esdms[[i]]@algorithm.correlation)[j],
                             ".", fixed = TRUE)[[1]]) > 1) {
-          a <- strsplit(row.names(enms[[i]]@algorithm.correlation)[j],
+          a <- strsplit(row.names(esdms[[i]]@algorithm.correlation)[j],
                         ".SDM", fixed = TRUE)[[1]][1]
           a <- tail(strsplit(a, ".", fixed = TRUE)[[1]], n = 1)
-          names(enms[[i]]@algorithm.correlation)[j] <- a
-          row.names(enms[[i]]@algorithm.correlation)[j] <- a
+          names(esdms[[i]]@algorithm.correlation)[j] <- a
+          row.names(esdms[[i]]@algorithm.correlation)[j] <- a
         }
-        if (!(names(enms[[i]]@algorithm.correlation)[j] %in% algo)) {
-          algo <- c(algo, names(enms[[i]]@algorithm.correlation)[j])
+        if (!(names(esdms[[i]]@algorithm.correlation)[j] %in% algo)) {
+          algo <- c(algo, names(esdms[[i]]@algorithm.correlation)[j])
         }
       }
     }
@@ -333,14 +333,14 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
       for (j in seq_len(length(algo))) {
         if (i > j) {
           corr <- c()
-          for (k in seq_len(length(enms))) {
-            if (length(enms[[k]]@algorithm.correlation) != 0) {
-              row <- which(row.names(enms[[k]]@algorithm.correlation) ==
+          for (k in seq_len(length(esdms))) {
+            if (length(esdms[[k]]@algorithm.correlation) != 0) {
+              row <- which(row.names(esdms[[k]]@algorithm.correlation) ==
                              row.names(mcorr)[j])
-              col <- which(names(enms[[k]]@algorithm.correlation) ==
+              col <- which(names(esdms[[k]]@algorithm.correlation) ==
                              names(mcorr)[i])
               if (length(row) > 0 && length(col) > 0) {
-                corr <- c(corr, enms[[k]]@algorithm.correlation[row,
+                corr <- c(corr, esdms[[k]]@algorithm.correlation[row,
                                                                 col])
               }
             }
@@ -359,9 +359,9 @@ setMethod('stacking', 'Ensemble.SDM', function(enm, ..., name = NULL, method = '
   if (verbose) {
     cat("   comparing algorithms evaluation")
   }
-  stack@algorithm.evaluation <- enm@algorithm.evaluation
-  for (i in 2:length(enms)) {
-    stack@algorithm.evaluation <- rbind(stack@algorithm.evaluation, enms[[i]]@algorithm.evaluation)
+  stack@algorithm.evaluation <- esdm@algorithm.evaluation
+  for (i in 2:length(esdms)) {
+    stack@algorithm.evaluation <- rbind(stack@algorithm.evaluation, esdms[[i]]@algorithm.evaluation)
   }
   stack@algorithm.evaluation$algo <- "algo"
   for (i in seq_len(length(row.names(stack@algorithm.evaluation)))) {

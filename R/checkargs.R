@@ -33,7 +33,7 @@
                       format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
                       categorical = NULL,
                       Norm = TRUE,
-                      enm = Ensemble.SDM(),
+                      esdm = Ensemble.SDM(),
                       stack = Stacked.SDM(),
                       range = NULL,
                       endemism = 'WEI',
@@ -208,9 +208,9 @@
 
   # Stacking
   if (!inherits(method, "character") || !(method %in% c("pSSDM", "Bernoulli", "bSSDM",
-                                                        "MaximumLikelyhood",
+                                                        "MaximumLikelihood",
                                                         "PRR.MEM", "PRR.pSSDM"))) {
-    stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelyhood, PRR.MEM, or PRR.pSSDM (see help).")
+    stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelihood, PRR.MEM, or PRR.pSSDM (see help).")
   }
   if (method == "Bernoulli" && !inherits(rep.B, "numeric") && abs(rep.B - round(rep.B)) !=
       0 && rep.B < 1) {
@@ -249,8 +249,8 @@
   }
 
   # save
-  if (!inherits(enm, "Ensemble.SDM")) {
-    stop("enm parameter should be an Ensemble.SDM.")
+  if (!inherits(esdm, "Ensemble.SDM")) {
+    stop("esdm parameter should be an Ensemble.SDM.")
   }
   if (!inherits(stack, "Stacked.SDM")) {
     stop("stack parameter should be a Stacked.SDM.")

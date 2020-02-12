@@ -7,7 +7,7 @@ NULL
 #' Allows to save S4 \linkS4class{Ensemble.SDM} and \linkS4class{Stacked.SDM}
 #' class objects.
 #'
-#' @param enm Ensemble.SDM. Ensemble SDM to be saved.
+#' @param esdm Ensemble.SDM. Ensemble SDM to be saved.
 #' @param stack Stacked.SDM. SSDM to be saved.
 #' @param name character. Folder name of the model to save.
 #' @param path character. Path to the directory chosen to save the SDM,
@@ -28,17 +28,17 @@ NULL
 
 #' @rdname save.model
 #' @export
-setGeneric('save.enm', function (enm, name = strsplit(enm@name, '.', fixed = TRUE)[[1]][1],
-                                 path = getwd(), verbose = TRUE, GUI = FALSE) {return(standardGeneric('save.enm'))})
+setGeneric('save.esdm', function (esdm, name = strsplit(esdm@name, '.', fixed = TRUE)[[1]][1],
+                                 path = getwd(), verbose = TRUE, GUI = FALSE) {return(standardGeneric('save.esdm'))})
 
 #' @rdname save.model
 #' @export
-setMethod('save.enm', 'Ensemble.SDM', function (enm,
-                                                        name = strsplit(enm@name, '.Ensemble.SDM', fixed = TRUE)[[1]][1],
+setMethod('save.esdm', 'Ensemble.SDM', function (esdm,
+                                                        name = strsplit(esdm@name, '.Ensemble.SDM', fixed = TRUE)[[1]][1],
                                                         path = getwd(),
                                                         verbose = TRUE, GUI = FALSE) {
   # Check arguments
-  .checkargs(enm = enm, name = name, path = path, verbose = verbose, GUI = GUI)
+  .checkargs(esdm = esdm, name = name, path = path, verbose = verbose, GUI = GUI)
 
   if (verbose) {
     cat("Saving ensemble model results \n")
@@ -52,11 +52,11 @@ setMethod('save.enm', 'Ensemble.SDM', function (enm,
   if (verbose) {
     cat("   rasters ...")
   }
-  writeRaster(enm@projection[[1]], paste0(path, "/", name, "/Rasters/Probability"),
+  writeRaster(esdm@projection[[1]], paste0(path, "/", name, "/Rasters/Probability"),
               "GTiff", overwrite = TRUE)
-  writeRaster(enm@binary[[1]], paste0(path, "/", name, "/Rasters/Binary"),
+  writeRaster(esdm@binary[[1]], paste0(path, "/", name, "/Rasters/Binary"),
               "GTiff", overwrite = TRUE)
-  writeRaster(enm@uncertainty, paste0(path, "/", name, "/Rasters/uncertainty"),
+  writeRaster(esdm@uncertainty, paste0(path, "/", name, "/Rasters/uncertainty"),
               "GTiff", overwrite = TRUE)
   if (verbose) {
     cat("saved \n")
@@ -66,13 +66,13 @@ setMethod('save.enm', 'Ensemble.SDM', function (enm,
   if (verbose) {
     cat("   tables ...")
   }
-  write.csv(enm@evaluation, paste0(path, "/", name, "/Tables/ENMeval.csv"))
-  write.csv(enm@algorithm.evaluation, paste0(path, "/", name, "/Tables/AlgoEval.csv"))
-  write.csv(enm@algorithm.correlation, paste0(path, "/", name, "/Tables/AlgoCorr.csv"))
-  write.csv(enm@variable.importance, paste0(path, "/", name, "/Tables/VarImp.csv"))
-  write.csv(enm@data, paste0(path, "/", name, "/Tables/Data.csv"))
-  write.csv(enm@name, paste0(path, "/", name, "/Tables/Name.csv"))
-  write.csv(enm@parameters, paste0(path, "/", name, "/Tables/Parameters.csv"))
+  write.csv(esdm@evaluation, paste0(path, "/", name, "/Tables/esdmeval.csv"))
+  write.csv(esdm@algorithm.evaluation, paste0(path, "/", name, "/Tables/AlgoEval.csv"))
+  write.csv(esdm@algorithm.correlation, paste0(path, "/", name, "/Tables/AlgoCorr.csv"))
+  write.csv(esdm@variable.importance, paste0(path, "/", name, "/Tables/VarImp.csv"))
+  write.csv(esdm@data, paste0(path, "/", name, "/Tables/Data.csv"))
+  write.csv(esdm@name, paste0(path, "/", name, "/Tables/Name.csv"))
+  write.csv(esdm@parameters, paste0(path, "/", name, "/Tables/Parameters.csv"))
   if (verbose) {
     cat("saved \n \n")
   }
@@ -126,12 +126,12 @@ setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
   write.csv(stack@parameters, paste0(path, "/", "Stack", "/Tables/Parameters.csv"))
   cat("saved \n\n")
 
-  # ENMS saving
+  # ESDMs saving
   if (verbose) {
-    cat("   enms ... \n\n")
+    cat("   esdms ... \n\n")
   }
-  for (i in seq_len(length(stack@enms))) {
-    save.enm(stack@enms[[i]], path = paste0(path, "/", "Species"), verbose = verbose,
+  for (i in seq_len(length(stack@esdms))) {
+    save.esdm(stack@esdms[[i]], path = paste0(path, "/", "Species"), verbose = verbose,
              GUI = GUI)
   }
   if (verbose) {
