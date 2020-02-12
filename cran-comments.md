@@ -15,4 +15,4 @@ There were no NOTEs, ERRORs or WARNINGs.
 
 This is a resubmission. In this version I have:
 
-* Fixed a major bug from version 0.2.5 due to dependency compatibility with raster 2.9-5
+* Removed SDMTools from dependencies and included corresponding function into SSDM following your mail
