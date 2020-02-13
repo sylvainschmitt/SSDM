@@ -42,8 +42,7 @@ NULL
 #'@param select.thresh numeric. Threshold(s) associated with the metric(s) used
 #'  to compute the selection.
 #'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
+#'  interval threshold values between 0 and 1.
 #'@param metric character. Metric used to compute the binary map threshold (see
 #'  details below).
 #'@param axes.metric Metric used to evaluate variable relative importance (see

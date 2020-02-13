@@ -7,7 +7,9 @@
 #' @importFrom shiny renderText renderUI renderPlot renderDataTable renderTable
 #' @importFrom shinydashboard dashboardPage dashboardHeader dashboardSidebar dashboardBody box tabBox
 #' @importFrom shinydashboard sidebarMenu sidebarMenuOutput renderMenu menuItem menuSubItem tabItems tabItem
-#' @importFrom gplots heatmap.2
+#' @importFrom ggplot2 ggplot aes geom_tile geom_text scale_fill_gradient theme_minimal theme element_blank element_text
+#' @importFrom reshape2 melt
+#' @importFrom scales muted
 #' @importFrom sp spplot SpatialPoints
 #' @importFrom raster stack crop extent aggregate reclassify
 NULL
@@ -186,10 +188,11 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       output$algo.corr.table <- renderTable({x@algorithm.correlation})
       output$algo.corr.heatmap <- renderPlot({
         m <- as.matrix(x@algorithm.correlation)
-        heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                  cellnote = round(m,2), notecol = "black", notecex = 2,
-                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
-                  col = rev(heat.colors(1000)))
+        # heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
+        #           cellnote = round(m,2), notecol = "black", notecex = 2,
+        #           trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
+        #           col = rev(heat.colors(1000)))
+        .heatmap(m)
       })
     }
     # Variable importance
@@ -345,10 +348,11 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
       if (length(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation) > 0) {
         x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation[upper.tri(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation, diag = TRUE)] = NA
         m <- as.matrix(x@esdms[[which(choices == input$esdmchoice)]]@algorithm.correlation)
-        heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                  cellnote = round(m,3), notecol = "black", notecex = 2,
-                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
-                  col = rev(heat.colors(1000)))
+        # heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
+        #           cellnote = round(m,3), notecol = "black", notecex = 2,
+        #           trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
+        #           col = rev(heat.colors(1000)))
+        .heatmap(m)
       }
     })
     # Variable importance
@@ -583,10 +587,11 @@ setMethod('plot', 'SDM', function(x, y, ...) {
         })
         output$algo.corr.heatmap <- renderPlot({
           m <- as.matrix(x@algorithm.correlation)
-          heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                    cellnote = round(m, 3), notecol = "black", notecex = 2,
-                    trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
-                    col = rev(heat.colors(1000)))
+          # heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
+          #           cellnote = round(m, 3), notecol = "black", notecex = 2,
+          #           trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
+          #           col = rev(heat.colors(1000)))
+          .heatmap(m)
         })
       }
     }
@@ -682,3 +687,13 @@ setMethod('plot', 'SDM', function(x, y, ...) {
   shinyApp(ui, server)
 })
 
+.heatmap <- function(m)
+  ggplot(melt(m, id.vars = NULL),
+         aes(Var1, Var2, fill = value, label = round(value, 2))) +
+  geom_tile() +
+  geom_text(col = "white") +
+  scale_fill_gradient(guide = "none", na.value = "white",
+                      low = muted("blue"), high = muted("red")) +
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_text(angle = 90))

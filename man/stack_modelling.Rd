@@ -56,8 +56,7 @@ SDM (see details below).}
 cross-validation used to evaluate the ensemble SDM (see details below).}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+interval threshold values between 0 and 1.}
 
 \item{axes.metric}{Metric used to evaluate variable relative importance (see
 details below).}

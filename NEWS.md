@@ -1,6 +1,11 @@
 NEWS
 ================
 
+SSDM 0.2.6.9003
+===============
+
+- gplots::heatmap.2 replaced by ggplot2 heatmap
+
 SSDM 0.2.6.9002
 ===============
 

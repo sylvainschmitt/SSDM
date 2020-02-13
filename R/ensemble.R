@@ -22,8 +22,7 @@ NULL
 #'@param weight logical. If TRUE, SDMs are weighted using the ensemble metric
 #'  or, alternatively, the mean of the selection   metrics.
 #'@param thresh numeric. A integer value specifying the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
+#'  interval threshold values between 0 and 1.
 #'@param uncertainty logical. If TRUE, generates an uncertainty map and
 #'  an algorithm correlation matrix.
 #'@param verbose logical. If set to true, allows the function to print text in

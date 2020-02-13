@@ -4,7 +4,7 @@ if (!requireNamespace("shinyFiles", quietly = TRUE)) {
 library(shinydashboard)
 library(shinyFiles)
 library(raster)
-library(gplots)
+library(ggplot2)
 
 
 serverWD <- function(working.directory){
@@ -93,7 +93,7 @@ serverWD <- function(working.directory){
     output$envnames <- renderTable({
       matrix(names(data$Env),dimnames=list(c(1:length(names(data$Env))),c("Selected data")))
       })
-      
+
     output$factors <- renderUI({
       selectInput('factors', 'Categorical', load.var$vars, multiple = TRUE, selectize = TRUE)
     })
@@ -752,10 +752,15 @@ serverWD <- function(working.directory){
     output$algo.corr.table <- renderTable({data$Stack@algorithm.correlation})
     output$algo.corr.heatmap <- renderPlot({
       m <- as.matrix(data$Stack@algorithm.correlation)
-      heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                cellnote = round(m,2), notecol = "black", notecex = 2,
-                trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
-                col = rev(heat.colors(1000)))
+      ggplot(reshape2::melt(m, id.vars = NULL),
+             aes(Var1, Var2, fill = value, label = round(value, 2))) +
+        geom_tile() +
+        geom_text(col = "white") +
+        scale_fill_gradient(guide = "none", na.value = "white",
+                            low = scales::muted("blue"), high = scales::muted("red")) +
+        theme_minimal() +
+        theme(axis.title = element_blank(),
+              axis.text.x = element_text(angle = 90))
     })
     # Variable importance
     output$varimp.barplot <- renderPlot({
@@ -915,10 +920,15 @@ serverWD <- function(working.directory){
       if (length(correlation) > 0) {
         correlation[upper.tri(correlation, diag = TRUE)] = NA
         m <- as.matrix(correlation)
-        heatmap.2(x = m, Rowv = FALSE, Colv = FALSE, dendrogram = "none",
-                  cellnote = round(m,3), notecol = "black", notecex = 2,
-                  trace = "none", key = FALSE, margins = c(7, 11), na.rm = TRUE,
-                  col = rev(heat.colors(1000)))
+        ggplot(reshape2::melt(m, id.vars = NULL),
+               aes(Var1, Var2, fill = value, label = round(value, 2))) +
+          geom_tile() +
+          geom_text(col = "white") +
+          scale_fill_gradient(guide = "none", na.value = "white",
+                              low = scales::muted("blue"), high = scales::muted("red")) +
+          theme_minimal() +
+          theme(axis.title = element_blank(),
+                axis.text.x = element_text(angle = 90))
       }
     })
     # Algo Eval Corr UI
@@ -1032,11 +1042,11 @@ serverWD <- function(working.directory){
       specieschoices <- reactive({c("all",names(data$Stack@esdms))})
       }
       if(is.null(data$Stack) & !is.null(data$ESDM)){
-        specieschoices <-reactive({data$ESDM@name}) 
+        specieschoices <-reactive({data$ESDM@name})
       }
       selectInput('speciesSave', 'Species:', specieschoices())
       })
-    
+
     observeEvent(input$speciesSave,{
       if(input$speciesSave == "all"){
         mapchoices <- list("Diversity map" = "diversity.map", "Endemism map"="endemism.map")}
@@ -1049,7 +1059,7 @@ serverWD <- function(working.directory){
         selectInput('mapSave','Map type:', mapchoices)
       })
     })
-    
+
     if(Sys.info()[['sysname']] == 'Linux') {
       shinyDirChoose(input, 'savem', session=session, roots=c( wd='.', home = '/home', root = '/'), filetypes=c(''))
     } else if (Sys.info()[['sysname']] == 'Windows') {
@@ -1113,7 +1123,7 @@ serverWD <- function(working.directory){
     })
 
     ### Model forecasting
-    
+
     output$projcheck <- renderText({
       if(is.null(data$Env) |  (is.null(data$ESDM) & is.null(data$Stack))){"Environmental data and model must both be provided"}
       else if(!is.null(data$ESDM)){if(!all(colnames(data$ESDM@data) %in% names(data$Env))){"Provided environmental variables do not match variables used model training. Please check your raster selection."}}
@@ -1130,8 +1140,8 @@ serverWD <- function(working.directory){
         updateTabItems(session, "actions", selected="stack")
       }
     })
-    
-    
+
+
     ### Quit Menu ###
 
     ## quit page ##

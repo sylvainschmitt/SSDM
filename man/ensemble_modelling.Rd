@@ -53,8 +53,7 @@ SDM (see details below).}
 cross-validation used to evaluate the ensemble SDM (see details below).}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+interval threshold values between 0 and 1.}
 
 \item{metric}{character. Metric used to compute the binary map threshold (see
 details below.)}

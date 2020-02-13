@@ -40,8 +40,7 @@ default it's the name of the previous SSDM.}
 SSDM.}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+interval threshold values between 0 and 1.}
 
 \item{tmp}{logical. If set to true, the habitat suitability map of each
 algorithm is saved in a temporary file to release memory. But beware: if you
