@@ -687,13 +687,15 @@ setMethod('plot', 'SDM', function(x, y, ...) {
   shinyApp(ui, server)
 })
 
-.heatmap <- function(m)
+.heatmap <- function(m) {
+  Var1 <- NULL ; Var2 <- NULL ; value <- NULL
   ggplot(melt(m, id.vars = NULL),
          aes(Var1, Var2, fill = value, label = round(value, 2))) +
-  geom_tile() +
-  geom_text(col = "white") +
-  scale_fill_gradient(guide = "none", na.value = "white",
-                      low = muted("blue"), high = muted("red")) +
-  theme_minimal() +
-  theme(axis.title = element_blank(),
-        axis.text.x = element_text(angle = 90))
+    geom_tile() +
+    geom_text(col = "white") +
+    scale_fill_gradient(guide = "none", na.value = "white",
+                        low = muted("blue"), high = muted("red")) +
+    theme_minimal() +
+    theme(axis.title = element_blank(),
+          axis.text.x = element_text(angle = 90))
+}

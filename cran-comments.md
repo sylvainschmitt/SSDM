@@ -15,4 +15,4 @@ There were no NOTEs, ERRORs or WARNINGs.
 
 This is a resubmission. In this version I have:
 
-* Removed SDMTools from dependencies and included corresponding function into SSDM following your mail
+* Removed orphaned packages `gplots` and `SDMTools` from dependencies
