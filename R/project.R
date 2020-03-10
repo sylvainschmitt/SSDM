@@ -21,6 +21,9 @@ NULL
 #' @param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'  use all the available CPU cores.
+#' @param minimal.memory logical. Only relevant if cores >1. If TRUE, only one model will be sent to each worker at a time, reducing used working memory.
+#' @param tmp logical or character. If FALSE, no temporary rasters are written. If TRUE, temporary rasters are written to the „tmp“ directory of your R environment. If character, temporary rasters are written to a custom path. Very useful to reduce working memory consumption (use together with minimal.memory=TRUE for maximal effect).
+#' But beware: Depending on number, resolution and extent of models, temporary files can take a lot of disk space. 
 #' @param ... Additional arguments for internal use.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
 #' @return Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
@@ -119,16 +122,16 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
     if(minimal.memory){
       # create indices to split models into chunks
       chunks <- split(1:length(models),ceiling(seq_along(1:length(models))/cores))
+      proj <- NULL
       for(k in 1:length(chunks)){
         model_chunk <- models[chunks[[k]]]
         
         cl <- parallel::makePSOCKcluster(length(model_chunk))
         doParallel::registerDoParallel(cl)
         proj_chunk <- foreach(model_chunk=itertools::isplitVector(model_chunk, chunks=length(cl)),.packages = c("raster","SSDM"),.verbose=FALSE) %dopar% {
-          lapply(model_chunk,project,Env = Env,update.projections=TRUE)
+          lapply(model_chunk,project,Env = Env)
         }
-        parallel::stopCluster(cl)
-        #gc()
+        
         proj_chunk <- unlist(proj_chunk)
     
     # save temporary rasters    
@@ -143,12 +146,14 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
         dir.create(paste0(tmppath, "/.models"))
       }
       for(i in 1:length(proj_chunk)){
-        writeRaster(proj_chunk[[i]]@projection, filename=paste0(tmppath, "/.models/proba_",proj_chunk[[i]]@name,"-",chunks[[k]][i],gsub(" |:|-","", Sys.time())))
-        writeRaster(proj_chunk[[i]]@projection, filename=paste0(tmppath, "/.models/bin_",proj_chunk[[i]]@name,"-",chunks[[k]][i],gsub(" |:|-","", Sys.time())))
+        proj_chunk[[i]]@projection <- writeRaster(proj_chunk[[i]]@projection, filename=paste0(tmppath, "/.models/proba_",proj_chunk[[i]]@name,"-",chunks[[k]][i],gsub(" |:|-","", Sys.time())))
+        proj_chunk[[i]]@binary <- writeRaster(proj_chunk[[i]]@binary, filename=paste0(tmppath, "/.models/bin_",proj_chunk[[i]]@name,"-",chunks[[k]][i],gsub(" |:|-","", Sys.time())))
       }
     } # tmp
-    
+      parallel::stopCluster(cl)
       proj <- c(proj,proj_chunk)
+      rm(proj_chunk)
+      gc(verbose=FALSE)
       } # k
     } else {
       # normal mode
@@ -173,9 +178,13 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
   else {
     projls <- list(projection=sum.algo.ensemble@projection, binary=sum.algo.ensemble@binary)
     if(uncertainty){projls <- c(projls,uncertainty=sum.algo.ensemble@uncertainty)}
-    if(SDM.projections){projls <- c(projls, list(algorithm.projections=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
+    if(SDM.projections){projls <- c(projls, list(sdms=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
     return(projls)
   }
+  # clean up tmp -- does not make sense if individual projections should be kept
+  # if(isTRUE(tmp)|is.character(tmp)){
+  #   unlink(paste0(tmppath,"/.models"), recursive = TRUE, force = TRUE)
+  # }
 })
 
 #' @rdname project

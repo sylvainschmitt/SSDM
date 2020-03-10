@@ -43,6 +43,11 @@ additionally an algorithm correlation matrix.}
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 use all the available CPU cores.}
 
+\item{minimal.memory}{logical. Only relevant if cores >1. If TRUE, only one model will be sent to each worker at a time, reducing used working memory.}
+
+\item{tmp}{logical or character. If FALSE, no temporary rasters are written. If TRUE, temporary rasters are written to the „tmp“ directory of your R environment. If character, temporary rasters are written to a custom path. Very useful to reduce working memory consumption (use together with minimal.memory=TRUE for maximal effect).
+But beware: Depending on number, resolution and extent of models, temporary files can take a lot of disk space.}
+
 \item{method}{character. Define the method used to create the local species
 richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.}
 }

@@ -367,8 +367,8 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
   for (i in 2:length(esdms)) {
     stack@algorithm.evaluation <- rbind(stack@algorithm.evaluation, esdms[[i]]@algorithm.evaluation)
   }
-  stack@algorithm.evaluation$algo <- "algo"
-  stack@algorithm.evaluation$algo <- unlist(regmatches(row.names(stack@algorithm.evaluation), gregexpr(algos, row.names(stack@algorithm.evaluation))))
+  # stack@algorithm.evaluation$algo <- "algo"
+  stack@algorithm.evaluation$algo <- unlist(regmatches(row.names(stack@algorithm.evaluation), gregexpr("ANN|CTA|GAM|GBM|GLM|MARS|MAXENT|RF|SVM", row.names(stack@algorithm.evaluation))))
   # for (i in seq_len(length(row.names(stack@algorithm.evaluation)))) {
   #   stack@algorithm.evaluation$algo[i] <- strsplit(row.names(stack@algorithm.evaluation),
   #                                                  ".", fixed = TRUE)[[i]][2]

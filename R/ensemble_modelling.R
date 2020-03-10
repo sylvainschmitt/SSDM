@@ -489,7 +489,7 @@ ensemble_modelling <- function(algorithms,
 
   # Removing tmp
   if (tmp) {
-    unlink("./.models", recursive = TRUE, force = TRUE)
+    unlink(paste0(tmppath,"/.models"), recursive = TRUE, force = TRUE)
   }
   rm(list = ls()[-which(ls() == "esdm")])
   gc()
