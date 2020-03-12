@@ -119,7 +119,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
           indices <- seq_len(length(datap$fold))
           fold <- 1
           while (length(indices) > 0) {
-            j <- sample(indices, 1)
+            j <- ifelse(length(indices)==1,indices,sample(indices, 1))
             datap$fold[j] <- fold
             indices <- indices[-which(indices == j)]
             if (fold != k) {
