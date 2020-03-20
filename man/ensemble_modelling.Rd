@@ -7,11 +7,11 @@
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL,
   save = FALSE, path = getwd(), cores = 1, PA = NULL,
-  cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
-  metric = "SES", axes.metric = "Pearson", uncertainty = TRUE,
-  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE,
-  GUI = FALSE, ...)
+  cv = "holdout", cv.param = c(0.7, 1), final.fit.data = "all",
+  thresh = 1001, metric = "SES", axes.metric = "Pearson",
+  uncertainty = TRUE, tmp = FALSE, SDM.projections = FALSE,
+  ensemble.metric = c("AUC"), ensemble.thresh = c(0.75),
+  weight = TRUE, verbose = TRUE, GUI = FALSE, ...)
 }
 \arguments{
 \item{algorithms}{character. A character vector specifying the algorithm
@@ -55,6 +55,8 @@ SDM (see details below).}
 
 \item{cv.param}{numeric. Parameters associated to the method of
 cross-validation used to evaluate the ensemble SDM (see details below).}
+
+\item{final.fit.data}{strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
 interval threshold values between 0 and 1 (see

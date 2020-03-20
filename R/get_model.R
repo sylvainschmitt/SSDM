@@ -23,8 +23,7 @@ setMethod("get_model", "Algorithm.SDM", function(obj, ....) {
 
 setMethod("get_model", "GLM.SDM", function(obj, test = "AIC", epsilon = 1e-08,
                                            maxit = 500, ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   formula <- "Presence ~"
   for (i in 2:length(data)) {
     var <- names(data[i])
@@ -47,8 +46,7 @@ setMethod("get_model", "GLM.SDM", function(obj, test = "AIC", epsilon = 1e-08,
 
 setMethod("get_model", "GAM.SDM", function(obj, test = "AIC", epsilon = 1e-08,
                                            maxit = 500, ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   formula <- "Presence ~"
   for (i in 2:length(data)) {
     var <- names(data[i])
@@ -73,16 +71,14 @@ setMethod("get_model", "GAM.SDM", function(obj, test = "AIC", epsilon = 1e-08,
 })
 
 setMethod("get_model", "MARS.SDM", function(obj, degree = 2, ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   model <- earth(Presence ~ ., data = data, degree = 2)
   return(model)
 })
 
 setMethod("get_model", "CTA.SDM", function(obj, final.leave = 1, algocv = 3,
                                            ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   model <- rpart(Presence ~ ., data = data, control = rpart.control(minbucket = final.leave,
                                                                     xval = algocv))
   return(model)
@@ -90,8 +86,7 @@ setMethod("get_model", "CTA.SDM", function(obj, final.leave = 1, algocv = 3,
 
 setMethod("get_model", "GBM.SDM", function(obj, trees = 2500, final.leave = 1,
                                            algocv = 3, thresh.shrink = 0.001, n.cores = 1, ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   if (all(data$Presence %in% c(0, 1)))
     distribution  <- "bernoulli"
   else
@@ -104,8 +99,7 @@ setMethod("get_model", "GBM.SDM", function(obj, trees = 2500, final.leave = 1,
 
 setMethod("get_model", "RF.SDM", function(obj, trees = 2500, final.leave = 1,
                                           ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   model <- randomForest(Presence ~ ., data = data, do.classif = TRUE,
                         ntree = trees, nodesize = final.leave, maxnodes = NULL)
   return(model)
@@ -118,21 +112,19 @@ setMethod("get_model", "MAXENT.SDM", function(obj, Env, ...) {
       factors <- c(factors, names(obj@data)[i])
     }
   }
-  model <- maxent(x = obj@data[,which(!colnames(obj@data)%in%c("X","Y","Presence"))], p = obj@data$Presence, factors = factors)
+  model <- maxent(x = obj@data[which(obj@data$train),which(!colnames(obj@data)%in%c("X","Y","Presence","train"))], p = obj@data$Presence[which(obj@data$train)], factors = factors)
   return(model)
 })
 
 setMethod("get_model", "ANN.SDM", function(obj, maxit = 500, ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   model <- nnet(Presence ~ ., data = data, size = 6, maxit = maxit)
   return(model)
 })
 
 setMethod("get_model", "SVM.SDM", function(obj, epsilon = 1e-08, algocv = 3,
                                            ...) {
-  data <- obj@data[-c(which(names(obj@data) == "X"), which(names(obj@data) ==
-                                                             "Y"))]
+  data <- obj@data[which(obj@data$train),-c(which(names(obj@data) %in% c("X","Y","train")))]
   model <- svm(Presence ~ ., data = data, type = "eps-regression",
                gamma = 1/(length(data) - 1), kernel = "radial", epsilon = epsilon, cross = algocv)
   return(model)

@@ -19,6 +19,7 @@ NULL
 #'  details below).
 #' @param cv.param numeric. Parameters associated to the method of
 #'  cross-validation used to evaluate the SDM (see details below).
+#' @param final.fit.data strategy used for fitting the final model to be returned: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
 #' @param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
@@ -61,7 +62,7 @@ setGeneric('evaluate', function(obj, ...) {return(standardGeneric('evaluate'))})
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env, ...) {
+setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data='all', thresh = 1001, metric = 'SES', Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -88,19 +89,19 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
                                                               cv.param[1]))] <- TRUE
           data[which(data$Presence == p), ] <- datap
         }
-        evaldata <- data[-which(data$train), ]
-        evaldata <- evaldata[-which(names(data) == "train")]
-        traindata <- data[which(data$train), ]
-        traindata <- traindata[-which(names(data) == "train")]
-        trainobj <- obj
-        trainobj@data <- traindata
-        model <- get_model(trainobj, ...)
-        predicted.values <- predict(model, evaldata)
-        threshold <- optim.thresh(evaldata$Presence, predicted.values,
+        eval.testdata <- data[-which(data$train), ]
+        eval.testdata <- eval.testdata[-which(names(data) == "train")]
+        eval.traindata <- data[which(data$train), ]
+        # eval.traindata <- eval.traindata[-which(names(data) == "train")]
+        evalobj <- obj
+        evalobj@data <- eval.traindata
+        model <- get_model(evalobj, ...)
+        predicted.values <- predict(model, eval.testdata)
+        threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
-        caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+        roweval <- accuracy(eval.testdata$Presence, predicted.values, threshold)
+        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
         roweval$calibration <- caleval@statistic
         if (i == 1) {
           evaluation <- roweval
@@ -109,6 +110,10 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
         }
       }
     } else if (cv == "k-fold") {
+      if(cv.param[1]<2){
+        warning("less than 2 folds selected, automatic adjustment to k=5")
+        cv.param[1] <- 5
+      }
       k <- cv.param[1]
       rep <- cv.param[2]
       for (i in seq_len(length(rep))) {
@@ -131,21 +136,22 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
           data[which(data$Presence == p), ] <- datap
         }
         for (j in 1:k) {
-          evaldata <- data[which(data$fold == j), ]
-          evaldata <- evaldata[-which(names(data) == "fold")]
-          traindata <- data[which(data$fold != j), ]
-          traindata <- traindata[-which(names(data) == "fold")]
-          trainobj <- obj
-          trainobj@data <- traindata
-          model <- get_model(trainobj, ...)
-          predicted.values <- predict(model, evaldata)
-          threshold <- optim.thresh(evaldata$Presence, predicted.values,
+          eval.testdata <- data[which(data$fold == j), ]
+          eval.testdata <- eval.testdata[-which(names(data) == "fold")]
+          eval.traindata <- data[which(data$fold != j), ]
+          eval.traindata <- eval.traindata[-which(names(data) == "fold")]
+          eval.traindata$train <- TRUE
+          evalobj <- obj
+          evalobj@data <- eval.traindata
+          model <- get_model(evalobj, ...)
+          predicted.values <- predict(model, eval.testdata)
+          threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
                                     thresh)
           threshold <- mean(threshold[[which(names(threshold) ==
                                                metric)]])
-          roweval <- accuracy(evaldata$Presence, predicted.values,
+          roweval <- accuracy(eval.testdata$Presence, predicted.values,
                               threshold)
-          caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
           roweval$calibration <- caleval@statistic
           if (i == 1 && j == 1) {
             evaluation <- roweval
@@ -158,12 +164,13 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
       data <- obj@data
       predicted.values <- c()
       for (j in seq_len(length(data[, 1]))) {
-        evaldata <- data[j, ]
-        traindata <- data[-j, ]
-        trainobj <- obj
-        trainobj@data <- traindata
-        model <- get_model(trainobj, ...)
-        predicted.values[j] <- predict(model, evaldata)
+        eval.testdata <- data[j, ]
+        eval.traindata <- data[-j, ]
+        eval.traindata$train <- TRUE 
+        evalobj <- obj
+        evalobj@data <- eval.traindata
+        model <- get_model(evalobj, ...)
+        predicted.values[j] <- predict(model, eval.testdata)
       }
       threshold <- optim.thresh(data$Presence, predicted.values, thresh)
       threshold <- mean(threshold[[which(names(threshold) == metric)]])
@@ -177,16 +184,41 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, thresh = 1001
     }
 
   } else {
-    # Conitnuous values of MEMs
+    # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
   }
+  
+  # assign train/test fractions for final model training
+  
+  if(final.fit.data=='holdout'){
+    obj@data <- data
+  }
+  if(is.numeric(final.fit.data)){
+    if(final.fit.data>0 & final.fit.data<=1){
+      data <- obj@data
+      data$train <- FALSE
+      for (p in 0:1) {
+        datap <- data[which(data$Presence == p), ]
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[3]))] <- TRUE
+        data[which(data$Presence == p), ] <- datap
+      }
+      obj@data <- data
+    } else{
+      warning("Training fraction needs to be between 0 and 1 for sampling, assuming 1")
+      final.fit.data <- 'all'}
+  }
+  if(final.fit.data=='all'){
+    data$train <- TRUE
+    obj@data <- data
+  }
+  
 
   return(obj)
 })
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, metric = 'SES', Env, ...) {
+setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='all', thresh = 1001, metric = 'SES', Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -206,25 +238,32 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
       for (i in 1:cv.param[2]) {
         data <- obj@data
         data$train <- FALSE
+        # only sample test presences, not test background points
         for (p in 0:1) {
           datap <- data[which(data$Presence == p), ]
-          datap$train[sample.int(length(datap$train), round(length(datap$train) *
-                                                              cv.param[1]))] <- TRUE
+          if(p==0){
+            datap$train <- TRUE
+            bgdata <- datap
+          } else {
+            datap$train[sample.int(length(datap$train), round(length(datap$train) * cv.param[1]))] <- TRUE
+          }
           data[which(data$Presence == p), ] <- datap
         }
-        evaldata <- data[-which(data$train), ]
-        evaldata <- evaldata[-which(names(data) == "train")]
-        traindata <- data[which(data$train), ]
-        traindata <- traindata[-which(names(data) == "train")]
-        trainobj <- obj
-        trainobj@data <- traindata
-        model <- get_model(trainobj, Env)
-        predicted.values <- predict(model, evaldata)
-        threshold <- optim.thresh(evaldata$Presence, predicted.values,
+        eval.testdata <- data[-which(data$train), ]
+        # add background points as test absences (can be the same as training, if not spatially biased)
+        eval.testdata <- rbind(eval.testdata,bgdata)
+        eval.testdata <- eval.testdata[-which(names(data) == "train")]
+        eval.traindata <- data[which(data$train), ]
+      
+        evalobj <- obj
+        evalobj@data <- eval.traindata
+        model <- get_model(evalobj, Env)
+        predicted.values <- predict(model, eval.testdata)
+        threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
                                   thresh)
         threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(evaldata$Presence, predicted.values, threshold)
-        caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+        roweval <- accuracy(eval.testdata$Presence, predicted.values, threshold)
+        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
         roweval$calibration <- caleval@statistic
         if (i == 1) {
           evaluation <- roweval
@@ -245,37 +284,43 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
         data <- obj@data
         data$fold <- 0
         for (p in 0:1) {
-          datap <- data[which(data$Presence == p), ]
-          indices <- seq_len(length(datap$fold))
-          fold <- 1
-          while (length(indices) > 0) {
-            j <- sample(indices, 1)
-            datap$fold[j] <- fold
-            indices <- indices[-which(indices == j)]
-            if (fold != k) {
-              fold <- fold + 1
-            } else {
-              fold <- 1
+          if(p==0){
+            bgdata <- data[which(data$Presence == p), ]
+          } else {
+            datap <- data[which(data$Presence == p), ]
+            indices <- seq_len(length(datap$fold))
+            fold <- 1
+            while (length(indices) > 0) {
+              j <- ifelse(length(indices)==1,indices,sample(indices, 1))
+              datap$fold[j] <- fold
+              indices <- indices[-which(indices == j)]
+              if (fold != k) {
+                fold <- fold + 1
+              } else {
+                fold <- 1
+              }
             }
+            data[which(data$Presence == p), ] <- datap
           }
-          data[which(data$Presence == p), ] <- datap
         }
         for (j in 1:k) {
-          evaldata <- data[which(data$fold == j), ]
-          evaldata <- evaldata[-which(names(data) == "fold")]
-          traindata <- data[which(data$fold != j), ]
-          traindata <- traindata[-which(names(data) == "fold")]
-          trainobj <- obj
-          trainobj@data <- traindata
-          model <- get_model(trainobj, Env)
-          predicted.values <- predict(model, evaldata)
-          threshold <- optim.thresh(evaldata$Presence, predicted.values,
+          eval.testdata <- data[which(data$fold == j), ]
+          eval.testdata <- rbind(eval.testdata,bgdata)
+          eval.testdata <- eval.testdata[-which(names(data) == "fold")]
+          eval.traindata <- data[which(data$fold != j), ]
+          eval.traindata <- eval.traindata[-which(names(data) == "fold")]
+          eval.traindata$train <- TRUE
+          evalobj <- obj
+          evalobj@data <- eval.traindata
+          model <- get_model(evalobj, Env)
+          predicted.values <- predict(model, eval.testdata)
+          threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
                                     thresh)
           threshold <- mean(threshold[[which(names(threshold) ==
                                                metric)]])
-          roweval <- accuracy(evaldata$Presence, predicted.values,
+          roweval <- accuracy(eval.testdata$Presence, predicted.values,
                               threshold)
-          caleval <- sdm::calibration(evaldata$Presence,predicted.values, nbin=20, weight=TRUE)
+          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
           roweval$calibration <- caleval@statistic
           if (i == 1 && j == 1) {
             evaluation <- roweval
@@ -291,10 +336,35 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001, m
     }
 
   } else {
-    # Conitnuous values of MEMs
+    # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
   }
+  
+  # assign train/test fractions for final model training
+  
+  if(final.fit.data=='holdout'){
+    obj@data <- data
+  }
+  if(is.numeric(final.fit.data)){
+    if(final.fit.data>0 & final.fit.data<=1){
+      data <- obj@data
+      data$train <- FALSE
+      for (p in 0:1) {
+        datap <- data[which(data$Presence == p), ]
+        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[3]))] <- TRUE
+        data[which(data$Presence == p), ] <- datap
+      }
+      obj@data <- data
+    } else{
+      warning("Training fraction needs to be between 0 and 1 for sampling, assuming 1")
+      final.fit.data <- 'all'}
+  }
+  if(final.fit.data=='all'){
+    data$train <- TRUE
+    obj@data <- data
+  }
 
+  
   return(obj)})
 
 #' @rdname evaluate

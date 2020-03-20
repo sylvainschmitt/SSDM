@@ -7,9 +7,9 @@
 stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
   name = NULL, save = FALSE, path = getwd(), PA = NULL,
-  cv = "holdout", cv.param = c(0.7, 1), thresh = 1001,
-  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  SDM.projections = FALSE, ensemble.metric = c("AUC"),
+  cv = "holdout", cv.param = c(0.7, 1), final.fit.data = "all",
+  thresh = 1001, axes.metric = "Pearson", uncertainty = TRUE,
+  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, method = "pSSDM",
   metric = "SES", rep.B = 1000, range = NULL, endemism = c("WEI",
   "Binary"), verbose = TRUE, GUI = FALSE, cores = 0, ...)
@@ -54,6 +54,8 @@ SDM (see details below).}
 
 \item{cv.param}{numeric. Parameters associated with the method of
 cross-validation used to evaluate the ensemble SDM (see details below).}
+
+\item{final.fit.data}{strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
 interval threshold values between 0 and 1 (see

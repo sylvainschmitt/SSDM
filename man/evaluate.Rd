@@ -10,11 +10,11 @@
 \usage{
 evaluate(obj, ...)
 
-\S4method{evaluate}{Algorithm.SDM}(obj, cv, cv.param, thresh = 1001,
-  metric = "SES", Env, ...)
+\S4method{evaluate}{Algorithm.SDM}(obj, cv, cv.param,
+  final.fit.data = "all", thresh = 1001, metric = "SES", Env, ...)
 
-\S4method{evaluate}{MAXENT.SDM}(obj, cv, cv.param, thresh = 1001,
-  metric = "SES", Env, ...)
+\S4method{evaluate}{MAXENT.SDM}(obj, cv, cv.param,
+  final.fit.data = "all", thresh = 1001, metric = "SES", Env, ...)
 
 \S4method{evaluate}{Stacked.SDM}(obj, ...)
 }
@@ -28,6 +28,8 @@ details below).}
 
 \item{cv.param}{numeric. Parameters associated to the method of
 cross-validation used to evaluate the SDM (see details below).}
+
+\item{final.fit.data}{strategy used for fitting the final model to be returned: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)}
 
 \item{thresh}{numeric. A single integer value representing the number of equal
 interval threshold values between 0 and 1 (see

@@ -42,6 +42,7 @@ NULL
 #'  SDM (see details below).
 #'@param cv.param numeric. Parameters associated with the method of
 #'  cross-validation used to evaluate the ensemble SDM (see details below).
+#'@param final.fit.data strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
 #'@param thresh numeric. A single integer value representing the number of equal
 #'  interval threshold values between 0 and 1 (see
 #'  \code{\link[SDMTools]{optim.thresh}}).
@@ -289,7 +290,7 @@ stack_modelling <- function(algorithms,
                            # Pseudo-absences definition
                            PA = NULL,
                            # Evaluation parameters
-                           cv = 'holdout', cv.param = c(0.7,1), thresh = 1001,
+                           cv = 'holdout', cv.param = c(0.7,1), final.fit.data = 'all', thresh = 1001,
                            axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, SDM.projections= FALSE,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
@@ -303,7 +304,7 @@ stack_modelling <- function(algorithms,
                            ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spcol = Spcol, rep = rep,
-             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param,
+             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, 
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty,
              tmp = tmp, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
              weight = weight, method = method, metric = metric, rep.B = rep.B, range = range,
@@ -398,7 +399,7 @@ esdms <- lapply(species, function(x) {
       }
       esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
                                     Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
-                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+                                    PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, thresh = thresh, metric = metric,
                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
                                     weight = weight, verbose = verbose, GUI = FALSE, cores=cores, SDM.projections = SDM.projections, ...))

@@ -10,6 +10,7 @@
                       rep = 1,
                       cv = 'holdout',
                       cv.param = c(0.7,2),
+                      final.fit.data = 'all',
                       thresh = 1001,
                       metric = 'SES',
                       axes.metric = 'Pearson',
@@ -110,6 +111,15 @@
   }
   if (cv == "holdout" && (cv.param[1] < 0 || cv.param[1] > 1)) {
     stop("cv.param[1] (train fraction) parameters should be a float between 0 and 1 (see help).")
+  }
+  
+  # final.fit.data
+  if (!inherits(final.fit.data,c("character","numeric"))) {
+    stop("final.fit.data should be a character string or numeric.")
+  }
+  
+  if (inherits(final.fit.data,"character") && !(final.fit.data %in% c("all", "holdout"))) {
+    stop("final.fit.data should be one of 'all', 'holdout' or numeric (between 0-1).")
   }
 
   # thresh

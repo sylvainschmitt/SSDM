@@ -31,7 +31,7 @@ In addition to build species distribution models you will need environmental var
 
 Rasters of environmental data need to have the same coordinate reference system while spatial extent and resolution of the environmental layers can differ. During processing, the package will deal with between-variables discrepancies in spatial extent and resolution by rescaling all environmental rasters to the smallest common spatial extent then upscaling them to the coarsest resolution.
 
-‘SSDM’ include `load_var` function to read raster files including your environmental variables. We will work with three 30 arcsec-resolution rasters covering the north part of the main island of New Caledonia ’Grande Terre’. Climatic variables (RAINFALL and TEMPERATURE) are from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of New Caledonia (2012) (see `?Env`).  
+‘SSDM’ includes the `load_var` function to read raster files of your environmental variables. We will work with three 30 arcsec-resolution rasters covering the north part of the main island of New Caledonia ’Grande Terre’. Climatic variables (RAINFALL and TEMPERATURE) are from the WorldClim database, and the SUBSTRATE map is from the IRD Atlas of New Caledonia (2012) (see `?Env`).  
 
 ```{r Environmental variables}
 library(SSDM)
@@ -42,8 +42,8 @@ Env
 
 **Note that:**
 
-  - Specify which environmental variable is categorical with `categorical` parameter. 
-  - Normalization is activated by default, check `Norm` option.
+  - Specify which environmental variable is categorical with the `categorical` parameter. 
+  - Normalization is activated by default, check the `Norm` option.
   
 ### Natural history records
 

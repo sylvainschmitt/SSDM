@@ -34,6 +34,7 @@ NULL
 #'  details below).
 #'@param cv.param numeric. Parameters associated to the method of
 #'  cross-validation used to evaluate the SDM (see details below).
+#'@param final.fit.data strategy used for fitting the final model to be returned: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
 #'@param select logical. If set to true, models are evaluated before being
 #'  projected, and not kept if they don't meet selection criteria (see details
 #'  below).
@@ -219,12 +220,12 @@ NULL
 #'@export
 modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
                       Ycol = "Latitude", Pcol = NULL, name = NULL, PA = NULL, cv = "holdout",
-                      cv.param = c(0.7, 2), thresh = 1001, metric = "SES", axes.metric = "Pearson",
+                      cv.param = c(0.7, 2), final.fit.data ='all', thresh = 1001, metric = "SES", axes.metric = "Pearson",
                       select = FALSE, select.metric = c("AUC"), select.thresh = c(0.75),
                       verbose = TRUE, GUI = FALSE, ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = name, PA = PA,
-             cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
+             cv = cv, cv.param = cv.param, final.fit.data=final.fit.data, thresh = thresh, metric = metric,
              axes.metric = axes.metric, select = select, select.metric = select.metric,
              select.thresh = select.thresh, verbose = verbose, GUI = GUI)
 
@@ -326,7 +327,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
   if (verbose) {
     cat("Model evaluation...\n")
   }
-  model <- evaluate(model, cv, cv.param, thresh, metric, Env, ...)
+  model <- evaluate(model, cv, cv.param, final.fit.data, thresh, metric, Env, ...)
   if (verbose) {
     cat("   done. \n\n")
   }
@@ -361,7 +362,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
     if (verbose) {
       cat("Model axes contribution evaluation...\n")
     }
-    model <- evaluate.axes(model, cv, cv.param, thresh, metric, axes.metric,
+    model <- evaluate.axes(model, cv, cv.param, final.fit.data, thresh, metric, axes.metric,
                            Env, ...)
     if (verbose) {
       cat("   done. \n\n")
