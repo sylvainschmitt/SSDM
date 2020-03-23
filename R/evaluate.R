@@ -1,7 +1,8 @@
 #' @include Algorithm.SDM.R
 #' @include Stacked.SDM.R
 #' @import methods
-#' @importFrom SDMTools optim.thresh accuracy
+#' @importFrom dismo evaluate threshold
+#' @importFrom SDMTools optim.thresh
 #' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 #' @importFrom raster reclassify rasterize extract stack
@@ -20,11 +21,9 @@ NULL
 #' @param cv.param numeric. Parameters associated to the method of
 #'  cross-validation used to evaluate the SDM (see details below).
 #' @param final.fit.data strategy used for fitting the final model to be returned: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
-#' @param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
-#' @param metric character. Metric(s) used to select the best SDMs that will be
-#'  included in the ensemble SDM (see details below).
+#' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).
+#' @param metric (deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).
 #' @param Env raster object. Stacked raster object of environmental variables
 #'  (can be processed first by \code{\link{load_var}}).
 #' @param ... unused argument
@@ -62,7 +61,7 @@ setGeneric('evaluate', function(obj, ...) {return(standardGeneric('evaluate'))})
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data='all', thresh = 1001, metric = 'SES', Env, ...) {
+setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh = 'SES', metric = NULL, thresh=1001, Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -70,15 +69,31 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
   }
   obj@parameters$cv <- cv
   obj@parameters$cv.param <- text.cv.param
-  obj@parameters$metric <- metric
+  if(!is.null(metric)){
+    warning("Argument 'metric' is deprecated and will be removed in future versions. Please consider using 'bin.thresh' instead.")
+    obj@parameters$metric <- metric
+  } else {
+    obj@parameters$metric <- bin.thresh
+  }
+  
 
   if (all(obj@data$Presence %in% c(0, 1))) {
     # Binary data of SDM model
 
+    # translate thresholding terms (metric only for backwards compatibility)
+    if(!is.null(metric)){
+      metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
+                       TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
+                       LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    } else {
+      bin.thresh <- switch(bin.thresh, Kappa = "kappa", NOM = "no_omission",
+                           TSS = "spec_sens", SES = "equal_sens_spec",
+                           EP = "prevalence")
+    }
+    
+    
     # Cross-validation
-    metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
-                     TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
-                     LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    
     if (cv == "holdout") {
       for (i in 1:cv.param[2]) {
         data <- obj@data
@@ -96,17 +111,24 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         evalobj <- obj
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
-        predicted.values <- predict(model, eval.testdata)
-        threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
-                                  thresh)
-        threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(eval.testdata$Presence, predicted.values, threshold)
-        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-        roweval$calibration <- caleval@statistic
-        if (i == 1) {
-          evaluation <- roweval
+        predicted.values <- c(predict(model, eval.testdata))
+        if(!is.null(metric)){
+          threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+          threshval <- mean(threshval[[which(names(threshval) == metric)]])
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)],tr= threshval)
         } else {
-          evaluation <- rbind(evaluation, roweval)
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
+          threshval <- dismo::threshold(roweval,stat=bin.thresh)
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
+        }
+        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+        
+        evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+
+        if (i == 1) {
+          evaluation <- evaldf
+        } else {
+          evaluation <- rbind(evaluation, evaldf)
         }
       }
     } else if (cv == "k-fold") {
@@ -144,19 +166,23 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
           evalobj <- obj
           evalobj@data <- eval.traindata
           model <- get_model(evalobj, ...)
-          predicted.values <- predict(model, eval.testdata)
-          threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
-                                    thresh)
-          threshold <- mean(threshold[[which(names(threshold) ==
-                                               metric)]])
-          roweval <- accuracy(eval.testdata$Presence, predicted.values,
-                              threshold)
-          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-          roweval$calibration <- caleval@statistic
-          if (i == 1 && j == 1) {
-            evaluation <- roweval
+          predicted.values <- c(predict(model, eval.testdata))
+          if(!is.null(metric)){
+            threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+            threshval <- mean(threshval[[which(names(threshval) == metric)]])
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
           } else {
-            evaluation <- rbind(evaluation, roweval)
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
+            threshval <- dismo::threshold(roweval,stat=bin.thresh)
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+          }
+          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+          
+          evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+          if (i == 1 && j == 1) {
+            evaluation <- evaldf
+          } else {
+            evaluation <- rbind(evaluation, evaldf)
           }
         }
       }
@@ -170,13 +196,20 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         evalobj <- obj
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
-        predicted.values[j] <- predict(model, eval.testdata)
+        predicted.values[j] <- c(predict(model, eval.testdata))
       }
-      threshold <- optim.thresh(data$Presence, predicted.values, thresh)
-      threshold <- mean(threshold[[which(names(threshold) == metric)]])
-      evaluation <- accuracy(data$Presence, predicted.values, threshold)
+      if(!is.null(metric)){
+        threshval <- optim.thresh(data$Presence, predicted.values, thresh)
+        threshval <- mean(threshval[[which(names(threshval) == metric)]])
+        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
+      } else {
+        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)])
+        threshval <- dismo::threshold(roweval,stat=bin.thresh)
+        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
+      }
       caleval <- sdm::calibration(data$Presence,predicted.values, nbin=20, weight=TRUE)
-      evaluation$calibration <- caleval@statistic
+      
+      evaluation <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
     }
     obj@evaluation <- evaluation[1, ]
     for (i in seq_len(length(evaluation))) {
@@ -218,7 +251,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='all', thresh = 1001, metric = 'SES', Env, ...) {
+setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh = 'SES', metric = NULL, thresh = 1001, Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -226,14 +259,28 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
   }
   obj@parameters$cv <- cv
   obj@parameters$cv.param <- text.cv.param
-  obj@parameters$metric <- metric
+  
+  if(!is.null(metric)){
+    warning("Argument 'metric' is deprecated and will be removed in future versions. Please consider using 'bin.thresh' instead.")
+    obj@parameters$metric <- metric
+  } else {
+    obj@parameters$metric <- bin.thresh
+  }
 
   if (all(obj@data$Presence %in% c(0, 1))) {
     # Binary data of SDM model
 
-    metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
-                     TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
-                     LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    # translate thresholding terms (metric only for backwards compatibility)
+    if(!is.null(metric)){
+      metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
+                       TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
+                       LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    } else {
+      bin.thresh <- switch(bin.thresh, Kappa = "kappa", CCR = "no_omission",
+                           TSS = "spec_sens", SES = "equal_sens_spec",
+                           EP = "prevalence")
+    }
+    
     if (cv == "holdout") {
       for (i in 1:cv.param[2]) {
         data <- obj@data
@@ -258,17 +305,24 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         evalobj <- obj
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, Env)
-        predicted.values <- predict(model, eval.testdata)
-        threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
-                                  thresh)
-        threshold <- mean(threshold[[which(names(threshold) == metric)]])
-        roweval <- accuracy(eval.testdata$Presence, predicted.values, threshold)
-        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-        roweval$calibration <- caleval@statistic
-        if (i == 1) {
-          evaluation <- roweval
+        predicted.values <- c(predict(model, eval.testdata))
+        if(!is.null(metric)){
+          threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+          threshval <- mean(threshval[[which(names(threshval) == metric)]])
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
         } else {
-          evaluation <- rbind(evaluation, roweval)
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
+          threshval <- dismo::threshold(roweval,stat=bin.thresh)
+          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+        }
+        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+        
+        evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+        
+        if (i == 1) {
+          evaluation <- evaldf
+        } else {
+          evaluation <- rbind(evaluation, evaldf)
         }
       }
     } else {
@@ -313,19 +367,23 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
           evalobj <- obj
           evalobj@data <- eval.traindata
           model <- get_model(evalobj, Env)
-          predicted.values <- predict(model, eval.testdata)
-          threshold <- optim.thresh(eval.testdata$Presence, predicted.values,
-                                    thresh)
-          threshold <- mean(threshold[[which(names(threshold) ==
-                                               metric)]])
-          roweval <- accuracy(eval.testdata$Presence, predicted.values,
-                              threshold)
-          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-          roweval$calibration <- caleval@statistic
-          if (i == 1 && j == 1) {
-            evaluation <- roweval
+          predicted.values <- c(predict(model, eval.testdata))
+          if(!is.null(metric)){
+            threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+            threshval <- mean(threshval[[which(names(threshval) == metric)]])
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
           } else {
-            evaluation <- rbind(evaluation, roweval)
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
+            threshval <- dismo::threshold(roweval,stat=bin.thresh)
+            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
+          }
+          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+          
+          evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+          if (i == 1 && j == 1) {
+            evaluation <- evaldf
+          } else {
+            evaluation <- rbind(evaluation, evaldf)
           }
         }
       }

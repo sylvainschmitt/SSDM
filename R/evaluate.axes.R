@@ -1,11 +1,9 @@
 #' @include Algorithm.SDM.R
 #' @import methods
 NULL
-setGeneric('evaluate.axes', function(obj, cv = 'holdout', cv.param = c(0.7, 2), final.fit.data='all', thresh = 1001,
-                                     metric = 'SES', axes.metric = 'Pearson', Env, ...) {return(standardGeneric('evaluate.axes'))})
+setGeneric('evaluate.axes', function(obj, cv = 'holdout', cv.param = c(0.7, 2), final.fit.data='all', bin.thresh='SES', metric = NULL, thresh = 1001, axes.metric = 'Pearson', Env, ...) {return(standardGeneric('evaluate.axes'))})
 
-setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data, thresh = 1001,
-                                                     metric = 'SES', axes.metric = 'Pearson', Env, ...) {
+setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh='SES', metric = NULL, thresh = 1001, axes.metric = 'Pearson', Env, ...) {
   obj@parameters$axes.metric <- axes.metric
   obj@variable.importance <- data.frame(matrix(nrow = 1, ncol = (length(obj@data) -
                                                                    4)))
@@ -23,7 +21,7 @@ setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, final.fi
       obj.axes <- obj
       obj.axes@data <- obj.axes@data[-i]
       if (axes.metric != "Pearson") {
-        obj.axes <- evaluate(obj.axes, cv, cv.param, thresh, metric)
+        obj.axes <- evaluate(obj.axes, cv, cv.param, bin.thresh, thresh, metric)
         obj@variable.importance[1, (i - 3)] <- obj@evaluation[1, which(names(obj@evaluation) ==
                                                                          axes.metric)] - obj.axes@evaluation[1, which(names(obj.axes@evaluation) ==
                                                                                                                         axes.metric)]
@@ -61,8 +59,7 @@ setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, final.fi
   return(obj)
 })
 
-setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, thresh = 1001,
-                                                  metric = 'SES', axes.metric = 'Pearson', Env, ...) {
+setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh= 'SES', metric = NULL, thresh = 1001, axes.metric = 'Pearson', Env, ...) {
   obj@parameters$axes.metric <- axes.metric
   obj@variable.importance <- data.frame(matrix(nrow = 1, ncol = (length(obj@data) -
                                                                    4)))
@@ -79,7 +76,7 @@ setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, thresh = 10
       obj.axes <- obj
       obj.axes@data <- obj.axes@data[-i]
       if (axes.metric != "Pearson") {
-        obj.axes <- evaluate(obj.axes, cv, cv.param, final.fit.data, thresh, metric, Env[[-(i -
+        obj.axes <- evaluate(obj.axes, cv, cv.param, final.fit.data, bin.thresh, thresh, metric, Env[[-(i -
                                                                               3)]], ...)
         obj@variable.importance[1, (i - 3)] <- obj@evaluation[1, which(names(obj@evaluation) ==
                                                                          axes.metric)] - obj.axes@evaluation[1, which(names(obj.axes@evaluation) ==

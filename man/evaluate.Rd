@@ -11,10 +11,12 @@
 evaluate(obj, ...)
 
 \S4method{evaluate}{Algorithm.SDM}(obj, cv, cv.param,
-  final.fit.data = "all", thresh = 1001, metric = "SES", Env, ...)
+  final.fit.data = "all", bin.thresh = "SES", metric = NULL,
+  thresh = 1001, Env, ...)
 
 \S4method{evaluate}{MAXENT.SDM}(obj, cv, cv.param,
-  final.fit.data = "all", thresh = 1001, metric = "SES", Env, ...)
+  final.fit.data = "all", bin.thresh = "SES", metric = NULL,
+  thresh = 1001, Env, ...)
 
 \S4method{evaluate}{Stacked.SDM}(obj, ...)
 }
@@ -31,12 +33,11 @@ cross-validation used to evaluate the SDM (see details below).}
 
 \item{final.fit.data}{strategy used for fitting the final model to be returned: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)}
 
-\item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+\item{bin.thresh}{character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
 
-\item{metric}{character. Metric(s) used to select the best SDMs that will be
-included in the ensemble SDM (see details below).}
+\item{metric}{(deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
+
+\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).}
 
 \item{Env}{raster object. Stacked raster object of environmental variables
 (can be processed first by \code{\link{load_var}}).}

@@ -1,4 +1,4 @@
-#' @include Algorithm.SDM.R checkargs.R
+#' @include Algorithm.SDM.R checkargs.R evaluate.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
 NULL
@@ -42,11 +42,9 @@ NULL
 #'  sufficient quality (see details below).
 #'@param select.thresh numeric. Threshold(s) associated with the metric(s) used
 #'  to compute the selection.
-#'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
-#'@param metric character. Metric used to compute the binary map threshold (see
-#'  details below).
+#' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).
+#' @param metric (deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param verbose logical. If set to true, allows the function to print text in
@@ -79,7 +77,11 @@ NULL
 #'  data are partitioned into k (\emph{cv.param[1]}) folds being k-1 times in
 #'  the training set and once the evaluation set and the operation can be
 #'  repeated (\emph{cv.param[2]}) times, \strong{LOO} (Leave One Out) each point
-#'  is successively taken as evaluation data.} \item{metric}{Choice of the
+#'  is successively taken as evaluation data.} \item{bin.thresh}{Choice of the
+#'  metric used to binarize model predictions and compute the confusion matrix (by default SES as recommended by Liu et al. (2005), see reference below):
+#'  \strong{Kappa} maximizes the Kappa, \strong{NOM} highest threshold without omission, \strong{TSS} (True Skill Statistic)
+#'  maximizes the sum of sensitivity and specificity, \strong{SES} uses the
+#'  sensitivity-specificity equality, \strong{EP} threshold where modeled prevalence is closest to observed prevalence.}\item{metric (deprecated)}{Choice of the
 #'  metric used to compute the binary map threshold and the confusion matrix (by
 #'  default SES as recommended by Liu et al. (2005), see reference below):
 #'  \strong{Kappa} maximizes the Kappa, \strong{CCR} maximizes the proportion of
@@ -220,12 +222,12 @@ NULL
 #'@export
 modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
                       Ycol = "Latitude", Pcol = NULL, name = NULL, PA = NULL, cv = "holdout",
-                      cv.param = c(0.7, 2), final.fit.data ='all', thresh = 1001, metric = "SES", axes.metric = "Pearson",
+                      cv.param = c(0.7, 2), final.fit.data ='all', bin.thresh = 'SES', metric = NULL, thresh = 1001, axes.metric = "Pearson",
                       select = FALSE, select.metric = c("AUC"), select.thresh = c(0.75),
                       verbose = TRUE, GUI = FALSE, ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, name = name, PA = PA,
-             cv = cv, cv.param = cv.param, final.fit.data=final.fit.data, thresh = thresh, metric = metric,
+             cv = cv, cv.param = cv.param, final.fit.data=final.fit.data, bin.thresh=bin.thresh, metric = metric, thresh = thresh,
              axes.metric = axes.metric, select = select, select.metric = select.metric,
              select.thresh = select.thresh, verbose = verbose, GUI = GUI)
 
@@ -246,7 +248,11 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
   }
   model@name <- paste0(name, algorithm, ".SDM")
   model@parameters$data <- "presence/absence data set"
-  model@parameters$metric <- metric
+  if(!is.null(metric)){
+    model@parameters$metric <- metric
+  } else {
+    model@parameters$metric <- bin.thresh
+  }
 
   if (verbose) {
     cat("Data check ... \n")
@@ -327,7 +333,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
   if (verbose) {
     cat("Model evaluation...\n")
   }
-  model <- evaluate(model, cv, cv.param, final.fit.data, thresh, metric, Env, ...)
+  model <- evaluate(model, cv, cv.param, final.fit.data, bin.thresh, metric, thresh, Env, ...)
   if (verbose) {
     cat("   done. \n\n")
   }
@@ -362,8 +368,7 @@ modelling <- function(algorithm, Occurrences, Env, Xcol = "Longitude",
     if (verbose) {
       cat("Model axes contribution evaluation...\n")
     }
-    model <- evaluate.axes(model, cv, cv.param, final.fit.data, thresh, metric, axes.metric,
-                           Env, ...)
+    model <- evaluate.axes(model, cv, cv.param, final.fit.data, bin.thresh, metric, thresh, axes.metric, Env, ...)
     if (verbose) {
       cat("   done. \n\n")
     }

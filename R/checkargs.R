@@ -11,8 +11,9 @@
                       cv = 'holdout',
                       cv.param = c(0.7,2),
                       final.fit.data = 'all',
+                      bin.thresh = 'SES',
+                      metric = NULL,
                       thresh = 1001,
-                      metric = 'SES',
                       axes.metric = 'Pearson',
                       select = FALSE,
                       select.metric = c('AUC'),
@@ -122,14 +123,18 @@
     stop("final.fit.data should be one of 'all', 'holdout' or numeric (between 0-1).")
   }
 
+  # bin.thresh
+  if (!inherits(bin.thresh, "character") || !(bin.thresh %in% c("Kappa", "NOM", "TSS","SES", "EP"))) {
+    stop("bin.thresh parameter should be Kappa, NOM, TSS, SES, or EP (see help).")
+  }
+  
   # thresh
   if (!inherits(thresh, "numeric") || abs(thresh - round(thresh)) != 0) {
     stop("thresh parameter should be an integer.")
   }
 
   # metric
-  if (!inherits(metric, "character") || !(metric %in% c("Kappa", "CCR", "TSS",
-                                                        "SES", "LW", "ROC"))) {
+  if (!inherits(metric, c("character","NULL")) || (inherits(metric, "character") && !(metric %in% c("Kappa", "CCR", "TSS","SES", "LW", "ROC")))) {
     stop("metric parameter should be Kappa, CCR, TSS, SES, LW, or ROC (see help).")
   }
 

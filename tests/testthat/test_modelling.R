@@ -5,8 +5,7 @@ test_that('modelling function', {
   available.algo <- available.algo <- c("GLM", "GAM", "MARS", "GBM", "CTA", "RF", "MAXENT","ANN", "SVM")
   for(i in available.algo){
     cat(paste("testing", i, "...\n"))
-    show_failure(SDM <- modelling(i, Occurrences, Env,
-                   Xcol = 'LONGITUDE', Ycol = 'LATITUDE', verbose = F))
+    show_failure(SDM <- modelling(i, Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE', verbose = F))
     expect_is(SDM, paste0(i,'.SDM'))
     }
 })

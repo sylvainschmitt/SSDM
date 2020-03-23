@@ -77,7 +77,7 @@ SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'),
 plot(SDM@projection, main = 'SDM\nfor Cryptocarya elliptica\nwith GLM algorithm')
 ```
 
-**Note that:** The package ‘SSDM’ encompasses a large methodolgy offered by literature. Have a look at all parameters for the `modelling` function with `?modelling`.
+**Note that:** The package ‘SSDM’ encompasses a large methodology offered by literature. Have a look at all parameters for the `modelling` function with `?modelling`.
 
 ### Ensemble species distribution models (ESDMs)
 
