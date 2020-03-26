@@ -6,7 +6,7 @@ test_that('project Stacked.SDM', {
                           Spcol = 'SPECIES', ensemble.thresh = 0,
                           verbose = FALSE, cores = 0)
   Env_new <- stack(Env[[1]]-0.3,Env[[2]],Env[[3]])
-  SSDM_proj <- project(SSDM,Env_new)
+  SSDM_proj <- project(SSDM,Env_new,output.format='model')
   expect_is(SSDM_proj, 'Stacked.SDM')
   expect_false(all(is.na(values(SSDM_proj@diversity.map))))
 })

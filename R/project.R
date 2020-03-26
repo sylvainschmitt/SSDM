@@ -15,9 +15,8 @@ NULL
 #' @param method character. Define the method used to create the local species
 #'  richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.
 #' @param SDM.projections logical. If FALSE (default), the projections of the Algorithm.SDMs will not be returned (only applies to Ensemble.SDMs and Stack.SDMs).
-#' @param update.projections logical. If TRUE (default), the original .SDM object will be returned with updated projection slots. If FALSE, the projected rasters will be returned as a list of rasters.
-#' @param uncertainty logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
-#'  additionally an algorithm correlation matrix.
+#' @param output.format character. If 'model' (default), the original .SDM object will be returned with updated projection slots. If 'rasters', the projected rasters will be returned as a list of rasters.
+#' @param uncertainty logical. If set to TRUE, generates an uncertainty map. If output.format is 'model' an algorithm correlation matrix is additionally returned.
 #' @param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'  use all the available CPU cores.
@@ -26,7 +25,7 @@ NULL
 #' But beware: Depending on number, resolution and extent of models, temporary files can take a lot of disk space. 
 #' @param ... arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE)). See \code{\link[SSDM]{modelling}}, algorithm section for more details.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
-#' @return Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
+#' @return Either returns the original .SDM object with updated projection slots (default) or if output.format = 'rasters' only returns the projections as Raster* objects or a list thereof.
 #' @name project
 #' @export
 setGeneric("project", function(obj, Env, ...) {
@@ -35,7 +34,10 @@ setGeneric("project", function(obj, Env, ...) {
 
 #' @rdname project
 #' @export
-setMethod("project", "Algorithm.SDM", function(obj, Env, update.projections=TRUE,...) {
+setMethod("project", "Algorithm.SDM", function(obj, Env, output.format='model', ...) {
+  if(!inherits(output.format,"character")||!output.format%in%c('model','rasters')){
+    stop("output.format should be 'model' or 'rasters'.")
+  }
   model = get_model(obj, ...)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   factors <- sapply(seq_len(length(Env@layers)), function(i)
@@ -67,9 +69,9 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, update.projections=TRUE
   obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
                                    obj@evaluation$threshold,Inf,1))
   
-  if(!update.projections){
+  if(output.format=="rasters"){
     return(list(projection=obj@projection,binary=obj@binary))
-  } else {
+  } else if(output.format=="model"){
     return(obj)
   }
 
@@ -77,7 +79,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, update.projections=TRUE
 
 #' @rdname project
 #' @export
-setMethod("project", "MAXENT.SDM", function(obj, Env, update.projections=TRUE, ...) {
+setMethod("project", "MAXENT.SDM", function(obj, Env, output.format='model', ...) {
   model = get_model(obj, ...)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   proj = raster::predict(Env, model, fun = function(model, x) {
@@ -100,16 +102,16 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, update.projections=TRUE, .
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
     obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
                                      obj@evaluation$threshold,Inf,1))
-  if(!update.projections){
+  if(output.format=="rasters"){
     return(list(projection=obj@projection,binary=obj@binary))
-  } else{
+  } else if(output.format=="model"){
     return(obj)
   }
 })
 
 #' @rdname project
 #' @export
-setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update.projections=TRUE, SDM.projections=FALSE, cores=0, minimal.memory=FALSE,tmp=FALSE,...) {
+setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, output.format='model', SDM.projections=FALSE, cores=0, minimal.memory=FALSE,tmp=FALSE,...) {
   
   models <- obj@sdms
   if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
@@ -172,10 +174,10 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
   # ensemble SDMs
   sum.algo.ensemble <- do.call(ensemble, c(proj,list(ensemble.thresh=0,weight=obj@parameters[,which(names(obj@parameters)=="weight")], verbose=F, SDM.projections=SDM.projections, uncertainty=uncertainty)))
 
-  if(update.projections){
+  if(output.format=="model"){
     return(sum.algo.ensemble)  
   }  
-  else {
+  else if(output.format=="rasters"){
     projls <- list(projection=sum.algo.ensemble@projection, binary=sum.algo.ensemble@binary)
     if(uncertainty){projls <- c(projls,uncertainty=sum.algo.ensemble@uncertainty)}
     if(SDM.projections){projls <- c(projls, list(sdms=lapply(sum.algo.ensemble@sdms, function(x) list(projection=x@projection,binary=x@binary))))}
@@ -189,7 +191,7 @@ setMethod("project", "Ensemble.SDM", function(obj, Env, uncertainty=TRUE, update
 
 #' @rdname project
 #' @export
-setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE, update.projections=TRUE, SDM.projections=FALSE, cores=0, minimal.memory=FALSE, tmp=FALSE, ...){
+setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE, output.format='model', SDM.projections=FALSE, cores=0, minimal.memory=FALSE, tmp=FALSE, ...){
   
   esdms <- obj@esdms
   
@@ -217,9 +219,9 @@ setMethod("project","Stacked.SDM",function(obj,Env,method=NULL, uncertainty=TRUE
   # obj@diversity.map <- ensemble.stack@diversity.map
   # obj@endemism.map <- ensemble.stack@endemism.map
   # obj@uncertainty <- ensemble.stack@uncertainty
-  if(update.projections){
+  if(output.format=="model"){
     return(ensemble.stack)
-  } else {
+  } else if(output.format=="rasters"){
     projls <- list(diversity.map=ensemble.stack@diversity.map, endemism.map=ensemble.stack@endemism.map, esdms=lapply(ensemble.stack@esdms, function(x) list(projection=x@projection,binary=x@binary)))
     if(uncertainty){
       projls <- c(projls,uncertainty=ensemble.stack@uncertainty)
