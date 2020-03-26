@@ -8,11 +8,12 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
   name = NULL, save = FALSE, path = getwd(), PA = NULL,
   cv = "holdout", cv.param = c(0.7, 1), final.fit.data = "all",
-  thresh = 1001, axes.metric = "Pearson", uncertainty = TRUE,
-  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
+  bin.thresh = "SES", metric = NULL, thresh = 1001,
+  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
+  SDM.projections = FALSE, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, method = "pSSDM",
-  metric = "SES", rep.B = 1000, range = NULL, endemism = c("WEI",
-  "Binary"), verbose = TRUE, GUI = FALSE, cores = 0, ...)
+  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
+  verbose = TRUE, GUI = FALSE, cores = 0, ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -57,9 +58,11 @@ cross-validation used to evaluate the ensemble SDM (see details below).}
 
 \item{final.fit.data}{strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)}
 
-\item{thresh}{numeric. A single integer value representing the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+\item{bin.thresh}{character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).}
+
+\item{metric}{(deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.}
+
+\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}). Only needed when \code{metric} is set.}
 
 \item{axes.metric}{Metric used to evaluate variable relative importance (see
 details below).}
@@ -88,9 +91,6 @@ metrics.}
 
 \item{method}{character. Define the method used to create the local species
 richness map (see details below).}
-
-\item{metric}{character. Metric used to compute the binary map threshold (see
-details below.)}
 
 \item{rep.B}{integer. If the method used to create the local species richness
 is the random bernoulli (\strong{Bernoulli}), rep.B parameter defines the number of
@@ -198,29 +198,28 @@ variable importance), and a list of ensemble SDMs for each species (see
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
- function from the package 'stats', you can set the following parameters (see
- \code{\link[stats]{glm}} for more details): \describe{
+ function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).  
+ The following parameters have defaults: \describe{
  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
- \item{epsilon}{numeric. Positive convergence tolerance eps ; the iterations
- converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}. By default, set
- to 10e-08.} \item{maxit}{numeric. Integer giving the maximal number of IWLS
- (Iterative Weighted Last Squares) iterations, default 500.} }
+ \item{control}{list (created with \code{\link[stats]{glm.control}}).
+ Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}. 
+ 'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
+ 'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 }
 
 \section{Generalized additive model (\strong{GAM}) }{
  Uses the \code{gam}
- function from the package 'mgcv', you can set the following parameters (see
- \code{\link[mgcv]{gam}} for more details): \describe{ \item{test}{character.
- Test used to evaluate the model, default 'AIC'.} \item{epsilon}{numeric.
- This is used for judging conversion of the GLM IRLS (Iteratively Reweighted
- Least Squares) loop, default 10e-08.} \item{maxit}{numeric. Maximum number
- of IRLS iterations to perform, default 500.} }
+ function from the package 'mgcv'. You can set parameters by supplying \code{gam.args=list(arg1=val1,arg2=val2)} (see \code{\link[mgcv]{gam}} for all settable arguments).
+ The following parameters have defaults: \describe{\item{test}{character.
+ Test used to evaluate the model, default 'AIC'.} \item{control}{list (created with \code{\link[mgcv]{gam.control}}).
+ Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}. 
+ 'epsilon' is a numeric used for judging the conversion of the GLM IRLS (Iteratively Reweighted Least Squares) loop. 'maxit' is an integer giving the maximum number of IRLS iterations to perform.} }
 }
 
 \section{Multivariate adaptive regression splines (\strong{MARS}) }{
  Uses the
- \code{earth} function from the package 'earth', you can set the following
- parameters (see \code{\link[earth]{earth}} for more details): \describe{
+ \code{earth} function from the package 'earth'. You can set parameters by supplying \code{mars.args=list(arg1=val1,arg2=val2)} (see \code{\link[earth]{earth}} for all settable arguments).
+ The following parameters have defaults: \describe{
  \item{degree}{integer. Maximum degree of interaction (Friedman's mi) ; 1
  meaning build an additive model (i.e., no interaction terms). By default,
  set to 2.} }
@@ -228,63 +227,74 @@ variable importance), and a list of ensemble SDMs for each species (see
 
 \section{Generalized boosted regressions model (\strong{GBM}) }{
  Uses the
- \code{gbm} function from the package 'gbm,' you can set the following
- parameters (see \code{\link[gbm]{gbm}} for more details): \describe{
- \item{trees}{integer. The total number of trees to fit. This is equivalent
+ \code{gbm} function from the package 'gbm'. You can set parameters by supplying \code{gbm.args=list(arg1=val1,arg2=val2)} (see \code{\link[gbm]{gbm}} for all settable arguments).
+ The following parameters have defaults: \describe{
+ \item{distribution}{character. Automatically detected from the format of the presence column in the occurrence dataset.}
+ \item{n.trees}{integer. The total number of trees to fit. This is equivalent
  to the number of iterations and the number of basis functions in the
- additive expansion. By default, set to 2500.} \item{final.leave}{integer.
+ additive expansion. By default, set to 2500.}
+ \item{n.minobsinnode}{integer.
  minimum number of observations in the trees terminal nodes. Note that this
- is the actual number of observations not the total weight. By default, set
- to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
- \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
- If cv.folds>1 then gbm, in addition to the usual fit, will perform a
- cross-validation. By default, set to 1e-03.} }
+ is the actual number of observations, not the total weight. By default, set
+ to 1.}
+ \item{cv.folds}{integer. Number of cross-validation folds to perform.
+ If cv.folds>1 then gbm - in addition to the usual fit - will perform a
+ cross-validation. By default, set to 3.}
+ \item{shrinkage}{numeric. A shrinkage parameter applied to each tree in the expansion (also known as learning rate or step-size reduction). By default, set to 0.001.}
+ \item{bag.fraction}{numeric. Fraction of the training set observations randomly selected to propose the next tree in the expansion.}
+ \item{train.fraction}{numeric. Training fraction used to fit the first gbm. The remainder is used to compute out-of-sample estimates of the loss function. By default, set to 1 (since evaluation/holdout is done with \code{SSDM::evaluate}.}
+ \item{n.cores}{integer. Number of cores to use for parallel computation of the CV folds. By default, set to 1. If you intend to use this, please set \code{ncores=0} to avoid conflicts.} }
 }
 
 \section{Classification tree analysis (\strong{CTA}) }{
  Uses the \code{rpart}
- function from the package 'rpart', you can set the following parameters (see
- \code{\link[rpart]{rpart}} for more details): \describe{
- \item{final.leave}{integer. The minimum number of observations in any
- terminal node, default 1.} \item{algocv}{integer. Number of
- cross-validations, default 3.} }
+ function from the package 'rpart'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[rpart]{rpart}} for all settable arguments).
+ The following parameters have defaults: \describe{
+ \item{control}{list (created with \code{\link[rpart]{rpart.control}}).
+ Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}. 
+ 'mibucket' is an integer giving the minimum number of observations in any
+ terminal node. 'xval' is an integer defining the number of
+ cross-validations.} }
 }
 
 \section{Random Forest (\strong{RF}) }{
  Uses the \code{randomForest} function
- from the package 'randomForest', you can set the following parameters (see
- \code{\link[randomForest]{randomForest}} for more details): \describe{
- \item{trees}{integer. Number of trees to grow. This should not be set to a
+ from the package 'randomForest'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[randomForest]{randomForest}} all settable arguments).
+ The following parameters have defaults: \describe{
+ \item{ntree}{integer. Number of trees to grow. This should not be set to a
  too small number, to ensure that every input row gets predicted at least a
- few times. By default, set to 2500.} \item{final.leave}{integer. Minimum
- size of terminal nodes. Setting this number larger causes smaller trees to
- be grown (and thus take less time). By default, set to 1.} }
+ few times. By default, set to 2500.}
+ \item{nodesize}{integer. Minimum size of terminal nodes. Setting this number larger causes smaller trees to be grown (and thus take less time). By default, set to 1.} }
 }
 
 \section{Maximum Entropy (\strong{MAXENT}) }{
  Uses the \code{maxent} function
  from the package 'dismo'. Make sure that you have correctly installed the
  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
- at \url{https://www.cs.princeton.edu/~schapire/maxent/} (see
- \code{\link[dismo]{maxent}} for more details).
+ at \url{https://www.cs.princeton.edu/~schapire/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
+ No specific defaults are set with this method.
 }
 
 \section{Artificial Neural Network (\strong{ANN}) }{
  Uses the \code{nnet}
- function from the package 'nnet', you can set the following parameters (see
- \code{\link[nnet]{nnet}} for more details): \describe{ \item{maxit}{integer.
- Maximum number of iterations, default 500.} }
+ function from the package 'nnet'. You can set parameters by supplying \code{ann.args=list(arg1=val1,arg2=val2)} (see \code{\link[nnet]{nnet}} for all settable arguments).
+ The following parameters have defaults: \describe{
+ \item{size}{integer. Number of units in the hidden layer. By default, set to 6.}
+ \item{maxit}{integer. Maximum number of iterations, default 500.} }
 }
 
 \section{Support vector machines (\strong{SVM}) }{
  Uses the \code{svm} function
- from the package 'e1071', you can set the following parameters (see
- \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
- Epsilon parameter in the insensitive loss function, default 1e-08.}
- \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
+ from the package 'e1071'. You can set parameters by supplying \code{svm.args=list(arg1=val1,arg2=val2)} (see \code{\link[e1071]{svm}} for all settable arguments).
+ The following parameters have defaults: \describe{
+ \item{type}{character. Regression/classification type SVM should be used with. By default, set to "eps-regression".}
+ \item{epsilon}{float. Epsilon parameter in the insensitive loss function, default 1e-08.}
+ \item{cross}{integer. If an integer value k>0 is specified, a k-fold
  cross-validation on the training data is performed to assess the quality of
  the model: the accuracy rate for classification and the Mean Squared Error
- for regression. By default, set to 3.} }
+ for regression. By default, set to 3.}
+ \item{kernel}{character. The kernel used in training and predicting. By default, set to "radial".}
+ \item{gamma}{numeric. Parameter needed for all kernels, default \code{1/(length(data) -1)}.} }
 }
 
 \section{Warning }{

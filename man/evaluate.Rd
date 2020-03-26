@@ -23,7 +23,7 @@ evaluate(obj, ...)
 \arguments{
 \item{obj}{Stacked.SDM. SSDM to evaluate}
 
-\item{...}{unused argument}
+\item{...}{arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE))}
 
 \item{cv}{character. Method of cross-validation used to evaluate the SDM (see
 details below).}

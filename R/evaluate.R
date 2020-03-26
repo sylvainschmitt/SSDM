@@ -26,7 +26,7 @@ NULL
 #' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).
 #' @param Env raster object. Stacked raster object of environmental variables
 #'  (can be processed first by \code{\link{load_var}}).
-#' @param ... unused argument
+#' @param ... arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE))
 #'
 #' @return SDM/ESDM/SSDM evaluation in a data.frame
 #'
@@ -304,7 +304,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
       
         evalobj <- obj
         evalobj@data <- eval.traindata
-        model <- get_model(evalobj, Env)
+        model <- get_model(evalobj, ...)
         predicted.values <- c(predict(model, eval.testdata))
         if(!is.null(metric)){
           threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)

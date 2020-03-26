@@ -24,7 +24,7 @@ NULL
 #' @param minimal.memory logical. Only relevant if cores >1. If TRUE, only one model will be sent to each worker at a time, reducing used working memory.
 #' @param tmp logical or character. If FALSE, no temporary rasters are written. If TRUE, temporary rasters are written to the „tmp“ directory of your R environment. If character, temporary rasters are written to a custom path. Very useful to reduce working memory consumption (use together with minimal.memory=TRUE for maximal effect).
 #' But beware: Depending on number, resolution and extent of models, temporary files can take a lot of disk space. 
-#' @param ... Additional arguments for internal use.
+#' @param ... arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE)). See \code{\link[SSDM]{modelling}}, algorithm section for more details.
 #' @details  The function uses any S4 .SDM class object and a raster stack of environmental layers of the variables the model was trained with. 
 #' @return Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
 #' @name project
@@ -78,7 +78,7 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, update.projections=TRUE
 #' @rdname project
 #' @export
 setMethod("project", "MAXENT.SDM", function(obj, Env, update.projections=TRUE, ...) {
-  model = get_model(obj, Env, ...)
+  model = get_model(obj, ...)
   if(all(names(Env) %in% colnames(obj@data)[-c(1:3)])==FALSE){stop("Environmental layer names do not match the variables used for model training")}
   proj = raster::predict(Env, model, fun = function(model, x) {
     x = as.data.frame(x)

@@ -65,7 +65,7 @@ setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, final.fit.d
                                                                    4)))
   names(obj@variable.importance) <- names(obj@data)[4:(length(obj@data)-1)]
   if (axes.metric == "Pearson") {
-    o.predicted.values <- predict(get_model(obj, Env), obj@data[,-which(names(obj@data)=="train")])  # original model predicted values
+    o.predicted.values <- predict(get_model(obj, ...), obj@data[,-which(names(obj@data)=="train")])  # original model predicted values
   }
 
   if(dim(obj@variable.importance)[2] == 1){
@@ -76,13 +76,12 @@ setMethod('evaluate.axes', "MAXENT.SDM", function(obj, cv, cv.param, final.fit.d
       obj.axes <- obj
       obj.axes@data <- obj.axes@data[-i]
       if (axes.metric != "Pearson") {
-        obj.axes <- evaluate(obj.axes, cv, cv.param, final.fit.data, bin.thresh, thresh, metric, Env[[-(i -
-                                                                              3)]], ...)
+        obj.axes <- evaluate(obj.axes, cv, cv.param, final.fit.data, bin.thresh, metric, thresh, Env=Env[[-(i -3)]], ...)
         obj@variable.importance[1, (i - 3)] <- obj@evaluation[1, which(names(obj@evaluation) ==
                                                                          axes.metric)] - obj.axes@evaluation[1, which(names(obj.axes@evaluation) ==
                                                                                                                         axes.metric)]
       } else {
-        predicted.values <- predict(get_model(obj.axes, Env[[-(i - 3)]]),
+        predicted.values <- predict(get_model(obj.axes, Env=Env[[-(i - 3)]], ...),
                                     obj.axes@data[,-which(names(obj.axes@data)=="train")])
         obj@variable.importance[(i - 3)] <- cor(predicted.values, o.predicted.values)
       }

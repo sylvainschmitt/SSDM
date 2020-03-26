@@ -13,7 +13,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-The package ‘SSDM’ is a computer platform implemented in R providing a range of methodological approaches and parameterization at each step of the SSDM building. This vignette presents a typical workflow in R command to use it. An additional vignette presents the same workflow using the graphic user interface with the `gui` function (see [GUI](GUI.html) vignette).
+The package ‘SSDM’ (*S*tacked *S*pecies *D*istribution *M*odels) is a computer platform implemented in R providing a range of methodological approaches and parameterization at each step of the SSDM building. This vignette presents a typical workflow in R. An additional vignette presents the same workflow using the graphic user interface with the `gui` function (see [GUI](GUI.html) vignette).
 
 The workflow of the package ‘SSDM’ is based on three modelling levels: 
 
@@ -27,7 +27,7 @@ The workflow of the package ‘SSDM’ is based on three modelling levels:
 
 ### Environmental variables
 
-In addition to build species distribution models you will need environmental variables. Currently ‘SSDM’ uses all raster formats supported by the R package ‘rgdal’. The package ‘SSDM’ supports both continuous (e.g., climate maps, digital elevation models, bathymetric maps) and categorical environmental variables (e.g., land cover maps, soil type maps) as inputs. The package also allows normalizing environmental variables, which may be useful to improve the fit of certain algorithms (like artificial neural networks).
+In order to build species distribution models you will need environmental variables. Currently ‘SSDM’ uses all raster formats supported by the R package ‘rgdal’. The package ‘SSDM’ supports both continuous (e.g., climate maps, digital elevation models, bathymetric maps) and categorical environmental variables (e.g., land cover maps, soil type maps) as inputs. The package also allows normalizing environmental variables, which may be useful to improve the fit of certain algorithms (like artificial neural networks or support vector machines).
 
 Rasters of environmental data need to have the same coordinate reference system while spatial extent and resolution of the environmental layers can differ. During processing, the package will deal with between-variables discrepancies in spatial extent and resolution by rescaling all environmental rasters to the smallest common spatial extent then upscaling them to the coarsest resolution.
 
@@ -45,9 +45,9 @@ Env
   - Specify which environmental variable is categorical with the `categorical` parameter. 
   - Normalization is activated by default, check the `Norm` option.
   
-### Natural history records
+### Natural history records / occurrence data
 
-Species distribution models are built on natural history records. 
+Species distribution models are built on natural history records indicating where the species occurred in the past. 
 
 ‘SSDM’ include `load_occ` function to read raw .csv or .txt files including your natural history records. We will work with natural history records from five Cryptocarya species native to New Caledonia (see `?Occurrences`).  
 
@@ -60,16 +60,16 @@ head(Occ)
 
 **Note that:** 
 
-  - Occurences are checked after environmental data are loaded, therefore environmental data need to be loaded before occurrences. 
-  - Use `GeoRes` option to thin occurences. Thinning removes unnecessary records, reducing the effect of sampling bias while retaining the greatest amount of information.
-  - For issues opening a file look at additional options of the `read.csv` function used to open you raw data.*
+  - Occurrences are checked after environmental data are loaded, therefore environmental data need to be loaded before occurrences. 
+  - Use the `GeoRes` option to thin occurences. Thinning removes unnecessary (clustered) records, reducing the effect of sampling bias while retaining the greatest amount of information.
+  - In case of file opening issues look at additional options of the `read.csv` function used to open your raw data.*
 
 
 ## Model algorithms
 
 ### Individual species distribution models (SDMs)
 
-In the example below we build an *elliptica* distribution model with a subset of the occurrences of the species and for one single algorithm, here generalized linear models. The package ‘SSDM’ includes the main algorithms used to model species distributions: general additive models (GAM), generalized linear models (GLM), multivariate adaptive regression splines (MARS), classification tree analysis (CTA), generalized boosted models (GBM), maximum entropy (Maxent), artificial neural networks (ANN), random forests (RF), and support vector machines (SVM). Default parameters of the dependent R package of each algorithm were conserved but most of them remain settable.
+In the example below we build a distribution model of Cryptocarya *elliptica* with a subset of the occurrences of the species and for one single algorithm, here generalized linear models. The package ‘SSDM’ currently includes eight commonly used algorithms for modelling species distributions: generalized additive models (GAM), generalized linear models (GLM), multivariate adaptive regression splines (MARS), classification tree analysis (CTA), generalized boosted models (GBM), maximum entropy (MAXENT), artificial neural networks (ANN), random forests (RF), and support vector machines (SVM). Default parameters of the dependent R package of each algorithm were conserved but most of them remain settable (see section 'Advanced settings').
 
 ```{r SDM}
 SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'), 
@@ -77,16 +77,20 @@ SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'),
 plot(SDM@projection, main = 'SDM\nfor Cryptocarya elliptica\nwith GLM algorithm')
 ```
 
-**Note that:** The package ‘SSDM’ encompasses a large methodology offered by literature. Have a look at all parameters for the `modelling` function with `?modelling`.
+**Note that:** The package ‘SSDM’ encompasses a large methodology offered by literature. Have a look at all parameters for the `modelling` function with `?modelling`. 
+
 
 ### Ensemble species distribution models (ESDMs)
 
-In this other example we build an ensemble *elliptica* distribution model combining CTA and MARS based SDMs of this species. Because uncertainty in distribution projections can skew policy making and planning, a recommendation is to fit a number of alternative model algorithms, explore the range of projections across the different SDMs and then to find consensus in SDM projections. Two consensus methods are implemented in the package ‘SSDM’: 
+In this next example we build an ensemble *elliptica* distribution model combining CTA and MARS based SDMs of this species. Because uncertainty in distribution projections can skew policy making and planning, a recommendation is to fit a number of alternative model algorithm, explore the range of projections across the different SDMs and then to find consensus in SDM projections. Two consensus methods are implemented in the package ‘SSDM’: 
 
 1. a simple average of the SDM outputs
 2. a weighted average (default option, used below), with weigths based on a user-specified metric or group of metrics. 
 
+Additionally, data sampling uncertainties (presences, pseudo-absences) may be addressed by running several replicates for each algorithm (`rep` argument).
+
 The package also provides an uncertainty map representing the between-algorithms variance. The degree of agreement between each pair of algorithms can be assessed through a correlation matrix giving the Pearson's coefficient.
+
 
 
 ```{r ESDM}
@@ -100,7 +104,7 @@ plot(ESDM@projection, main = 'ESDM\nfor Cryptocarya elliptica\nwith CTA and MARS
 
 ### Stacked species distribution models (SSDMs)
 
-Finally, we build a stacked species distribution model using CTA and SVM algorihtms and multiple species. The outputs of the different species are aggregated in SSDM maps of local species richness and composition using the summing continuous habitat suitability maps stacking method (pSSDM).
+Finally, we build a stacked species distribution model using CTA and SVM algorithms and multiple species. The outputs of the different species are aggregated in SSDM maps of local species richness and endemism using the summing continuous habitat suitability maps stacking method (pSSDM).
 
 
 ```{r SSDM}
@@ -116,13 +120,14 @@ Five other stacking methods are available (see references in `?stack_modelling` 
   - by summing discrete presence/absence maps obtained by drawing repeatedly from a Bernoulli distribution 
   - by applying the ‘probability ranking’ rule (PRR) of the SESAM framework (a number of species equal to the prediction of species richness is selected on the basis of decreasing probability of presence calculated by the SDMs) with species richness as estimated by a pSSDM (referred to as ‘PRR.pSSDM’)
   - by applying the PRR with species richness as estimated by a MEM (‘PRR.MEM’)
-  - by using the maximum-likelihood adjustment approach
+  - by using the maximum-likelihood adjustment approach ('MaximumLikelihood')
 
 ## Outputs
 
 ### Model accuracy assessment
 
 A range of model evaluation metrics included in the package ‘SDMTools’ have been integrated in the package ‘SSDM’. They include the area under the receiving operating characteristic (ROC) curve (AUC), the Cohen's Kappa coefficient, the omission rate, the sensitivity (true positive rate) and the specificity (true negative rate). These metrics are all based on the confusion matrix (also called ‘error matrix’, which represents the instances in a predicted class versus the instances in an actual class). The confusion matrix is computed converting the habitat suitability maps into binary presence/absence maps.
+Most of these criteria only test the discrimination capacity of a model (how well it may distinguish/correctly predict presences and absences), but do not tell, how well the model performs on unseen data. For this purpose, we also included a calibration metric (Naimi & Arauja), which is an important measure for model transferability over space and time (e.g. for climate change projections).
 
 ```{r SDM evaluation}
 knitr::kable(ESDM@evaluation)
@@ -165,7 +170,7 @@ All results can be summarized inside a shiny dashboard by calling `plot` method 
 
 ## Model forecasting
 
-To investigate impacts of changing environmental conditions on species distribution and assemblage, it is often of interest to project an existing model using different environmental rasters than used for model building. In ‘SSDM’  this can be done by using the `project` function, which takes any SDM (`Algorithm.SDM`), ESDM (`Ensemble.SDM`) or SSDM (`Stacked.SDM`) object produced with `modelling`, `ensemble_modelling` or `stack_modelling`.
+To investigate impacts of changing environmental conditions on species distribution and assemblages, it is often of interest to project an existing model using different environmental rasters than used for model building. In ‘SSDM’  this can be done by using the `project` function, which takes any SDM (`Algorithm.SDM`), ESDM (`Ensemble.SDM`) or SSDM (`Stacked.SDM`) object produced with `modelling`, `ensemble_modelling` or `stack_modelling`.
 The following example shows the projection of our previously built SDM object to an environment with reduced rainfall and increased temperature.
 
 ```{r project}
@@ -173,5 +178,30 @@ Env_new <- stack(Env[[1]]-0.3,Env[[2]],Env[[3]]+0.2)
 SDM_projection <- project(SDM,Env_new)
 ```
 
-The function (currently) takes the supplied SDM object and returns the same with updated `@projection` slots and, in the case of ESDMs and SSDMs, also updates the `@uncertainty`, `@diversity.map` and `@endemism.map`. 
+The function by default takes the supplied SDM object and returns it with updated `@projection` slots and, in the case of ESDMs and SSDMs, also updates the `@uncertainty`, `@diversity.map` and `@endemism.map`. If the original model should be kept, the resulting maps can also be returned as a list by setting `update.projections=FALSE`. Further, for ESDMs or SSDMs the projections of the individual models they are composed of can be saved by setting `SDM.projections=TRUE`.
+
+
+## Advanced settings
+
+### Modelling methods
+
+SSDM includes a collection of different modelling methods, which may be seen as a science in themselves. For easier use, all algorithms are set up with default settings, which may or may not be sufficient for your specific application. For better fine-tuning, custom settings can be easily passed to the original functions through `algo.args` lists ('algo' being the lowercase name of the respective algorithm). For example, if you want to set the `singular.ok` argument in the `glm` function use `glm.args=list(singular.ok=FALSE)`. 
+*Disclaimer*: When using custom argument settings to build models, please remember to also supply these argument lists in any consecutive steps (e.g. when calling `project` afterwards to project the model into a different environment). This is because - for reasons of efficiency and harmonization -  SSDM objects only store information necessary to rebuild the models when needed instead of storing the original models.
+
+If you need to access the original models for any reason, you may do so by using the internal function `SSDM:::get_model(model)` (mind the triple dots). 
+
+
+
+### Performance and speed
+
+Due to their very nature, ensemble and stacked models can become large in size and take a long time to finish.
+Depending on your hardware, this may cause problems with your available working memory, since R by habits stores objects in RAM.
+
+To deal with these issues, we included several options to reduce memory load and optimize speed at the same time. Firstly, the number of cores that should be used for computing in parallel (using the `parallel` and `foreach` packages) can be set through the `ncores` arguments in `ensemble_modelling`, `stack_modelling` and `project`. 
+
+R objects are by default exported to each worker and increase the necessary memory with decreasing speed improvement. Here, we use the `itertools` package to only send the necessary chunks to each worker. By using the `minimal.memory` arguments, only one model is send to each worker at a time, decreasing memory load some more.
+
+Finally, for the least memory use you may set the `tmp` argument to TRUE to save temporary files (raster projections) to the raster temporary folder. Please be aware, however, that the files may take up a lot of disk space. Alternatively, with `tmp` you may specify a path, where temporary files should be stored. 
+Please keep in mind, that the temporary folders might be cleared when closing R, so you may want to write the projections before closing your session.
+
 

@@ -30,7 +30,7 @@ project(obj, Env, ...)
 
 \item{Env}{Raster stack. Updated environmental rasters to be used for projection.}
 
-\item{...}{Additional arguments for internal use.}
+\item{...}{arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE)). See \code{\link[SSDM]{modelling}}, algorithm section for more details.}
 
 \item{update.projections}{logical. If TRUE (default), the original .SDM object will be returned with updated projection slots. If FALSE, the projected rasters will be returned as a list of rasters.}
 
