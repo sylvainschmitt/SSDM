@@ -1,4 +1,4 @@
-test_that('parallelization, memory efficiency', {
+test_that('Ensemble parallelization', {
   data(Env)
   data(Occurrences)
   Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')

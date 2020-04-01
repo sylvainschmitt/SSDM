@@ -11,17 +11,16 @@
 \usage{
 project(obj, Env, ...)
 
-\S4method{project}{Algorithm.SDM}(obj, Env, update.projections = TRUE,
-  ...)
+\S4method{project}{Algorithm.SDM}(obj, Env, output.format = "model", ...)
 
-\S4method{project}{MAXENT.SDM}(obj, Env, update.projections = TRUE, ...)
+\S4method{project}{MAXENT.SDM}(obj, Env, output.format = "model", ...)
 
 \S4method{project}{Ensemble.SDM}(obj, Env, uncertainty = TRUE,
-  update.projections = TRUE, SDM.projections = FALSE, cores = 0,
+  output.format = "model", SDM.projections = FALSE, cores = 0,
   minimal.memory = FALSE, tmp = FALSE, ...)
 
 \S4method{project}{Stacked.SDM}(obj, Env, method = NULL,
-  uncertainty = TRUE, update.projections = TRUE,
+  uncertainty = TRUE, output.format = "model",
   SDM.projections = FALSE, cores = 0, minimal.memory = FALSE,
   tmp = FALSE, ...)
 }
@@ -32,10 +31,9 @@ project(obj, Env, ...)
 
 \item{...}{arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE)). See \code{\link[SSDM]{modelling}}, algorithm section for more details.}
 
-\item{update.projections}{logical. If TRUE (default), the original .SDM object will be returned with updated projection slots. If FALSE, the projected rasters will be returned as a list of rasters.}
+\item{output.format}{character. If 'model' (default), the original .SDM object will be returned with updated projection slots. If 'rasters', the projected rasters will be returned as a list of rasters.}
 
-\item{uncertainty}{logical. If set to TRUE, generates an uncertainty map and if update.projection is TRUE
-additionally an algorithm correlation matrix.}
+\item{uncertainty}{logical. If set to TRUE, generates an uncertainty map. If output.format is 'model' an algorithm correlation matrix is additionally returned.}
 
 \item{SDM.projections}{logical. If FALSE (default), the projections of the Algorithm.SDMs will not be returned (only applies to Ensemble.SDMs and Stack.SDMs).}
 
@@ -52,7 +50,7 @@ But beware: Depending on number, resolution and extent of models, temporary file
 richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.}
 }
 \value{
-Either returns the original .SDM object with updated projection slots (default) or if update.projections = FALSE only returns the projections as Raster* objects or a list thereof.
+Either returns the original .SDM object with updated projection slots (default) or if output.format = 'rasters' only returns the projections as Raster* objects or a list thereof.
 }
 \description{
 This is a collection of methods to project SDMs, ESDMs or SSDMs into the supplied environment. The function is used internally to calculate the input for the projection slot of .SDM classes but can also be used to project existing .SDM objects (see Details).

@@ -6,11 +6,11 @@
 \usage{
 ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL,
-  save = FALSE, path = getwd(), cores = 1, PA = NULL,
-  cv = "holdout", cv.param = c(0.7, 1), final.fit.data = "all",
-  bin.thresh = "SES", metric = NULL, thresh = 1001,
-  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  SDM.projections = FALSE, ensemble.metric = c("AUC"),
+  save = FALSE, path = getwd(), cores = 0, parmode = "replicates",
+  PA = NULL, cv = "holdout", cv.param = c(0.7, 1),
+  final.fit.data = "all", bin.thresh = "SES", metric = NULL,
+  thresh = 1001, axes.metric = "Pearson", uncertainty = TRUE,
+  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE,
   GUI = FALSE, ...)
 }
@@ -46,6 +46,8 @@ which the ensemble SDM will be saved.}
 
 \item{cores}{integer. Specify the number of CPU cores used to do the
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically}
+
+\item{parmode}{character. Parallelization mode: along 'algorithms' or 'replicates'. Defaults to 'replicates'.}
 
 \item{PA}{list(nb, strat) defining the pseudo-absence selection strategy used
 in case of presence-only dataset. If PA is NULL, recommended PA selection

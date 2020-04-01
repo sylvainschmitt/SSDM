@@ -13,7 +13,7 @@ stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
   SDM.projections = FALSE, ensemble.metric = c("AUC"),
   ensemble.thresh = c(0.75), weight = TRUE, method = "pSSDM",
   rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = TRUE, GUI = FALSE, cores = 0, ...)
+  verbose = TRUE, GUI = FALSE, cores = 0, parmode = "species", ...)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details
@@ -113,6 +113,8 @@ user interface).}
 \item{cores}{integer. Specify the number of CPU cores used to do the
 computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 use all the available CPU cores.}
+
+\item{parmode}{character. Parallelization mode: along 'species', 'algorithms' or 'replicates'. Defaults to 'species'.}
 
 \item{...}{additional parameters for the algorithm modelling function (see
 details below).}

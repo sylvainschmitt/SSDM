@@ -13,7 +13,6 @@ test_that("modelling works", {
   expect_equal(length(which(model@data$Presence == 0)), 1000)
   model = data.values(model, Env)
   expect_equal(dim(model@data), c(1057, 6))
-  expect_true("train"%in%colnames(model@data))
   model = evaluate(model, cv = "holdout", cv.param = c(0.7, 2), final.fit.data = 'all', bin.thresh="SES", thresh = 1001, metric = NULL, Env)
   expect_equal(dim(model@evaluation), c(1, 8))
   expect_equal(dim(model@data), c(1057, 7))

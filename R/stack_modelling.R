@@ -2,6 +2,8 @@
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
+#' @importFrom foreach foreach %dopar%
+#' @importFrom doParallel registerDoParallel
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
@@ -78,6 +80,7 @@ NULL
 #'@param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'  use all the available CPU cores.
+#'@param parmode character. Parallelization mode: along 'species', 'algorithms' or 'replicates'. Defaults to 'species'.
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
@@ -307,7 +310,7 @@ stack_modelling <- function(algorithms,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
-                           verbose = TRUE, GUI = FALSE, cores = 0,
+                           verbose = TRUE, GUI = FALSE, cores = 0, parmode = 'species',
                            # Modelling parameters
                            ...) {
   # Check arguments
@@ -329,88 +332,117 @@ stack_modelling <- function(algorithms,
       stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
     }
   }
-  if (tmp) {
+  
+  # test if more than one species supplied
+  species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
+  if(length(species) < 2) stop("Species column has less than 2 species/levels.")
+  
+  if (isTRUE(tmp)) {
     tmppath <- get("tmpdir", envir = .PkgEnv)
-    if (!("/.esdms" %in% list.dirs(tmppath)))
+    if (!("/.esdms" %in% tmppath))
       (dir.create(paste0(tmppath, "/.esdms")))
+    tmppath <- paste0(tmppath, "/.esdms")
+  }
+  if(is.character(tmp)){
+    if (!("/.esdms" %in% tmp))
+      (dir.create(paste0(tmp, "/.esdms")))
+    tmppath <- paste0(tmp, "/.esdms")
   }
 
   # Ensemble models creation
   if (verbose) {
     cat("#### Ensemble models creation ##### \n\n")
   }
-  species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
 
-  # if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
-  #   if (verbose) {
-  #     cat("Opening clusters,", cores, "cores \n")
-  #   }
-  #   if ((parallel::detectCores() - 1) < cores) {
-  #     warning("It seems you attributed more cores than your CPU have !")
-  #   }
-  #   cl <- parallel::makeCluster(cores, outfile = "")
-  #   if (verbose) {
-  #     cat("Exporting environment to clusters \n")
-  #   }
-  #   parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
-  #                                           ls(envir = environment())), envir = environment())
-  #   esdms <- parallel::parLapply(cl, species, function(species) {
-  #     esdm.name <- species
-  #     Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-  #                                                              Spcol)] == species)
-  #     if (verbose) {
-  #       cat("Ensemble modelling :", esdm.name, "\n\n")
-  #     }
-  #     esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
-  #                                   Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
-  #                                   PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-  #                                   axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-  #                                   ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-  #                                   weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1,
-  #                                   ...))
-  #     if (GUI) {
-  #       incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
-  #                                                                    Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
-  #     }
-  #     if (inherits(esdm, "try-error")) {
-  #       if (verbose) {
-  #         cat(esdm)
-  #       }
-  #       esdm <- NULL
-  #     } else {
-  #       if (tmp && !is.null(esdm)) {
-  #         esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
-  #                                                                   "/.esdms/proba", esdm.name), overwrite = TRUE)
-  #         esdm@binary <- writeRaster(esdm@binary[[1]], paste0(tmppath,
-  #                                                           "/.esdms/bin", esdm.name), overwrite = TRUE)
-  #         esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
-  #                                                                "/.esdms/uncert", esdm.name), overwrite = TRUE)
-  #       }
-  #       if (verbose) {
-  #         cat("\n\n")
-  #       }
-  #     }
-  #     return(esdm)
-  #   })
-  #   if (verbose) {
-  #     cat("Closing clusters \n")
-  #   }
-  #   parallel::stopCluster(cl)
-  # 
-  # } else {
+  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
+    if ((parallel::detectCores() - 1) < cores) {
+      cores <- parallel::detectCores() - 1
+      warning(paste("It seems you attributed more cores than your CPU has! Reducing to",cores, "cores."))
+    }
+  
+    if(verbose){
+      cl <- parallel::makeCluster(cores, outfile="")
+      } else {cl <- parallel::makeCluster(cores)}
+    doParallel::registerDoParallel(cl)
+    if(verbose){
+      cat("Opening clusters,", cores, "cores \n")
+    }
+    
+    # parallelize along longest dimension, if no preference supplied
+  # if(is.null(parmode)){
+  #   pardim <- c(species=length(species)-cores,algorithms=length(algorithms)-cores,replicates=rep-cores)
+  # parmode <- names(which.max(pardim))
+  # }
+    
+  if(parmode == "species"){
+    esdms <- foreach(i=1:length(species),.packages = c("raster","SSDM"),.verbose=FALSE)%dopar%{
+      if(verbose){
+        cat(paste(Sys.time(),"Started modelling", species[i],"\n\n"))
+      }
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species[i])
+      esdm.name <- species[i]
+      if(!isFALSE(tmp)){
+        (dir.create(paste0(tmppath, "/",species[i])))
+        tmppathsub <- paste0(tmppath, "/",species[i])
+      } else {tmppathsub <- tmp }
+      
+      esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
+                                     Ycol, Pcol, rep = rep, name = species[i], save = FALSE, path = path,
+                                     PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh,
+                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmppathsub,
+                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                     weight = weight, verbose = FALSE, GUI = FALSE, cores=0, SDM.projections = SDM.projections))
+      if (GUI) {
+        incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
+                                                                     Spcol)]))) + 1), detail = paste(species[i], " ensemble SDM built"))
+      }
+      if (inherits(esdm, "try-error")) {
+        if (verbose) {
+          cat(esdm)
+        }
+        esdm <- NULL
+      } else {
+        if (!isFALSE(tmp) && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection, paste0(tmppathsub,"/proba", esdm.name), format='raster', overwrite = TRUE)
+          esdm@binary <- writeRaster(esdm@binary, paste0(tmppathsub,"/bin", esdm.name), format='raster', overwrite = TRUE)
+          if(uncertainty){
+            esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppathsub,"/uncert", esdm.name), format='raster', overwrite = TRUE)
+          }
+        }
+        if(verbose){
+          cat(paste(Sys.time(),"Finished", species[i],"\n\n"))
+        }
+      }
+      return(esdm)
+    }
+    
+    parallel::stopCluster(cl)
+    if(verbose){
+      cat("Closed clusters")
+    }
+      
+    } # parallelize along species
+    
+  } # end parallel
+  
+  
+  if(parmode != "species" || cores == 0){
+    
+    ### parallelize along replicates or algorithms... pass parmode to ensemble_modelling
 esdms <- lapply(species, function(x) {
       esdm.name <- x
-      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-                                                               Spcol)] == x)
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == x)
+      if(isFALSE(tmp)){tmppath <- tmp}
+      
       if (verbose) {
         cat("Ensemble modelling :", esdm.name, "\n\n")
       }
       esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
                                     Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
                                     PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh,
-                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmppath,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, SDM.projections = SDM.projections, ...))
+                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, parmode = parmode, SDM.projections = SDM.projections, ...))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
                                                                      Spcol)]))) + 1), detail = paste(x, " ensemble SDM built"))
@@ -421,11 +453,12 @@ esdms <- lapply(species, function(x) {
         }
         esdm <- NULL
       } else {
-        if (tmp && !is.null(esdm)) {
-          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
-                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
-          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
-                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
+        if (!isFALSE(tmp) && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection, paste0(tmppath, "/proba", esdm.name), format='raster', overwrite = TRUE)
+          esdm@binary <- writeRaster(esdm@binary, paste0(tmppath, "/bin", esdm.name), format='raster', overwrite = TRUE)
+          if(uncertainty){
+            esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,"/uncert", esdm.name), format='raster', overwrite = TRUE)
+          }
         }
         if (verbose) {
           cat("\n\n")
@@ -433,7 +466,7 @@ esdms <- lapply(species, function(x) {
       }
       return(esdm)
     })
-  # }
+  }
 
   esdms <- esdms[!sapply(esdms, is.null)]
 

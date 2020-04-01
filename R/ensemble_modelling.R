@@ -64,6 +64,7 @@ NULL
 #'  metric or, alternatively, the mean of the selection metrics.
 #'@param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+#'@param parmode character. Parallelization mode: along 'algorithms' or 'replicates'. Defaults to 'replicates'.
 #'@param verbose logical. If \code{TRUE}, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Do not take this argument into account (parameter for the
@@ -302,7 +303,7 @@ ensemble_modelling <- function(algorithms,
                               # Occurrences reading
                               Xcol = 'Longitude', Ycol = 'Latitude', Pcol = NULL,
                               # Model creation
-                              rep = 10, name = NULL, save = FALSE, path = getwd(), cores=1,
+                              rep = 10, name = NULL, save = FALSE, path = getwd(), cores=0, parmode = 'replicates',
                               # Pseudo-absences definition
                               PA = NULL,
                               # Evaluation parameters
@@ -335,12 +336,12 @@ ensemble_modelling <- function(algorithms,
     tmppath <- get("tmpdir", envir = .PkgEnv)
     if (!("/.models" %in% list.dirs(path)))
       (dir.create(paste0(tmppath, "/.models")))
+    tmppath <- paste0(tmppath, "/.models")
   }
   if(is.character(tmp)){
-    tmppath <- tmp
-    if (!("/.models" %in% list.dirs(path)))
-      (dir.create(paste0(tmppath, "/.models")))
-    tmp <- TRUE
+    if (!("/.models" %in% tmp))
+      (dir.create(paste0(tmp, "/.models")))
+    tmppath <- paste0(tmp, "/.models")
   }
 
   # Algorithms models creation
@@ -366,52 +367,96 @@ ensemble_modelling <- function(algorithms,
     if(verbose){
       cat("Opening clusters,", cores, "cores \n")
     }
-    for (i in seq_len(length(algorithms))){
-      model.name <- paste0(algorithms[i])
-      if (verbose) {
-        cat("Modelling :", model.name, "\n\n")
-      }
-      modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster"),.verbose=verbose) %dopar% {
-        model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
-                               Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh, axes.metric = axes.metric,
-                               select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
-                               verbose = verbose, GUI = GUI))
-        
-        if (inherits(model, "try-error")) {
-          if (verbose) {
-            cat(model)
-          }
-        } else {
-          ### needs further testing
-          if (tmp & !is.null(model)) {
-            model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                     "/.models/proba", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), overwrite = TRUE)
-            model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                             "/.models/bin", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), overwrite = TRUE)
-          }
+    
+    ### REPLICATES PARALLELIZATION MODE
+    if(parmode=="replicates"){
+      for (i in seq_len(length(algorithms))){
+        model.name <- paste0(algorithms[i])
+        if (verbose) {
+          cat("Modelling :", model.name, "\n\n")
         }
-      return(model)
-    }
-          suppressWarnings({
-            models <- c(models,modelrep)
-          })
-          if (verbose) {
-            cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(), "%Y-%m-%d %T")))
+        modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster","SSDM"),.verbose=verbose) %dopar% {
+          model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
+                                 Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh, axes.metric = axes.metric,
+                                 select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
+                                 verbose = verbose, GUI = GUI))
+          
+          if (inherits(model, "try-error")) {
+            if (verbose) {
+              cat(model)
+            }
+          } else {
+            ### needs further testing
+            if (!isFALSE(tmp) & !is.null(model)) {
+              model@projection <- writeRaster(model@projection, paste0(tmppath,
+                                                                       "/proba", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), format='raster',overwrite = TRUE)
+              model@binary <- writeRaster(model@binary, paste0(tmppath,
+                                                               "/bin", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), format='raster', overwrite = TRUE)
+            }
           }
-          if (GUI) {
-            incProgress(1/(length(algorithms) + 1), detail = paste(algorithms[i],
-                                                                   "SDM built"))
+          return(model)
+        }
+        suppressWarnings({
+          models <- c(models,modelrep)
+        })
+        if (verbose) {
+          cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(), "%Y-%m-%d %T")))
+        }
+        if (GUI) {
+          incProgress(1/(length(algorithms) + 1), detail = paste(algorithms[i],
+                                                                 "SDM built"))
+        }
+      }
+    } # end parmode replicates
+    
+    ### ALGORITHM PARALLELIZATION MODE
+    if(parmode=="algorithms"){
+        if (verbose) {
+          cat(paste(Sys.time(),"Start modelling", paste0(algorithms,collapse="/"), "in parallel \n\n"))
+        }
+        models <- foreach::foreach(i=1:length(algorithms),.packages = c("raster","SSDM"),.verbose=verbose) %dopar% {
+          modelrep <- list()
+          for (j in 1:rep) {
+            model.name <- paste0(algorithms[i], ".", sprintf(paste0("%0",nchar(rep),"d"),j))
+            model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
+                                 Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh, axes.metric = axes.metric,
+                                 select = FALSE, select.metric = ensemble.metric, select.thresh = ensemble.thresh,
+                                 verbose = verbose, GUI = GUI))
+          
+          if (inherits(model, "try-error")) {
+            if (verbose) {
+              cat(model)
+            }
+          } else {
+            ### needs further testing
+            if (!isFALSE(tmp) & !is.null(model)) {
+              model@projection <- writeRaster(model@projection, paste0(tmppath,
+                                                                       "/proba", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), format='raster', overwrite = TRUE)
+              model@binary <- writeRaster(model@binary, paste0(tmppath,
+                                                               "/bin", model.name, Sys.getpid(), gsub(" |:|-","", Sys.time())), format='raster', overwrite = TRUE)
+            }
           }
-    }
+          modelrep <- c(modelrep,model) 
+        }
+        return(modelrep)
+        }
+        
+        models <- unlist(models)
+        
+        if (verbose) {
+          cat(paste(Sys.time(),"Finished modelling", paste0(algorithms,collapse="/"), "in parallel \n\n"))
+        }
+      } # end parmode algorithms
+    
     parallel::stopCluster(cl)
     if(verbose){
       cat("Closed clusters")
     }
-    }
- else {
+    
+  } else {
   for (i in seq_len(length(algorithms))) {
     for (j in 1:rep) {
-      model.name <- paste0(algorithms[i], ".", j)
+      model.name <- paste0(algorithms[i], ".", sprintf(paste0("%0",nchar(rep),"d"),j))
       if (verbose) {
         cat("Modelling :", model.name, "\n\n")
       }
@@ -429,22 +474,21 @@ ensemble_modelling <- function(algorithms,
         }
       } else {
         ### not working yet
-        if (tmp & !is.null(model)) {
+        if (!isFALSE(tmp) & !is.null(model)) {
           model@projection <- writeRaster(model@projection, paste0(tmppath,
-                                                                   "/.models/proba",j,model.name), overwrite = TRUE)
+                                                                   "/proba",model.name), format='raster', overwrite = TRUE)
           model@binary <- writeRaster(model@binary, paste0(tmppath,
-                                                           "/.models/bin",j,model.name), overwrite = TRUE)
+                                                           "/bin",model.name), format='raster', overwrite = TRUE)
         }
         suppressWarnings({
           models[model.name] <- model
         })
       }
       if (verbose) {
-        cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(),
-                                                                         "%Y-%m-%d %T")))
+        cat(sprintf("%s done for %s %s \n\n", model.name, spname, format(Sys.time(),"%Y-%m-%d %T")))
       }
-    }
-  }
+    } # j replicates
+  } # i algos
 }
   # Ensemble modelling
   if (verbose) {
@@ -494,8 +538,8 @@ ensemble_modelling <- function(algorithms,
   }
 
   # Removing tmp
-  if (tmp) {
-    unlink(paste0(tmppath,"/.models"), recursive = TRUE, force = TRUE)
+  if (!isFALSE(tmp)) {
+    unlink(paste0(tmppath), recursive = TRUE, force = TRUE)
   }
   rm(list = ls()[-which(ls() == "esdm")])
   gc()
