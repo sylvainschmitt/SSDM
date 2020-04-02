@@ -7,5 +7,5 @@ test_that('modelling function', {
     cat(paste("testing", i, "...\n"))
     show_failure(SDM <- modelling(i, Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE', verbose = F))
     expect_is(SDM, paste0(i,'.SDM'))
-    }
+  }
 })
