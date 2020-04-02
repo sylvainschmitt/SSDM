@@ -59,7 +59,7 @@ load_occ <- function(path = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
   if (!is.null(path)) {
     file <- paste0(path, "/", file)
   }
-  Occurrences <- read.csv2(file = file, ...)  # Occ = occurrences
+  Occurrences <- read.csv2(file = file, stringsAsFactors = TRUE, ...)  # Occ = occurrences
 
   # Checking columns format
   if (!is.null(Spcol)) {

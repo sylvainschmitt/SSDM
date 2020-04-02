@@ -5,7 +5,7 @@
 * R-hub Fedora Linux, R-devel, clang
 * R-hub Ubuntu Linux 16.04 LTS, R-release
 * R-hub Windows Server 2008 R2 SP1, R-devel
-* Win-builder Windows, R-3.7.0
+* Win-builder Windows, R-4.0.0
 
 ## R CMD check results
 
@@ -15,4 +15,4 @@ There were no NOTEs, ERRORs or WARNINGs.
 
 This is a resubmission. In this version I have:
 
-* Fixed a major bug from version 0.2.5 due to dependency compatibility with raster 2.9-5
+# * Added stringsAsFactors = TRUE in read.csv2 from load_occ.R folowwing the new defaulot in R 4.0.0

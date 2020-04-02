@@ -1,6 +1,21 @@
 NEWS
 ================
 
+SSDM 0.2.7.9001
+===============
+
+- stringsAsFactors = TRUE in read.csv2 from load_occ.R folowwing the new defaulot in R 4.0.0
+
+SSDM 0.2.6.9003
+===============
+
+- gplots::heatmap.2 replaced by ggplot2 heatmap
+
+SSDM 0.2.6.9002
+===============
+
+- #74 fixed
+
 SSDM 0.2.6.9001
 ===============
 

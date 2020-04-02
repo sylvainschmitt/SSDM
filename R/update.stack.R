@@ -27,8 +27,7 @@ NULL
 #'@param path character. Name of the path to the directory to contain the saved
 #'  SSDM.
 #'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1 (see
-#'  \code{\link[SDMTools]{optim.thresh}}).
+#'  interval threshold values between 0 and 1.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithm is saved in a temporary file to release memory. But beware: if you
 #'  close R, temporary files will be deleted To avoid any loss you can save

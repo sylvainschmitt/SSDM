@@ -1,8 +1,9 @@
 #' @include Algorithm.SDM.R
 #' @include Stacked.SDM.R
+#' @include optim.thresh.R
+#' @include accuracy.R
 #' @import methods
 #' @importFrom dismo evaluate threshold
-#' @importFrom SDMTools optim.thresh
 #' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 #' @importFrom raster reclassify rasterize extract stack
@@ -47,7 +48,7 @@ NULL
 #' }
 #'
 #' @references Pottier, J., Dubuis, A., Pellissier, L., Maiorano, L., Rossier,
-#'   L., Randin, C. F., Guisan, A. (2013). The accuracy of plant assemblage
+#'   L., Randin, C. F., Guisan, A. (2013). The .accuracy of plant assemblage
 #'   prediction from species distribution models varies along environmental
 #'   gradients. Global Ecology and Biogeography, 22(1), 52-63.
 #'   https://doi.org/10.1111/j.1466-8238.2012.00790.x
@@ -113,7 +114,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         model <- get_model(evalobj, ...)
         predicted.values <- c(predict(model, eval.testdata))
         if(!is.null(metric)){
-          threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+          threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
           threshval <- mean(threshval[[which(names(threshval) == metric)]])
           roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)],tr= threshval)
         } else {
@@ -124,7 +125,6 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
         
         evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
-
         if (i == 1) {
           evaluation <- evaldf
         } else {
@@ -168,7 +168,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
           model <- get_model(evalobj, ...)
           predicted.values <- c(predict(model, eval.testdata))
           if(!is.null(metric)){
-            threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+            threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
             threshval <- mean(threshval[[which(names(threshval) == metric)]])
             roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
           } else {
@@ -307,7 +307,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         model <- get_model(evalobj, ...)
         predicted.values <- c(predict(model, eval.testdata))
         if(!is.null(metric)){
-          threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+          threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
           threshval <- mean(threshval[[which(names(threshval) == metric)]])
           roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
         } else {
@@ -318,7 +318,6 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
         
         evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
-        
         if (i == 1) {
           evaluation <- evaldf
         } else {
@@ -369,7 +368,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
           model <- get_model(evalobj, Env)
           predicted.values <- c(predict(model, eval.testdata))
           if(!is.null(metric)){
-            threshval <- optim.thresh(eval.testdata$Presence, predicted.values, thresh)
+            threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
             threshval <- mean(threshval[[which(names(threshval) == metric)]])
             roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
           } else {

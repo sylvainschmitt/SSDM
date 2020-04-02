@@ -69,7 +69,7 @@ evaluate(SSDM)
 }
 \references{
 Pottier, J., Dubuis, A., Pellissier, L., Maiorano, L., Rossier,
-  L., Randin, C. F., Guisan, A. (2013). The accuracy of plant assemblage
+  L., Randin, C. F., Guisan, A. (2013). The .accuracy of plant assemblage
   prediction from species distribution models varies along environmental
   gradients. Global Ecology and Biogeography, 22(1), 52-63.
   https://doi.org/10.1111/j.1466-8238.2012.00790.x
