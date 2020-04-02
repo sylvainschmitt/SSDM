@@ -4,6 +4,7 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom iterators icount
+#' @importFrom parallel detectCores makeCluster stopCluster
 NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
@@ -357,14 +358,14 @@ ensemble_modelling <- function(algorithms,
 
   models <- list()
 
-  if(cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
-    if ((parallel::detectCores() - 1) < cores) {
-      cores <- parallel::detectCores()-1
+  if(cores > 0) {
+    if ((detectCores() - 1) < cores) {
+      cores <- detectCores()-1
       warning(paste("It seems you attributed more cores than your CPU has! Automatic reduction to",
                     cores, "cores."))
     }
-    cl <- parallel::makeCluster(cores)
-    doParallel::registerDoParallel(cl)
+    cl <- makeCluster(cores)
+    registerDoParallel(cl)
     if(verbose){
       cat("Opening clusters,", cores, "cores \n")
     }
@@ -472,7 +473,7 @@ ensemble_modelling <- function(algorithms,
         }
       } # end parmode algorithms
 
-    parallel::stopCluster(cl)
+    stopCluster(cl)
     if(verbose){
       cat("Closed clusters")
     }
