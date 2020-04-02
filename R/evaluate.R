@@ -76,7 +76,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
   } else {
     obj@parameters$metric <- bin.thresh
   }
-  
+
 
   if (all(obj@data$Presence %in% c(0, 1))) {
     # Binary data of SDM model
@@ -91,10 +91,10 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
                            TSS = "spec_sens", SES = "equal_sens_spec",
                            EP = "prevalence")
     }
-    
-    
+
+
     # Cross-validation
-    
+
     if (cv == "holdout") {
       for (i in 1:cv.param[2]) {
         data <- obj@data
@@ -123,7 +123,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
           roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
         }
         caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-        
+
         evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
         if (i == 1) {
           evaluation <- evaldf
@@ -177,7 +177,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
             roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
           }
           caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-          
+
           evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
           if (i == 1 && j == 1) {
             evaluation <- evaldf
@@ -192,14 +192,14 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
       for (j in seq_len(length(data[, 1]))) {
         eval.testdata <- data[j, ]
         eval.traindata <- data[-j, ]
-        eval.traindata$train <- TRUE 
+        eval.traindata$train <- TRUE
         evalobj <- obj
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
         predicted.values[j] <- c(predict(model, eval.testdata))
       }
       if(!is.null(metric)){
-        threshval <- optim.thresh(data$Presence, predicted.values, thresh)
+        threshval <- .optim.thresh(data$Presence, predicted.values, thresh)
         threshval <- mean(threshval[[which(names(threshval) == metric)]])
         roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
       } else {
@@ -208,7 +208,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
       }
       caleval <- sdm::calibration(data$Presence,predicted.values, nbin=20, weight=TRUE)
-      
+
       evaluation <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
     }
     obj@evaluation <- evaluation[1, ]
@@ -220,9 +220,9 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
     # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
   }
-  
+
   # assign train/test fractions for final model training
-  
+
   if(final.fit.data=='holdout'){
     obj@data <- data
   }
@@ -244,7 +244,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
     data$train <- TRUE
     obj@data <- data
   }
-  
+
 
   return(obj)
 })
@@ -259,7 +259,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
   }
   obj@parameters$cv <- cv
   obj@parameters$cv.param <- text.cv.param
-  
+
   if(!is.null(metric)){
     warning("Argument 'metric' is deprecated and will be removed in future versions. Please consider using 'bin.thresh' instead.")
     obj@parameters$metric <- metric
@@ -280,7 +280,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
                            TSS = "spec_sens", SES = "equal_sens_spec",
                            EP = "prevalence")
     }
-    
+
     if (cv == "holdout") {
       for (i in 1:cv.param[2]) {
         data <- obj@data
@@ -301,7 +301,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         eval.testdata <- rbind(eval.testdata,bgdata)
         eval.testdata <- eval.testdata[-which(names(data) == "train")]
         eval.traindata <- data[which(data$train), ]
-      
+
         evalobj <- obj
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
@@ -316,7 +316,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
           roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
         }
         caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-        
+
         evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
         if (i == 1) {
           evaluation <- evaldf
@@ -377,7 +377,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
             roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
           }
           caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
-          
+
           evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
           if (i == 1 && j == 1) {
             evaluation <- evaldf
@@ -396,9 +396,9 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
     # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
   }
-  
+
   # assign train/test fractions for final model training
-  
+
   if(final.fit.data=='holdout'){
     obj@data <- data
   }
@@ -421,7 +421,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
     obj@data <- data
   }
 
-  
+
   return(obj)})
 
 #' @rdname evaluate

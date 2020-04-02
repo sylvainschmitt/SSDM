@@ -188,7 +188,7 @@ setMethod("get_model", "GBM.SDM", function(obj, gbm.args=list(), ...) {
   }
 
   # call GBM
-  capture.output(model <- do.call(gbm, gbm.args))
+  model <- do.call(gbm, gbm.args)
   return(model)
 })
 
