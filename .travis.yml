@@ -12,6 +12,7 @@ addons:
       - libgdal-dev
       - libproj-dev
       - xml2
+      - libudunits2-dev
 
 r_packages:
   - rgdal
