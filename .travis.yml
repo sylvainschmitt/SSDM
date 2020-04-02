@@ -13,6 +13,9 @@ addons:
       - libproj-dev
       - xml2
 
+install:
+  - Rscript -e 'devtools::install_github(" valentinitnelav/geobuffer")'
+
 r_packages:
   - rgdal
   - covr
