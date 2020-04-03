@@ -45,8 +45,8 @@ NULL
 #'  cross-validation used to evaluate the ensemble SDM (see details below).
 #'@param final.fit.data strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
 #' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).
-#' @param metric (deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
-#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}). Only needed when \code{metric} is set.
+#' @param metric (deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}). Only needed when \code{metric} is set.
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param uncertainty logical. If \code{TRUE}, generates an uncertainty map and
