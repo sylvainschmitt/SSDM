@@ -63,9 +63,9 @@ cross-validation used to evaluate the ensemble SDM (see details below).}
 
 \item{bin.thresh}{character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).}
 
-\item{metric}{(deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.}
+\item{metric}{(deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.}
 
-\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}). Only needed when \code{metric} is set.}
+\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}). Only needed when \code{metric} is set.}
 
 \item{axes.metric}{Metric used to evaluate variable relative importance (see
 details below).}
