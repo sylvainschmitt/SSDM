@@ -35,9 +35,9 @@ cross-validation used to evaluate the SDM (see details below).}
 
 \item{bin.thresh}{character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
 
-\item{metric}{(deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
+\item{metric}{(deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
 
-\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).}
+\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}).}
 
 \item{Env}{raster object. Stacked raster object of environmental variables
 (can be processed first by \code{\link{load_var}}).}
