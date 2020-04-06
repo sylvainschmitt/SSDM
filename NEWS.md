@@ -1,18 +1,62 @@
 NEWS
 ================
 
+SSDM 0.2.8.9000
+===============
+new/edited:
+- make all algorithm parameters settable (#66)
+- implement parallelization everywhere possible (e.g. ensemble/stack modelling, projection, uncertainty, etc.)
+- replace parLapply with foreach (less memory use, #13/#30/#58) 
+- add options to reduce memory use (minimal.memory, tmp="filepath", SDM.projections, #51)
+- add geographic buffering as new PA-sampling strategy (geobuffer)
+- added sdm::calibration as evaluation statistic
+- switch evaluation from SDMTools to dismo (#74/#78)
+- add final.fit.data to control test/train of final model (#77)
+- add information which data was used for final model training (obj@data$train)
+- restructure project function (Russian doll)
+- add option to return projections directly as rasters (output.format='rasters')
+- extend vignette
+
+
+bug fixes:
+- fix unequal fold sampling in cross-validation
+- fix Maxent projection (#70)
+- fix Maxent background sampling error (when area had less than 10,000 cells)
+- fix lost connection error when using tmp
+- stop stack_modelling immediately, if less than 1 species
+- add GBM default n.cores=1 to avoid parallelization conflicts
+
+
+SSDM 0.2.7.9001
+===============
+
+- stringsAsFactors = TRUE in read.csv2 from load_occ.R folowwing the new defaulot in R 4.0.0
+
+SSDM 0.2.6.9003
+===============
+
+- gplots::heatmap.2 replaced by ggplot2 heatmap
+
+SSDM 0.2.6.9002
+===============
+
+- #74 fixed
+
 SSDM 0.2.6.9001
 ===============
 
 - insertion of slot @sdms & @esdms in Ensemble.SDM & Stacked.SDM classes
 - renaming all enm references to esdm
 - addition of project methods for ESDMs and SSDMs (including description, test unit, and user input check for environmental data)
+- fix MaximumLikelihood stacking method (#28)
+- fix and extend GUI 
 
 
 SSDM 0.2.6
 ===============
 
 - CRAN v0.2.6 submission
+
 
 SSDM 0.2.5.9001
 ===============

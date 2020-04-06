@@ -38,8 +38,7 @@ used to compute the selection.}
 or, alternatively, the mean of the selection   metrics.}
 
 \item{thresh}{numeric. A integer value specifying the number of equal
-interval threshold values between 0 and 1 (see
-\code{\link[SDMTools]{optim.thresh}}).}
+interval threshold values between 0 and 1.}
 
 \item{uncertainty}{logical. If TRUE, generates an uncertainty map and
 an algorithm correlation matrix.}

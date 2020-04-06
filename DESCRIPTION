@@ -1,7 +1,7 @@
 Package: SSDM
 Type: Package
 Title: Stacked Species Distribution Modelling
-Version: 0.2.7.0005
+Version: 0.2.8.9001
 Author: Sylvain Schmitt, Robin Pouteau, Dimitri Justeau, Florian de Boissieu, Lukas Baumbach, Philippe Birnbaum
 Maintainer: Sylvain Schmitt <sylvain.m.schmitt@gmail.com>
 URL: https://github.com/sylvainschmitt/SSDM
@@ -21,8 +21,6 @@ Imports:
     sp (>= 1.2.0),
     raster (>= 2.9-5),
     methods (>= 3.2.2),
-    SDMTools (>= 1.1.221),
-    ecospat (>= 3.0),
     mgcv (>= 1.8.7),
     earth (>= 4.4.3),
     rpart (>= 4.1.10),
@@ -31,16 +29,20 @@ Imports:
     dismo (>= 1.0.12),
     nnet (>= 7.3.10),
     e1071 (>= 1.6.7),
+    ggplot2 (>= 3.1.1),
+    reshape2 (>= 1.4.3),
+    scales (>= 1.0.0),
     shiny (>= 0.12.2),
     shinydashboard (>= 0.5.1),
-    gplots (>= 0.1.0),
     shinyFiles (>= 0.7.0),
     spThin (>= 0.1.0),
     poibin (>= 1.3.0),
     foreach (>= 1.4.4),
     doParallel (>= 1.0.14),
     iterators (>= 1.0.10),
-    itertools (>= 0.1-3)
+    itertools (>= 0.1-3),
+    parallel (>= 3.5.2),
+    snow (>= 0.4-3)
 Depends:
     R (>= 3.2.2)
 Collate:
@@ -52,9 +54,11 @@ Collate:
     'PA.select.R'
     'SSDM.R'
     'Stacked.SDM.R'
+    'accuracy.R'
     'checkargs.R'
     'data.values.R'
     'ensemble.R'
+    'optim.thresh.R'
     'evaluate.R'
     'modelling.R'
     'ensemble_modelling.R'

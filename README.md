@@ -38,9 +38,9 @@ Usage
 
 After installing, **SSDM** package, you can launch the graphical user interface by typing gui() in the console.
 
-<center>
+
 [**Click to enlarge**](https://raw.githubusercontent.com/sylvainschmitt/SSDM/master/examples/SSDM.gif)
-<center>
+
 ![Screenshot](https://raw.githubusercontent.com/sylvainschmitt/SSDM/master/examples/SSDM.gif)
 
 Functionnalities

@@ -35,9 +35,9 @@ cross-validation used to evaluate the SDM (see details below).}
 
 \item{bin.thresh}{character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
 
-\item{metric}{(deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
+\item{metric}{(deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (including related scores such as TPR, TNR, omission rate, Kappa, etc.).}
 
-\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}).}
+\item{thresh}{(deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}).}
 
 \item{Env}{raster object. Stacked raster object of environmental variables
 (can be processed first by \code{\link{load_var}}).}
@@ -69,7 +69,7 @@ evaluate(SSDM)
 }
 \references{
 Pottier, J., Dubuis, A., Pellissier, L., Maiorano, L., Rossier,
-  L., Randin, C. F., Guisan, A. (2013). The accuracy of plant assemblage
+  L., Randin, C. F., Guisan, A. (2013). The .accuracy of plant assemblage
   prediction from species distribution models varies along environmental
   gradients. Global Ecology and Biogeography, 22(1), 52-63.
   https://doi.org/10.1111/j.1466-8238.2012.00790.x

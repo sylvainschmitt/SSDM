@@ -12,11 +12,15 @@ addons:
       - libgdal-dev
       - libproj-dev
       - xml2
+      - libudunits2-dev
 
 r_packages:
   - rgdal
   - covr
   - devtools
+
+r_github_packages:
+  - valentinitnelav/geobuffer
 
 after_success:
   - Rscript -e 'library(covr); codecov(type ="all")'

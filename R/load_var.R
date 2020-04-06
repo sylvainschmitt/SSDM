@@ -16,12 +16,12 @@ NULL
 #'  be loaded.
 #'@param format character. Format of environmental variables files
 #'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
-#'@param categorical character. Specify whether an environmental variable is a categorical variable.
-#'@param Norm logical. If set to true, normalizes environmental variables between 0 and 1.
-#'@param tmp logical. If set to true, rasters are
+#'@param categorical character. Specify environmental variables that are categorical.
+#'@param Norm logical. Default FALSE. If set to TRUE, normalizes environmental variables into a range between 0 and 1.
+#'@param tmp logical. If set to TRUE, rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
 #'  beware: if you close R, temporary files will be deleted.
-#'@param verbose logical. If set to true, allows the function to print text in the
+#'@param verbose logical. If set to TRUE, allows the function to print text in the
 #'  console.
 #'@param GUI logical. Do not take that argument into account (parameter for the
 #'  user interface).
@@ -39,7 +39,7 @@ NULL
 #'@export
 load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
                                                               ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
-                     Norm = TRUE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
+                     Norm = FALSE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(path = path, files = files, format = format, categorical = categorical,
              Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)

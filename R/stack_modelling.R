@@ -4,6 +4,7 @@
 #' @importFrom raster stack writeRaster
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores makeCluster stopCluster
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
@@ -46,8 +47,8 @@ NULL
 #'  cross-validation used to evaluate the ensemble SDM (see details below).
 #'@param final.fit.data strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
 #' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).
-#' @param metric (deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
-#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}). Only needed when \code{metric} is set.
+#' @param metric (deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}). Only needed when \code{metric} is set.
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param uncertainty logical. If set to true, generates an uncertainty map and
@@ -155,11 +156,11 @@ NULL
 #'  \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
-#'  function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).  
+#'  function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).
 #'  The following parameters have defaults: \describe{
 #'  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
 #'  \item{control}{list (created with \code{\link[stats]{glm.control}}).
-#'  Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}. 
+#'  Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}.
 #'  'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
 #'  'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 #'
@@ -167,7 +168,7 @@ NULL
 #'  function from the package 'mgcv'. You can set parameters by supplying \code{gam.args=list(arg1=val1,arg2=val2)} (see \code{\link[mgcv]{gam}} for all settable arguments).
 #'  The following parameters have defaults: \describe{\item{test}{character.
 #'  Test used to evaluate the model, default 'AIC'.} \item{control}{list (created with \code{\link[mgcv]{gam.control}}).
-#'  Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}. 
+#'  Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}.
 #'  'epsilon' is a numeric used for judging the conversion of the GLM IRLS (Iteratively Reweighted Least Squares) loop. 'maxit' is an integer giving the maximum number of IRLS iterations to perform.} }
 #'
 #'@section Multivariate adaptive regression splines (\strong{MARS}) : Uses the
@@ -200,7 +201,7 @@ NULL
 #'  function from the package 'rpart'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[rpart]{rpart}} for all settable arguments).
 #'  The following parameters have defaults: \describe{
 #'  \item{control}{list (created with \code{\link[rpart]{rpart.control}}).
-#'  Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}. 
+#'  Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}.
 #'  'mibucket' is an integer giving the minimum number of observations in any
 #'  terminal node. 'xval' is an integer defining the number of
 #'  cross-validations.} }
@@ -315,7 +316,7 @@ stack_modelling <- function(algorithms,
                            ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spcol = Spcol, rep = rep,
-             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, 
+             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty,
              tmp = tmp, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
              weight = weight, method = method, metric = metric, rep.B = rep.B, range = range,
@@ -332,11 +333,11 @@ stack_modelling <- function(algorithms,
       stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
     }
   }
-  
+
   # test if more than one species supplied
   species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
   if(length(species) < 2) stop("Species column has less than 2 species/levels.")
-  
+
   if (isTRUE(tmp)) {
     tmppath <- get("tmpdir", envir = .PkgEnv)
     if (!("/.esdms" %in% tmppath))
@@ -354,26 +355,26 @@ stack_modelling <- function(algorithms,
     cat("#### Ensemble models creation ##### \n\n")
   }
 
-  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
-    if ((parallel::detectCores() - 1) < cores) {
-      cores <- parallel::detectCores() - 1
+  if (cores > 0) {
+    if ((detectCores() - 1) < cores) {
+      cores <- detectCores() - 1
       warning(paste("It seems you attributed more cores than your CPU has! Reducing to",cores, "cores."))
     }
-  
+
     if(verbose){
-      cl <- parallel::makeCluster(cores, outfile="")
-      } else {cl <- parallel::makeCluster(cores)}
-    doParallel::registerDoParallel(cl)
+      cl <- makeCluster(cores, outfile="")
+      } else {cl <- makeCluster(cores)}
+    registerDoParallel(cl)
     if(verbose){
       cat("Opening clusters,", cores, "cores \n")
     }
-    
+
     # parallelize along longest dimension, if no preference supplied
   # if(is.null(parmode)){
   #   pardim <- c(species=length(species)-cores,algorithms=length(algorithms)-cores,replicates=rep-cores)
   # parmode <- names(which.max(pardim))
   # }
-    
+
   if(parmode == "species"){
     esdms <- foreach(i=1:length(species),.packages = c("raster","SSDM"),.verbose=FALSE)%dopar%{
       if(verbose){
@@ -385,7 +386,7 @@ stack_modelling <- function(algorithms,
         (dir.create(paste0(tmppath, "/",species[i])))
         tmppathsub <- paste0(tmppath, "/",species[i])
       } else {tmppathsub <- tmp }
-      
+
       esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
                                      Ycol, Pcol, rep = rep, name = species[i], save = FALSE, path = path,
                                      PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh,
@@ -415,25 +416,25 @@ stack_modelling <- function(algorithms,
       }
       return(esdm)
     }
-    
-    parallel::stopCluster(cl)
+
+    stopCluster(cl)
     if(verbose){
       cat("Closed clusters")
     }
-      
+
     } # parallelize along species
-    
+
   } # end parallel
-  
-  
+
+
   if(parmode != "species" || cores == 0){
-    
+
     ### parallelize along replicates or algorithms... pass parmode to ensemble_modelling
 esdms <- lapply(species, function(x) {
       esdm.name <- x
       Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == x)
       if(isFALSE(tmp)){tmppath <- tmp}
-      
+
       if (verbose) {
         cat("Ensemble modelling :", esdm.name, "\n\n")
       }

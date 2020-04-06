@@ -43,8 +43,8 @@ NULL
 #'@param select.thresh numeric. Threshold(s) associated with the metric(s) used
 #'  to compute the selection.
 #' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).
-#' @param metric (deprecated) character. Classification threshold (\code{\link[SDMTools]{optim.thresh}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
-#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{\link[SDMTools]{optim.thresh}}). Only needed when \code{metric} is set.
+#' @param metric (deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}). Only needed when \code{metric} is set.
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param verbose logical. If set to true, allows the function to print text in
