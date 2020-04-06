@@ -6,7 +6,7 @@
 \usage{
 load_var(path = getwd(), files = NULL, format = c(".grd", ".tif",
   ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"),
-  categorical = NULL, Norm = TRUE, tmp = TRUE, verbose = TRUE,
+  categorical = NULL, Norm = FALSE, tmp = TRUE, verbose = TRUE,
   GUI = FALSE)
 }
 \arguments{
@@ -20,15 +20,15 @@ be loaded.}
 \item{format}{character. Format of environmental variables files
 (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).}
 
-\item{categorical}{character. Specify whether an environmental variable is a categorical variable.}
+\item{categorical}{character. Specify environmental variables that are categorical.}
 
-\item{Norm}{logical. If set to true, normalizes environmental variables between 0 and 1.}
+\item{Norm}{logical. Default FALSE. If set to TRUE, normalizes environmental variables into a range between 0 and 1.}
 
-\item{tmp}{logical. If set to true, rasters are
+\item{tmp}{logical. If set to TRUE, rasters are
 read in temporary file avoiding to overload the random access memory. But
 beware: if you close R, temporary files will be deleted.}
 
-\item{verbose}{logical. If set to true, allows the function to print text in the
+\item{verbose}{logical. If set to TRUE, allows the function to print text in the
 console.}
 
 \item{GUI}{logical. Do not take that argument into account (parameter for the

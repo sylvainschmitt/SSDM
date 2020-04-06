@@ -2,6 +2,9 @@
 #'   stacking.R Stacked.SDM.R
 #' @importFrom shiny incProgress
 #' @importFrom raster stack writeRaster
+#' @importFrom foreach foreach %dopar%
+#' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores makeCluster stopCluster
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
@@ -42,20 +45,21 @@ NULL
 #'  SDM (see details below).
 #'@param cv.param numeric. Parameters associated with the method of
 #'  cross-validation used to evaluate the ensemble SDM (see details below).
-#'@param thresh numeric. A single integer value representing the number of equal
-#'  interval threshold values between 0 and 1.
-#'@param metric character. Metric used to compute the binary map threshold (see
-#'  details below.)
+#'@param final.fit.data strategy used for fitting the final/evaluated Algorithm.SDMs: 'holdout'= use same train and test data as in (last) evaluation, 'all'= train model with all data (i.e. no test data) or numeric (0-1)= sample a custom training fraction (left out fraction is set aside as test data)
+#' @param bin.thresh character. Classification threshold (\code{\link[dismo]{threshold}}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below).
+#' @param metric (deprecated) character. Classification threshold (\code{SDMTools::optim.thresh}) used to binarize model predictions into presence/absence and compute the confusion matrix (see details below). This argument is only kept for backwards compatibility, if possible please use \code{bin.thresh} instead.
+#' @param thresh (deprecated) integer. Number of equally spaced thresholds in the interval 0-1 (\code{SDMTools::optim.thresh}). Only needed when \code{metric} is set.
 #'@param axes.metric Metric used to evaluate variable relative importance (see
 #'  details below).
 #'@param uncertainty logical. If set to true, generates an uncertainty map and
 #'  an algorithm correlation matrix.
 #'@param tmp logical. If set to true, the habitat suitability map of each
 #'  algorithms is saved in a temporary file to release memory. But beware: if
-#'  you close R, temporary files will be deleted To avoid any loss you can
+#'  you close R, temporary files will be deleted. To avoid any loss you can
 #'  save your SSDM with \code{\link{save.model}}. Depending on number,
 #'  resolution and extent of models, temporary files can take a lot of disk
 #'  space. Temporary files are written in R environment temporary folder.
+#'@param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
 #'@param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
 #'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
@@ -74,13 +78,14 @@ NULL
 #'  range restriction will be applied.
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+#'  use all the available CPU cores.
+#'@param parmode character. Parallelization mode: along 'species', 'algorithms' or 'replicates'. Defaults to 'species'.
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI logical. Don't take that argument into account (parameter for the
 #'  user interface).
-#'@param cores integer. Specify the number of CPU cores used to do the
-#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'  use all the available CPU cores.
 #'@param ... additional parameters for the algorithm modelling function (see
 #'  details below).
 #'
@@ -151,77 +156,87 @@ NULL
 #'  \strong{'Binary'}.} \item{...}{See algorithm in detail section} }
 #'
 #'@section Generalized linear model (\strong{GLM}) : Uses the \code{glm}
-#'  function from the package 'stats', you can set the following parameters (see
-#'  \code{\link[stats]{glm}} for more details): \describe{
+#'  function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
 #'  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
-#'  \item{epsilon}{numeric. Positive convergence tolerance eps ; the iterations
-#'  converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}. By default, set
-#'  to 10e-08.} \item{maxit}{numeric. Integer giving the maximal number of IWLS
-#'  (Iterative Weighted Last Squares) iterations, default 500.} }
+#'  \item{control}{list (created with \code{\link[stats]{glm.control}}).
+#'  Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}.
+#'  'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
+#'  'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 #'
 #'@section Generalized additive model (\strong{GAM}) : Uses the \code{gam}
-#'  function from the package 'mgcv', you can set the following parameters (see
-#'  \code{\link[mgcv]{gam}} for more details): \describe{ \item{test}{character.
-#'  Test used to evaluate the model, default 'AIC'.} \item{epsilon}{numeric.
-#'  This is used for judging conversion of the GLM IRLS (Iteratively Reweighted
-#'  Least Squares) loop, default 10e-08.} \item{maxit}{numeric. Maximum number
-#'  of IRLS iterations to perform, default 500.} }
+#'  function from the package 'mgcv'. You can set parameters by supplying \code{gam.args=list(arg1=val1,arg2=val2)} (see \code{\link[mgcv]{gam}} for all settable arguments).
+#'  The following parameters have defaults: \describe{\item{test}{character.
+#'  Test used to evaluate the model, default 'AIC'.} \item{control}{list (created with \code{\link[mgcv]{gam.control}}).
+#'  Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}.
+#'  'epsilon' is a numeric used for judging the conversion of the GLM IRLS (Iteratively Reweighted Least Squares) loop. 'maxit' is an integer giving the maximum number of IRLS iterations to perform.} }
 #'
 #'@section Multivariate adaptive regression splines (\strong{MARS}) : Uses the
-#'  \code{earth} function from the package 'earth', you can set the following
-#'  parameters (see \code{\link[earth]{earth}} for more details): \describe{
+#'  \code{earth} function from the package 'earth'. You can set parameters by supplying \code{mars.args=list(arg1=val1,arg2=val2)} (see \code{\link[earth]{earth}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
 #'  \item{degree}{integer. Maximum degree of interaction (Friedman's mi) ; 1
 #'  meaning build an additive model (i.e., no interaction terms). By default,
 #'  set to 2.} }
 #'
 #'@section Generalized boosted regressions model (\strong{GBM}) : Uses the
-#'  \code{gbm} function from the package 'gbm,' you can set the following
-#'  parameters (see \code{\link[gbm]{gbm}} for more details): \describe{
-#'  \item{trees}{integer. The total number of trees to fit. This is equivalent
+#'  \code{gbm} function from the package 'gbm'. You can set parameters by supplying \code{gbm.args=list(arg1=val1,arg2=val2)} (see \code{\link[gbm]{gbm}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
+#'  \item{distribution}{character. Automatically detected from the format of the presence column in the occurrence dataset.}
+#'  \item{n.trees}{integer. The total number of trees to fit. This is equivalent
 #'  to the number of iterations and the number of basis functions in the
-#'  additive expansion. By default, set to 2500.} \item{final.leave}{integer.
+#'  additive expansion. By default, set to 2500.}
+#'  \item{n.minobsinnode}{integer.
 #'  minimum number of observations in the trees terminal nodes. Note that this
-#'  is the actual number of observations not the total weight. By default, set
-#'  to 1.} \item{algocv}{integer. Number of cross-validations, default 3.}
-#'  \item{thresh.shrink}{integer. Number of cross-validation folds to perform.
-#'  If cv.folds>1 then gbm, in addition to the usual fit, will perform a
-#'  cross-validation. By default, set to 1e-03.} }
+#'  is the actual number of observations, not the total weight. By default, set
+#'  to 1.}
+#'  \item{cv.folds}{integer. Number of cross-validation folds to perform.
+#'  If cv.folds>1 then gbm - in addition to the usual fit - will perform a
+#'  cross-validation. By default, set to 3.}
+#'  \item{shrinkage}{numeric. A shrinkage parameter applied to each tree in the expansion (also known as learning rate or step-size reduction). By default, set to 0.001.}
+#'  \item{bag.fraction}{numeric. Fraction of the training set observations randomly selected to propose the next tree in the expansion.}
+#'  \item{train.fraction}{numeric. Training fraction used to fit the first gbm. The remainder is used to compute out-of-sample estimates of the loss function. By default, set to 1 (since evaluation/holdout is done with \code{SSDM::evaluate}.}
+#'  \item{n.cores}{integer. Number of cores to use for parallel computation of the CV folds. By default, set to 1. If you intend to use this, please set \code{ncores=0} to avoid conflicts.} }
 #'
 #'@section Classification tree analysis (\strong{CTA}) : Uses the \code{rpart}
-#'  function from the package 'rpart', you can set the following parameters (see
-#'  \code{\link[rpart]{rpart}} for more details): \describe{
-#'  \item{final.leave}{integer. The minimum number of observations in any
-#'  terminal node, default 1.} \item{algocv}{integer. Number of
-#'  cross-validations, default 3.} }
+#'  function from the package 'rpart'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[rpart]{rpart}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
+#'  \item{control}{list (created with \code{\link[rpart]{rpart.control}}).
+#'  Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}.
+#'  'mibucket' is an integer giving the minimum number of observations in any
+#'  terminal node. 'xval' is an integer defining the number of
+#'  cross-validations.} }
 #'
 #'@section Random Forest (\strong{RF}) : Uses the \code{randomForest} function
-#'  from the package 'randomForest', you can set the following parameters (see
-#'  \code{\link[randomForest]{randomForest}} for more details): \describe{
-#'  \item{trees}{integer. Number of trees to grow. This should not be set to a
+#'  from the package 'randomForest'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[randomForest]{randomForest}} all settable arguments).
+#'  The following parameters have defaults: \describe{
+#'  \item{ntree}{integer. Number of trees to grow. This should not be set to a
 #'  too small number, to ensure that every input row gets predicted at least a
-#'  few times. By default, set to 2500.} \item{final.leave}{integer. Minimum
-#'  size of terminal nodes. Setting this number larger causes smaller trees to
-#'  be grown (and thus take less time). By default, set to 1.} }
+#'  few times. By default, set to 2500.}
+#'  \item{nodesize}{integer. Minimum size of terminal nodes. Setting this number larger causes smaller trees to be grown (and thus take less time). By default, set to 1.} }
 #'
 #'@section Maximum Entropy (\strong{MAXENT}) : Uses the \code{maxent} function
 #'  from the package 'dismo'. Make sure that you have correctly installed the
 #'  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
-#'  at \url{https://www.cs.princeton.edu/~schapire/maxent/} (see
-#'  \code{\link[dismo]{maxent}} for more details).
+#'  at \url{https://www.cs.princeton.edu/~schapire/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
+#'  No specific defaults are set with this method.
 #'
 #'@section Artificial Neural Network (\strong{ANN}) : Uses the \code{nnet}
-#'  function from the package 'nnet', you can set the following parameters (see
-#'  \code{\link[nnet]{nnet}} for more details): \describe{ \item{maxit}{integer.
-#'  Maximum number of iterations, default 500.} }
+#'  function from the package 'nnet'. You can set parameters by supplying \code{ann.args=list(arg1=val1,arg2=val2)} (see \code{\link[nnet]{nnet}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
+#'  \item{size}{integer. Number of units in the hidden layer. By default, set to 6.}
+#'  \item{maxit}{integer. Maximum number of iterations, default 500.} }
 #'
 #'@section Support vector machines (\strong{SVM}) : Uses the \code{svm} function
-#'  from the package 'e1071', you can set the following parameters (see
-#'  \code{\link[e1071]{svm}} for more details): \describe{ \item{epsilon}{float.
-#'  Epsilon parameter in the insensitive loss function, default 1e-08.}
-#'  \item{algocv}{integer. If an integer value k>0 is specified, a k-fold
+#'  from the package 'e1071'. You can set parameters by supplying \code{svm.args=list(arg1=val1,arg2=val2)} (see \code{\link[e1071]{svm}} for all settable arguments).
+#'  The following parameters have defaults: \describe{
+#'  \item{type}{character. Regression/classification type SVM should be used with. By default, set to "eps-regression".}
+#'  \item{epsilon}{float. Epsilon parameter in the insensitive loss function, default 1e-08.}
+#'  \item{cross}{integer. If an integer value k>0 is specified, a k-fold
 #'  cross-validation on the training data is performed to assess the quality of
 #'  the model: the accuracy rate for classification and the Mean Squared Error
-#'  for regression. By default, set to 3.} }
+#'  for regression. By default, set to 3.}
+#'  \item{kernel}{character. The kernel used in training and predicting. By default, set to "radial".}
+#'  \item{gamma}{numeric. Parameter needed for all kernels, default \code{1/(length(data) -1)}.} }
 #'
 #'@section Warning : Depending on the raster object resolution the process can
 #'  be more or less time and memory consuming.
@@ -287,21 +302,21 @@ stack_modelling <- function(algorithms,
                            # Pseudo-absences definition
                            PA = NULL,
                            # Evaluation parameters
-                           cv = 'holdout', cv.param = c(0.7,1), thresh = 1001,
-                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE,
+                           cv = 'holdout', cv.param = c(0.7,1), final.fit.data = 'all', bin.thresh = 'SES', metric = NULL, thresh = 1001,
+                           axes.metric = 'Pearson', uncertainty = TRUE, tmp = FALSE, SDM.projections= FALSE,
                            # Assembling parameters
                            ensemble.metric = c('AUC'), ensemble.thresh = c(0.75), weight = TRUE,
                            # Diversity map computing
-                           method = 'pSSDM', metric = 'SES', rep.B = 1000,
+                           method = 'pSSDM', rep.B = 1000,
                            # Range restriction and endemism
                            range = NULL, endemism = c('WEI','Binary'),
                            # Informations parameters
-                           verbose = TRUE, GUI = FALSE, cores = 1,
+                           verbose = TRUE, GUI = FALSE, cores = 0, parmode = 'species',
                            # Modelling parameters
                            ...) {
   # Check arguments
   .checkargs(Xcol = Xcol, Ycol = Ycol, Pcol = Pcol, Spcol = Spcol, rep = rep,
-             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param,
+             name = name, save = save, path = path, PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh,
              thresh = thresh, axes.metric = axes.metric, uncertainty = uncertainty,
              tmp = tmp, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
              weight = weight, method = method, metric = metric, rep.B = rep.B, range = range,
@@ -318,48 +333,69 @@ stack_modelling <- function(algorithms,
       stop(algorithms[[i]], " is still not available, please use one of those : GLM, GAM, MARS, GBM, CTA, RF, MAXENT, ANN, SVM")
     }
   }
-  if (tmp) {
+
+  # test if more than one species supplied
+  species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
+  if(length(species) < 2) stop("Species column has less than 2 species/levels.")
+
+  if (isTRUE(tmp)) {
     tmppath <- get("tmpdir", envir = .PkgEnv)
-    if (!("/.esdms" %in% list.dirs(tmppath)))
+    if (!("/.esdms" %in% tmppath))
       (dir.create(paste0(tmppath, "/.esdms")))
+    tmppath <- paste0(tmppath, "/.esdms")
+  }
+  if(is.character(tmp)){
+    if (!("/.esdms" %in% tmp))
+      (dir.create(paste0(tmp, "/.esdms")))
+    tmppath <- paste0(tmp, "/.esdms")
   }
 
   # Ensemble models creation
   if (verbose) {
     cat("#### Ensemble models creation ##### \n\n")
   }
-  species <- levels(as.factor(Occurrences[, which(names(Occurrences) == Spcol)]))
 
-  if (cores > 0 && requireNamespace("parallel", quietly = TRUE)) {
-    if (verbose) {
+  if (cores > 0) {
+    if ((detectCores() - 1) < cores) {
+      cores <- detectCores() - 1
+      warning(paste("It seems you attributed more cores than your CPU has! Reducing to",cores, "cores."))
+    }
+
+    if(verbose){
+      cl <- makeCluster(cores, outfile="")
+      } else {cl <- makeCluster(cores)}
+    registerDoParallel(cl)
+    if(verbose){
       cat("Opening clusters,", cores, "cores \n")
     }
-    if ((parallel::detectCores() - 1) < cores) {
-      warning("It seems you attributed more cores than your CPU have !")
-    }
-    cl <- parallel::makeCluster(cores, outfile = "")
-    if (verbose) {
-      cat("Exporting environment to clusters \n")
-    }
-    parallel::clusterExport(cl, varlist = c(lsf.str(envir = globalenv()),
-                                            ls(envir = environment())), envir = environment())
-    esdms <- parallel::parLapply(cl, species, function(species) {
-      esdm.name <- species
-      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-                                                               Spcol)] == species)
-      if (verbose) {
-        cat("Ensemble modelling :", esdm.name, "\n\n")
+
+    # parallelize along longest dimension, if no preference supplied
+  # if(is.null(parmode)){
+  #   pardim <- c(species=length(species)-cores,algorithms=length(algorithms)-cores,replicates=rep-cores)
+  # parmode <- names(which.max(pardim))
+  # }
+
+  if(parmode == "species"){
+    esdms <- foreach(i=1:length(species),.packages = c("raster","SSDM"),.verbose=FALSE)%dopar%{
+      if(verbose){
+        cat(paste(Sys.time(),"Started modelling", species[i],"\n\n"))
       }
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == species[i])
+      esdm.name <- species[i]
+      if(!isFALSE(tmp)){
+        (dir.create(paste0(tmppath, "/",species[i])))
+        tmppathsub <- paste0(tmppath, "/",species[i])
+      } else {tmppathsub <- tmp }
+
       esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
-                                    Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
-                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
-                                    ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, n.cores = 1,
-                                    ...))
+                                     Ycol, Pcol, rep = rep, name = species[i], save = FALSE, path = path,
+                                     PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh,
+                                     axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmppathsub,
+                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+                                     weight = weight, verbose = FALSE, GUI = FALSE, cores=0, SDM.projections = SDM.projections))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
-                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+                                                                     Spcol)]))) + 1), detail = paste(species[i], " ensemble SDM built"))
       }
       if (inherits(esdm, "try-error")) {
         if (verbose) {
@@ -367,42 +403,50 @@ stack_modelling <- function(algorithms,
         }
         esdm <- NULL
       } else {
-        if (tmp && !is.null(esdm)) {
-          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
-                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
-          esdm@binary <- writeRaster(esdm@binary[[1]], paste0(tmppath,
-                                                            "/.esdms/bin", esdm.name), overwrite = TRUE)
-          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
-                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
+        if (!isFALSE(tmp) && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection, paste0(tmppathsub,"/proba", esdm.name), format='raster', overwrite = TRUE)
+          esdm@binary <- writeRaster(esdm@binary, paste0(tmppathsub,"/bin", esdm.name), format='raster', overwrite = TRUE)
+          if(uncertainty){
+            esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppathsub,"/uncert", esdm.name), format='raster', overwrite = TRUE)
+          }
         }
-        if (verbose) {
-          cat("\n\n")
+        if(verbose){
+          cat(paste(Sys.time(),"Finished", species[i],"\n\n"))
         }
       }
       return(esdm)
-    })
-    if (verbose) {
-      cat("Closing clusters \n")
     }
-    parallel::stopCluster(cl)
 
-  } else {
-    esdms <- lapply(species, function(species) {
-      esdm.name <- species
-      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) ==
-                                                               Spcol)] == species)
+    stopCluster(cl)
+    if(verbose){
+      cat("Closed clusters")
+    }
+
+    } # parallelize along species
+
+  } # end parallel
+
+
+  if(parmode != "species" || cores == 0){
+
+    ### parallelize along replicates or algorithms... pass parmode to ensemble_modelling
+esdms <- lapply(species, function(x) {
+      esdm.name <- x
+      Spoccurrences <- subset(Occurrences, Occurrences[which(names(Occurrences) == Spcol)] == x)
+      if(isFALSE(tmp)){tmppath <- tmp}
+
       if (verbose) {
         cat("Ensemble modelling :", esdm.name, "\n\n")
       }
       esdm <- try(ensemble_modelling(algorithms, Spoccurrences, Env, Xcol,
                                     Ycol, Pcol, rep = rep, name = esdm.name, save = FALSE, path = path,
-                                    PA = PA, cv = cv, cv.param = cv.param, thresh = thresh, metric = metric,
-                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmp,
+                                    PA = PA, cv = cv, cv.param = cv.param, final.fit.data = final.fit.data, bin.thresh = bin.thresh, metric = metric, thresh = thresh,
+                                    axes.metric = axes.metric, uncertainty = uncertainty, tmp = tmppath,
                                     ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-                                    weight = weight, verbose = verbose, GUI = FALSE, ...))
+                                    weight = weight, verbose = verbose, GUI = FALSE, cores=cores, parmode = parmode, SDM.projections = SDM.projections, ...))
       if (GUI) {
         incProgress(1/(length(levels(as.factor(Occurrences[, which(names(Occurrences) ==
-                                                                     Spcol)]))) + 1), detail = paste(species, " ensemble SDM built"))
+                                                                     Spcol)]))) + 1), detail = paste(x, " ensemble SDM built"))
       }
       if (inherits(esdm, "try-error")) {
         if (verbose) {
@@ -410,11 +454,12 @@ stack_modelling <- function(algorithms,
         }
         esdm <- NULL
       } else {
-        if (tmp && !is.null(esdm)) {
-          esdm@projection <- writeRaster(esdm@projection[[1]], paste0(tmppath,
-                                                                    "/.esdms/proba", esdm.name), overwrite = TRUE)
-          esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,
-                                                                 "/.esdms/uncert", esdm.name), overwrite = TRUE)
+        if (!isFALSE(tmp) && !is.null(esdm)) {
+          esdm@projection <- writeRaster(esdm@projection, paste0(tmppath, "/proba", esdm.name), format='raster', overwrite = TRUE)
+          esdm@binary <- writeRaster(esdm@binary, paste0(tmppath, "/bin", esdm.name), format='raster', overwrite = TRUE)
+          if(uncertainty){
+            esdm@uncertainty <- writeRaster(esdm@uncertainty, paste0(tmppath,"/uncert", esdm.name), format='raster', overwrite = TRUE)
+          }
         }
         if (verbose) {
           cat("\n\n")
@@ -445,6 +490,7 @@ stack_modelling <- function(algorithms,
     if (method %in% c("PRR.MEM", "PRR.pSSDM")) {
       esdms["Env"] <- Env
     }
+    esdms["uncertainty"] <- uncertainty
     if (!is.null(range)) {
       esdms["range"] <- range
     }
@@ -454,7 +500,7 @@ stack_modelling <- function(algorithms,
   }
 
   if (!is.null(stack)) {
-    # Paremeters
+    # Parameters
     stack@parameters$sp.nb.origin <- length(levels(as.factor(Occurrences[,
                                                                          which(names(Occurrences) == Spcol)])))
     if (GUI) {
@@ -473,6 +519,9 @@ stack_modelling <- function(algorithms,
         save.stack(stack, path = path)
       }
     }
+  }
+  if(verbose){
+    cat(sprintf("\n\n #### Stack modelling %s ##### %s \n\n", "done",format(Sys.time(), "%Y-%m-%d %T")))
   }
   return(stack)
 }

@@ -11,23 +11,46 @@
 \usage{
 project(obj, Env, ...)
 
-\S4method{project}{Algorithm.SDM}(obj, Env, ...)
+\S4method{project}{Algorithm.SDM}(obj, Env, output.format = "model", ...)
 
-\S4method{project}{MAXENT.SDM}(obj, Env, ...)
+\S4method{project}{MAXENT.SDM}(obj, Env, output.format = "model", ...)
 
-\S4method{project}{Ensemble.SDM}(obj, Env, ...)
+\S4method{project}{Ensemble.SDM}(obj, Env, uncertainty = TRUE,
+  output.format = "model", SDM.projections = FALSE, cores = 0,
+  minimal.memory = FALSE, tmp = FALSE, ...)
 
-\S4method{project}{Stacked.SDM}(obj, Env, ...)
+\S4method{project}{Stacked.SDM}(obj, Env, method = NULL,
+  uncertainty = TRUE, output.format = "model",
+  SDM.projections = FALSE, cores = 0, minimal.memory = FALSE,
+  tmp = FALSE, ...)
 }
 \arguments{
 \item{obj}{Object of class Algorithm.SDM, Ensemble.SDM or Stacked.SDM. Model(s) to be projected.}
 
 \item{Env}{Raster stack. Updated environmental rasters to be used for projection.}
 
-\item{...}{Additional arguments for internal use.}
+\item{...}{arguments for internal use (get_model), such as argument lists to be passed to the source functions (e.g. glm.args=list(test="AIC",singular.ok=FALSE)). See \code{\link[SSDM]{modelling}}, algorithm section for more details.}
+
+\item{output.format}{character. If 'model' (default), the original .SDM object will be returned with updated projection slots. If 'rasters', the projected rasters will be returned as a list of rasters.}
+
+\item{uncertainty}{logical. If set to TRUE, generates an uncertainty map. If output.format is 'model' an algorithm correlation matrix is additionally returned.}
+
+\item{SDM.projections}{logical. If FALSE (default), the projections of the Algorithm.SDMs will not be returned (only applies to Ensemble.SDMs and Stack.SDMs).}
+
+\item{cores}{integer. Specify the number of CPU cores used to do the
+computing. You can use \code{\link[parallel]{detectCores}}) to automatically
+use all the available CPU cores.}
+
+\item{minimal.memory}{logical. Only relevant if cores >1. If TRUE, only one model will be sent to each worker at a time, reducing used working memory.}
+
+\item{tmp}{logical or character. If FALSE, no temporary rasters are written. If TRUE, temporary rasters are written to the „tmp“ directory of your R environment. If character, temporary rasters are written to a custom path. Very useful to reduce working memory consumption (use together with minimal.memory=TRUE for maximal effect).
+But beware: Depending on number, resolution and extent of models, temporary files can take a lot of disk space.}
+
+\item{method}{character. Define the method used to create the local species
+richness map (for details see \code{\link[SSDM]{stack_modelling}}). If NULL (default), the method used for building the SSDM is used.}
 }
 \value{
-Either returns the original .SDM object with updated projection slots or if minimal.outputs = TRUE only returns the projections as Raster* objects. Depending on the object class this may be: a raster (Algorithm.SDM), a raster stack (Ensemble.SDM), a biodiversity map/mean raster (Stacked.SDM).
+Either returns the original .SDM object with updated projection slots (default) or if output.format = 'rasters' only returns the projections as Raster* objects or a list thereof.
 }
 \description{
 This is a collection of methods to project SDMs, ESDMs or SSDMs into the supplied environment. The function is used internally to calculate the input for the projection slot of .SDM classes but can also be used to project existing .SDM objects (see Details).

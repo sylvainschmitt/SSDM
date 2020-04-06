@@ -1,5 +1,5 @@
 #' @include Algorithm.SDM.R checkargs.R
-#' @importFrom raster raster stack reclassify
+#' @importFrom raster raster stack reclassify beginCluster clusterR endCluster
 NULL
 
 #'Methods to assemble multiple algorithms in an ensemble SDM
@@ -25,6 +25,9 @@ NULL
 #'  interval threshold values between 0 and 1.
 #'@param uncertainty logical. If TRUE, generates an uncertainty map and
 #'  an algorithm correlation matrix.
+#'@param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
+#'@param cores integer. Specify the number of CPU cores used to do the
+#'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
 #'@param verbose logical. If set to true, allows the function to print text in
 #'  the console.
 #'@param GUI,format,na.rm  logical. Do not take those arguments into account
@@ -36,7 +39,7 @@ NULL
 #'  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
 #'  from the confusion matrix} \item{specificity}{Specificity from the confusion
 #'  matrix} \item{prop.correct}{Proportion of correctly predicted occurrences
-#'  from the confusion matrix} }
+#'  from the confusion matrix} \item{calibration}{Calibration metric (Naimi & Araujo 2016)} }
 #'
 #'@return an S4 \linkS4class{Ensemble.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
@@ -64,7 +67,7 @@ NULL
 #'
 #'@export
 setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
+                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections=FALSE, cores=0,
                                 verbose = TRUE, GUI = FALSE) {
   return(standardGeneric("ensemble"))
 })
@@ -72,7 +75,7 @@ setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
 #' @rdname ensemble
 #' @export
 setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE,
+                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections=FALSE, cores=0,
                                                 verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
@@ -138,7 +141,17 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         }
     }
     # Store individual models
-    esdm@sdms <- sdms[c(selection.indices)]
+    if(!SDM.projections){
+      sdmsmin <- lapply(sdms[c(selection.indices)],function(x) {
+        x@projection <- raster()
+        x@binary <- raster()
+        return(x)
+        })
+      esdm@sdms <- sdmsmin
+    }
+    else {
+      esdm@sdms <- sdms[c(selection.indices)]
+    }
 
     # Sum of algorithm ensemble
     if (verbose) {
@@ -234,7 +247,14 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         if (verbose) {
           cat("uncertainty mapping...")
         }
-        esdm@uncertainty <- calc(projections, var)
+        if(cores>0){
+          beginCluster(cores)
+          esdm@uncertainty <- clusterR(projections, fun=function(x) calc(x, var))
+          endCluster()
+        }
+        else{
+          esdm@uncertainty <- calc(projections, var)
+        }
         names(esdm@uncertainty) <- "uncertainty map"
         if (verbose) {
           cat("   done \n")

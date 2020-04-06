@@ -48,6 +48,12 @@ test_that('cv.param argument checking works',{
   expect_error(.checkargs(cv.param = 1))
 })
 
+#### final.fit.data ####
+test_that('final.fit.data argument checking works',{
+  expect_error(.checkargs(final.fit.data = "hello"))
+})
+
+
 #### thresh ####
 test_that('thresh argument checking works',{
   expect_error(.checkargs(thresh = 'thousand'))
@@ -95,7 +101,7 @@ test_that('uncertainty argument checking works',{
 
 #### tmp ####
 test_that('tmp argument checking works',{
-  expect_error(.checkargs(tmp = 'TRUE'))
+  expect_error(.checkargs(tmp = 0))
 })
 
 #### ensemble.metric ####

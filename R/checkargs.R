@@ -10,8 +10,10 @@
                       rep = 1,
                       cv = 'holdout',
                       cv.param = c(0.7,2),
+                      final.fit.data = 'all',
+                      bin.thresh = 'SES',
+                      metric = NULL,
                       thresh = 1001,
-                      metric = 'SES',
                       axes.metric = 'Pearson',
                       select = FALSE,
                       select.metric = c('AUC'),
@@ -77,8 +79,8 @@
                                           PA$nb < 1)) {
     stop("PA$nb should be an integer > 0.")
   }
-  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk"))) {
-    stop("PA$strat should be random or disk (see help).")
+  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk","geobuffer"))) {
+    stop("PA$strat should be random, disk or geobuffer (see help).")
   }
 
   # rep
@@ -111,15 +113,28 @@
   if (cv == "holdout" && (cv.param[1] < 0 || cv.param[1] > 1)) {
     stop("cv.param[1] (train fraction) parameters should be a float between 0 and 1 (see help).")
   }
+  
+  # final.fit.data
+  if (!inherits(final.fit.data,c("character","numeric"))) {
+    stop("final.fit.data should be a character string or numeric.")
+  }
+  
+  if (inherits(final.fit.data,"character") && !(final.fit.data %in% c("all", "holdout"))) {
+    stop("final.fit.data should be one of 'all', 'holdout' or numeric (between 0-1).")
+  }
 
+  # bin.thresh
+  if (!inherits(bin.thresh, "character") || !(bin.thresh %in% c("Kappa", "NOM", "TSS","SES", "EP"))) {
+    stop("bin.thresh parameter should be Kappa, NOM, TSS, SES, or EP (see help).")
+  }
+  
   # thresh
   if (!inherits(thresh, "numeric") || abs(thresh - round(thresh)) != 0) {
     stop("thresh parameter should be an integer.")
   }
 
   # metric
-  if (!inherits(metric, "character") || !(metric %in% c("Kappa", "CCR", "TSS",
-                                                        "SES", "LW", "ROC"))) {
+  if (!inherits(metric, c("character","NULL")) || (inherits(metric, "character") && !(metric %in% c("Kappa", "CCR", "TSS","SES", "LW", "ROC")))) {
     stop("metric parameter should be Kappa, CCR, TSS, SES, LW, or ROC (see help).")
   }
 
@@ -138,8 +153,8 @@
   } else {
     for (i in seq_len(length(select.metric))) {
       if (!(select.metric[i] %in% c("AUC", "Kappa", "sensitivity", "specificity",
-                                    "prop.correct"))) {
-        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help)."))
+                                    "prop.correct","calibration"))) {
+        stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
   }
@@ -166,8 +181,8 @@
   if (!inherits(uncertainty, "logical")) {
     stop("uncertainty parameter should be a logical (True or False).")
   }
-  if (!inherits(tmp, "logical")) {
-    stop("tmp parameter should be a logical (True or False).")
+  if (!inherits(tmp, c("logical","character"))) {
+    stop("tmp parameter should be a logical (True or False) or character (file path).")
   }
   if (!inherits(save, "logical")) {
     stop("save parameter should be a logical (True or False).")
@@ -188,8 +203,8 @@
   } else {
     for (i in seq_len(length(ensemble.metric))) {
       if (!(ensemble.metric[i] %in% c("AUC", "Kappa", "sensitivity",
-                                      "specificity", "prop.correct"))) {
-        stop(paste("ensemble.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, or prop.correct (see help)."))
+                                      "specificity", "prop.correct","calibration"))) {
+        stop(paste("ensemble.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
   }
