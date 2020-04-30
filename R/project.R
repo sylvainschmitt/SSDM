@@ -60,14 +60,17 @@ setMethod("project", "Algorithm.SDM", function(obj, Env, output.format='model', 
   #   return(predict(model, x))
   # }))
   # Rescaling projection
-  proj = reclassify(proj, c(-Inf, 0, 0))
-  if(all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    if(proj@data@max) proj = proj / proj@data@max
-  names(proj) = "Projection"
+  # proj = reclassify(proj, c(-Inf, 0, 0))
+  # clamp projection into interval 0-1
+  proj = reclassify(proj, c(-Inf, 0, 0,1,Inf,1))
+  if(!all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
+    # normalization is bad
+    # if(proj@data@max) proj = proj / proj@data@max
+    names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
-  obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
-                                   obj@evaluation$threshold,Inf,1))
+    obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
+                                     obj@evaluation$threshold,Inf,1))
   
   if(output.format=="rasters"){
     return(list(projection=obj@projection,binary=obj@binary))
@@ -94,14 +97,18 @@ setMethod("project", "MAXENT.SDM", function(obj, Env, output.format='model', ...
     return(predict(model, x))
   })
   # Rescaling projection
-  proj = reclassify(proj, c(-Inf, 0, 0))
+  # proj = reclassify(proj, c(-Inf, 0, 0))
+  # clamp projection into interval 0-1
+  proj = reclassify(proj, c(-Inf, 0, 0,1,Inf,1))
   if(!all(obj@data$Presence %in% c(0,1))) # MEMs should not be rescaled
-    if(proj@data@max) proj = proj / proj@data@max
+    # normalization is bad
+    # if(proj@data@max) proj = proj / proj@data@max
   names(proj) = "Projection"
   obj@projection = proj
   if(all(obj@data$Presence %in% c(0,1))) # MEMs can't produce binary
     obj@binary <- reclassify(proj, c(-Inf,obj@evaluation$threshold,0,
                                      obj@evaluation$threshold,Inf,1))
+  
   if(output.format=="rasters"){
     return(list(projection=obj@projection,binary=obj@binary))
   } else if(output.format=="model"){
