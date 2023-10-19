@@ -82,8 +82,6 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
-    geobuffer,
-    fasterize,
     sdm
 RoxygenNote: 7.2.3
 VignetteBuilder: 
