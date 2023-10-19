@@ -9,3 +9,4 @@ examples
 cran-comments.md
 ^appveyor\.yml$
 ToDo.md
+^\.github$
