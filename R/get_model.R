@@ -11,6 +11,7 @@
 #' @importFrom e1071 svm
 #' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
+#' @importFrom utils capture.output
 NULL
 
 setGeneric("get_model", function(obj, ...) {
@@ -188,7 +189,7 @@ setMethod("get_model", "GBM.SDM", function(obj, gbm.args=list(), ...) {
   }
 
   # call GBM
-  model <- do.call(gbm, gbm.args)
+  capture.output(model <- do.call(gbm, gbm.args), file = nullfile())
   return(model)
 })
 

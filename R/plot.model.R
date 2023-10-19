@@ -1,6 +1,6 @@
 #' @include Algorithm.SDM.R Ensemble.SDM.R Stacked.SDM.R
 #' @importFrom raster stack crop extent aggregate reclassify
-#' @importFrom shiny h1 h2 h3 p reactiveValues observeEvent icon brushOpts shinyApp
+#' @importFrom shiny h1 h2 h3 p reactiveValues observeEvent icon brushOpts shinyApp htmlOutput
 #' @importFrom shiny fluidPage fluidRow tabPanel actionButton
 #' @importFrom shiny selectInput sliderInput radioButtons checkboxInput checkboxGroupInput
 #' @importFrom shiny textOutput uiOutput plotOutput dataTableOutput tableOutput

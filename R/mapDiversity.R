@@ -2,6 +2,7 @@
 #' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<- Which setValues
 #' @importFrom stats lm optim
 #' @importFrom poibin dpoibin
+#' @importFrom sf st_as_sf
 NULL
 
 #' Map Diversity
@@ -191,7 +192,7 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
   Richness <- reclassify(obj@esdms[[1]]@projection, c(-Inf, Inf, 0))
   for (i in seq_len(length(obj@esdms)))
     Richness <- Richness + rasterize(
-      SpatialPoints(obj@esdms[[i]]@data[1:2]),
+      sf::st_as_sf(obj@esdms[[i]]@data[1:2], coords = c("X", "Y")),
       Richness, field = obj@esdms[[i]]@data$Presence,
       background = 0)
   if (all(values(Richness) %in% c(0, 1, NA)))

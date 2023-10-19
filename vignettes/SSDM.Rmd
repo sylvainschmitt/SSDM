@@ -27,7 +27,7 @@ The workflow of the package ‘SSDM’ is based on three modelling levels:
 
 ### Environmental variables
 
-In order to build species distribution models you will need environmental variables. Currently ‘SSDM’ uses all raster formats supported by the R package ‘rgdal’. The package ‘SSDM’ supports both continuous (e.g., climate maps, digital elevation models, bathymetric maps) and categorical environmental variables (e.g., land cover maps, soil type maps) as inputs. The package also allows normalizing environmental variables, which may be useful to improve the fit of certain algorithms (like artificial neural networks or support vector machines).
+In order to build species distribution models you will need environmental variables. Currently ‘SSDM’ uses all raster formats supported by the R package ‘raster’. The package ‘SSDM’ supports both continuous (e.g., climate maps, digital elevation models, bathymetric maps) and categorical environmental variables (e.g., land cover maps, soil type maps) as inputs. The package also allows normalizing environmental variables, which may be useful to improve the fit of certain algorithms (like artificial neural networks or support vector machines).
 
 Rasters of environmental data need to have the same coordinate reference system while spatial extent and resolution of the environmental layers can differ. During processing, the package will deal with between-variables discrepancies in spatial extent and resolution by rescaling all environmental rasters to the smallest common spatial extent then upscaling them to the coarsest resolution.
 

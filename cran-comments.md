@@ -1,18 +1,23 @@
 ## Test environments 
 
-* local Ubuntu 16.04 LTS, R 3.6.0
-* Travis CI Ubuntu 14.04.5 LTS, R-release
-* R-hub Fedora Linux, R-devel, clang
-* R-hub Ubuntu Linux 16.04 LTS, R-release
-* R-hub Windows Server 2008 R2 SP1, R-devel
-* Win-builder Windows, R-4.0.0
+* local Ubuntu 22.04 LTS, R 4.3.1
+* GitHub Actions Ubuntu 20.04 LTS, R-release
 
 ## R CMD check results
 
-There were no NOTEs, ERRORs or WARNINGs.
+There were no ERRORs or WARNINGs.
+
+There was one NOTE:
+
+  Imports includes 24 non-default packages.
+   Importing from so many packages makes the package vulnerable to any of
+   them becoming unavailable.  Move as many as possible to Suggests and
+   use conditionally.
+   
+The fact that we quickly updated the package following several dependency
+changes shows that we are able to assume all the needed dependencies.
 
 ## Resubmission
 
-This is a resubmission. In this version I have:
-
-# * Added stringsAsFactors = TRUE in read.csv2 from load_occ.R folowwing the new defaulot in R 4.0.0
+This is a resubmission. In this version I have removed rgdal and sp 
+from the package dependencies following r-spatial package archiving.
