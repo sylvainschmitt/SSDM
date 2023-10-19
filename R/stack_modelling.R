@@ -5,6 +5,7 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom parallel detectCores makeCluster stopCluster
+#' @import snow
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
