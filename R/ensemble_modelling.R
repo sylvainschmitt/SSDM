@@ -4,7 +4,8 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom iterators icount
-#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom parallel detectCores
+#' @importFrom snow makeCluster stopCluster
 NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
@@ -377,7 +378,8 @@ ensemble_modelling <- function(algorithms,
         if (verbose) {
           cat("Modelling :", model.name, "\n\n")
         }
-        modelrep <- foreach::foreach(iterators::icount(rep),.packages = c("raster","SSDM"),
+        modelrep <- foreach::foreach(iterators::icount(rep),
+                                     .packages = c("raster","SSDM"),
                                      .verbose=verbose) %dopar% {
           model <- try(modelling(algorithms[i], Occurrences, Env, Xcol = Xcol,
                                  Ycol = Ycol, Pcol = Pcol, name = NULL, PA = PA,

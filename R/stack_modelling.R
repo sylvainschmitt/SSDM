@@ -4,8 +4,8 @@
 #' @importFrom raster stack writeRaster
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
-#' @importFrom parallel detectCores makeCluster stopCluster
-#' @import snow
+#' @importFrom parallel detectCores
+#' @importFrom snow makeCluster stopCluster
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
