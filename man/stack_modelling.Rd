@@ -4,16 +4,42 @@
 \alias{stack_modelling}
 \title{Build an SSDM that assembles multiple algorithms and species.}
 \usage{
-stack_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, Spcol = "SpeciesID", rep = 10,
-  name = NULL, save = FALSE, path = getwd(), PA = NULL,
-  cv = "holdout", cv.param = c(0.7, 1), final.fit.data = "all",
-  bin.thresh = "SES", metric = NULL, thresh = 1001,
-  axes.metric = "Pearson", uncertainty = TRUE, tmp = FALSE,
-  SDM.projections = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, method = "pSSDM",
-  rep.B = 1000, range = NULL, endemism = c("WEI", "Binary"),
-  verbose = TRUE, GUI = FALSE, cores = 0, parmode = "species", ...)
+stack_modelling(
+  algorithms,
+  Occurrences,
+  Env,
+  Xcol = "Longitude",
+  Ycol = "Latitude",
+  Pcol = NULL,
+  Spcol = "SpeciesID",
+  rep = 10,
+  name = NULL,
+  save = FALSE,
+  path = getwd(),
+  PA = NULL,
+  cv = "holdout",
+  cv.param = c(0.7, 1),
+  final.fit.data = "all",
+  bin.thresh = "SES",
+  metric = NULL,
+  thresh = 1001,
+  axes.metric = "Pearson",
+  uncertainty = TRUE,
+  tmp = FALSE,
+  SDM.projections = FALSE,
+  ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75),
+  weight = TRUE,
+  method = "pSSDM",
+  rep.B = 1000,
+  range = NULL,
+  endemism = c("WEI", "Binary"),
+  verbose = TRUE,
+  GUI = FALSE,
+  cores = 0,
+  parmode = "species",
+  ...
+)
 }
 \arguments{
 \item{algorithms}{character. Choice of the algorithm(s) to be run (see details

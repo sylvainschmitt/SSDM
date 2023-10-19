@@ -7,7 +7,6 @@
 #' @importFrom stats aggregate.data.frame cor glm glm.control rbinom runif sd var
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 #' @importFrom raster reclassify rasterize extract stack
-#' @importFrom sp SpatialPoints coordinates
 NULL
 
 #' Evaluate

@@ -3,7 +3,6 @@
 \docType{package}
 \name{SSDM}
 \alias{SSDM}
-\alias{SSDM-package}
 \title{SSDM: Stacked species distribution modelling}
 \description{
 SSDM is a package to map species richness and endemism based on Stacked Species Distribution Models (SSDM). It provides tools to build

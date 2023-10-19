@@ -1,5 +1,4 @@
 #' @include Ensemble.SDM.R checkargs.R
-#' @importFrom sp Polygon Polygons SpatialPolygons SpatialPoints bbox
 #' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<- Which setValues
 #' @importFrom stats lm optim
 #' @importFrom poibin dpoibin
@@ -143,7 +142,7 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
     # helper functions and maximum likelihood function
     logit = function(x) {x=ifelse(x<0.0001,0.0001,ifelse(x>0.9999,.9999,x));   ;log(x/(1 - x))}
     invlogit = function(x) {exp(x)/(1+exp(x))}
-    
+
     nLL.Calabrese <- function(par,sr,probs) {
       bysite <- function(j) {
         logit.probs <- logit(as.numeric(probs[j,]))
@@ -152,16 +151,16 @@ setMethod("mapDiversity", "Stacked.SDM", function(obj, method, rep.B = 1000,
       }
       - sum(sapply(seq_len(length(sr)),bysite)) 	# optim performs minimization, so for maximum likelihood we need to invert
     }
-    
+
   # find the maximum likelihood estimates for adjustment parameters
-    adj.par <- optim(par=c(0,0), fn=nLL.Calabrese, sr=obs.sr, probs=pred.prob) 
+    adj.par <- optim(par=c(0,0), fn=nLL.Calabrese, sr=obs.sr, probs=pred.prob)
   # adjust the predicted probabilities, transform back with invlogit and stack
     corr.sr <- rowSums(apply(pred.prob,2,FUN=function(x){invlogit(logit(x)+adj.par$par[1]*obs.sr+adj.par$par[2])}))
     ### End of code from Damaris Zurell/Justin Calabrese
-    
+
     diversity.map[ind_notNA] <- corr.sr
   }
-  
+
 
   if (method == "PRR.MEM") {
     # Probability ranking with MEM (SESAM, D'Amen et al, 2015)

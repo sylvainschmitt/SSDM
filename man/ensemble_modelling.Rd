@@ -4,15 +4,37 @@
 \alias{ensemble_modelling}
 \title{Build an ensemble SDM that assembles multiple algorithms}
 \usage{
-ensemble_modelling(algorithms, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, rep = 10, name = NULL,
-  save = FALSE, path = getwd(), cores = 0, parmode = "replicates",
-  PA = NULL, cv = "holdout", cv.param = c(0.7, 1),
-  final.fit.data = "all", bin.thresh = "SES", metric = NULL,
-  thresh = 1001, axes.metric = "Pearson", uncertainty = TRUE,
-  tmp = FALSE, SDM.projections = FALSE, ensemble.metric = c("AUC"),
-  ensemble.thresh = c(0.75), weight = TRUE, verbose = TRUE,
-  GUI = FALSE, ...)
+ensemble_modelling(
+  algorithms,
+  Occurrences,
+  Env,
+  Xcol = "Longitude",
+  Ycol = "Latitude",
+  Pcol = NULL,
+  rep = 10,
+  name = NULL,
+  save = FALSE,
+  path = getwd(),
+  cores = 0,
+  parmode = "replicates",
+  PA = NULL,
+  cv = "holdout",
+  cv.param = c(0.7, 1),
+  final.fit.data = "all",
+  bin.thresh = "SES",
+  metric = NULL,
+  thresh = 1001,
+  axes.metric = "Pearson",
+  uncertainty = TRUE,
+  tmp = FALSE,
+  SDM.projections = FALSE,
+  ensemble.metric = c("AUC"),
+  ensemble.thresh = c(0.75),
+  weight = TRUE,
+  verbose = TRUE,
+  GUI = FALSE,
+  ...
+)
 }
 \arguments{
 \item{algorithms}{character. A character vector specifying the algorithm

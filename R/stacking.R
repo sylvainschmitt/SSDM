@@ -1,5 +1,5 @@
 #' @include Ensemble.SDM.R checkargs.R
-#' @importFrom sp Polygon Polygons SpatialPolygons SpatialPoints bbox
+#' @importFrom sf st_as_sf st_buffer
 #' @importFrom raster raster stack reclassify mask calc overlay values rasterize rasterToPoints values<-
 #' @importFrom stats lm
 NULL
@@ -33,7 +33,7 @@ NULL
 #'@param endemism character. Define the method used to create an endemism map
 #'  (see details below).
 #'@param eval logical. If set to FALSE, disable stack evaluation.
-#' @param uncertainty logical. If set to TRUE, generates an uncertainty map and 
+#' @param uncertainty logical. If set to TRUE, generates an uncertainty map and
 #'  an algorithm correlation matrix.
 #'@param verbose logical. If set to TRUE, allows the function to print text in
 #'  the console.
@@ -120,7 +120,7 @@ setGeneric('stacking', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B 
 #' @rdname stacking
 #' @export
 setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 'pSSDM', rep.B = 1000,
-                                               Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE, uncertainty=TRUE, 
+                                               Env = NULL, range = NULL, endemism = c('WEI','Binary'), eval = TRUE, uncertainty=TRUE,
                                                verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(esdm = esdm, name = name, method = method, rep.B = rep.B, range = range,
@@ -176,21 +176,9 @@ setMethod('stacking', 'Ensemble.SDM', function(esdm, ..., name = NULL, method = 
                                                           1]))/sum(esdms[[j]]@algorithm.evaluation$kept.model)
       occ <- esdms[[j]]@data[1:nbocc, ]
       occ <- occ[which(occ$Presence == 1), 1:2]
-      circles <- list()
-      for (i in seq_len(length(occ[, 1]))) {
-        x <- occ$X[i]
-        y <- occ$Y[i]
-        pts <- seq(0, 2 * pi, length.out = 100)
-        # xy = cbind(x + range/60 * sin(pts), y + range/60 * cos(pts))
-        res <- res(stack@endemism.map)[1]
-        xy <- cbind(x + range * res * sin(pts), y + range * res * cos(pts))
-        circle <- Polygon(xy)
-        circles[i] <- circle
-      }
-      sc <- SpatialPolygons(list(Polygons(circles, "Circles")))
-      esdms[[j]]@projection <- mask(esdms[[j]]@projection, sc, updatevalue = 0)
-      # thresh = esdms[[j]]@evaluation$threshold esdms[[j]]@projection =
-      # reclassify(esdms[[j]]@projection, c(-Inf,thresh,0, thresh,Inf,1))
+      circles <- st_as_sf(occ, coords = c("X", "Y"))
+      circles <- st_buffer(circles, range * res)
+      esdms[[j]]@projection <- mask(esdms[[j]]@projection, circles, updatevalue = 0)
     }
   }
   if (verbose) {

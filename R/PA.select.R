@@ -1,6 +1,6 @@
 #' @include Algorithm.SDM.R
 #' @import methods
-#' @importFrom sp Polygon Polygons SpatialPolygons bbox
+#' @importFrom sf st_as_sf st_buffer
 #' @importFrom raster raster stack extract predict reclassify layerStats calc Which xyFromCell crs
 NULL
 
@@ -17,17 +17,9 @@ setMethod('PA.select', "Algorithm.SDM", function(obj, Env, PA = NULL, verbose = 
   # Mask defining
   if (PA$strat == 'disk') {
     if(verbose) {cat('   disk selection \n')}
-    circles = list()
-    for (i in seq_len(length(obj@data$X))) {
-      x = obj@data$X[i]
-      y = obj@data$Y[i]
-      pts = seq(0, 2 * pi, length.out = 100)
-      xy = cbind(x + 2/60 * sin(pts), y + 2/60 * cos(pts))
-      circle = Polygon(xy)
-      circles[i] = circle
-    }
-    sc= SpatialPolygons(list(Polygons(circles, 'Circles')))
-    Mask = mask(Env[[1]], sc)
+    circles <- st_as_sf(obj@data, coords = c("X", "Y"))
+    circles <- st_buffer(circles, 2/60)
+    Mask = mask(Env[[1]], circles)
   }
   if(PA$strat=='geobuffer'){
     if(!is.null(PA$dist)){

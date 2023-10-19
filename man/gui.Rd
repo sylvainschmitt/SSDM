@@ -4,8 +4,11 @@
 \alias{gui}
 \title{SSDM package Graphic User Interface}
 \usage{
-gui(port = getOption("shiny.port"), host = getOption("shiny.host",
-  "127.0.0.1"), working.directory = getwd())
+gui(
+  port = getOption("shiny.port"),
+  host = getOption("shiny.host", "127.0.0.1"),
+  working.directory = getwd()
+)
 }
 \arguments{
 \item{port}{char. The TCP port that the application should listen on (see

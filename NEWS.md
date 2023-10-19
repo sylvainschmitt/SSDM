@@ -1,6 +1,13 @@
 NEWS
 ================
 
+SSDM 0.2.8.9001
+===============
+
+bug fixes:
+- totally removing rgdal following r-spatial evolution
+- moving from sp to sf following r-spatial evolution
+
 SSDM 0.2.8.9000
 ===============
 new/edited:

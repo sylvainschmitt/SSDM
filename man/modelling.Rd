@@ -4,12 +4,29 @@
 \alias{modelling}
 \title{Build an SDM using a single algorithm}
 \usage{
-modelling(algorithm, Occurrences, Env, Xcol = "Longitude",
-  Ycol = "Latitude", Pcol = NULL, name = NULL, PA = NULL,
-  cv = "holdout", cv.param = c(0.7, 2), final.fit.data = "all",
-  bin.thresh = "SES", metric = NULL, thresh = 1001,
-  axes.metric = "Pearson", select = FALSE, select.metric = c("AUC"),
-  select.thresh = c(0.75), verbose = TRUE, GUI = FALSE, ...)
+modelling(
+  algorithm,
+  Occurrences,
+  Env,
+  Xcol = "Longitude",
+  Ycol = "Latitude",
+  Pcol = NULL,
+  name = NULL,
+  PA = NULL,
+  cv = "holdout",
+  cv.param = c(0.7, 2),
+  final.fit.data = "all",
+  bin.thresh = "SES",
+  metric = NULL,
+  thresh = 1001,
+  axes.metric = "Pearson",
+  select = FALSE,
+  select.metric = c("AUC"),
+  select.thresh = c(0.75),
+  verbose = TRUE,
+  GUI = FALSE,
+  ...
+)
 }
 \arguments{
 \item{algorithm}{character. Choice of the algorithm to be run (see details

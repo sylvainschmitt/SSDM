@@ -10,7 +10,8 @@
 #' @importFrom ggplot2 ggplot aes geom_tile geom_text scale_fill_gradient theme_minimal theme element_blank element_text
 #' @importFrom reshape2 melt
 #' @importFrom scales muted
-#' @importFrom sp spplot SpatialPoints
+#' @importFrom leaflet leafletOutput renderLeaflet colorNumeric leaflet addTiles addRasterImage addLegend
+#' @importFrom sf st_as_sf
 #' @importFrom raster stack crop extent aggregate reclassify
 NULL
 
@@ -56,13 +57,17 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
         tabItem(tabName = "stack",
                 fluidRow(
                   tabBox(title = 'Maps',
-                         tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                                   plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
-                                   textOutput('diversity.info'),
-                                   title = 'Local species richness'),
-                         tabPanel(plotOutput('endemism'), title = 'Endemism map', textOutput('endemism.info')),
-                         tabPanel(plotOutput('uncertainty'), title = 'Uncertainty'),
-                         tabPanel(tableOutput('summary'), title = 'Summary')
+                         tabPanel(htmlOutput('diversity.title'),
+                                  leaflet::leafletOutput("Diversity"),
+                                  textOutput('diversity.info'),
+                                  title = 'Local species richness'),
+                         tabPanel(leaflet::leafletOutput('endemism'),
+                                  title = 'Endemism map',
+                                  textOutput('endemism.info')),
+                         tabPanel(leaflet::leafletOutput('uncertainty'),
+                                  title = 'Uncertainty'),
+                         tabPanel(tableOutput('summary'),
+                                  title = 'Summary')
                   ),
                   tabBox(title = 'Variable importance',
                          tabPanel(plotOutput('varimp.barplot'),
@@ -92,13 +97,15 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
         tabItem(tabName = 'esdm',
                 fluidRow(
                   tabBox(title = 'Maps',
-                         tabPanel( actionButton('esdmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL, ...),
-                                   plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)),
+                         tabPanel(
+                           htmlOutput('probability.title'),
+                           leaflet::leafletOutput('probability'),
                                    title = 'Habitat suitability'),
-                         tabPanel(plotOutput('niche'),
+                         tabPanel(
+                           leaflet::leafletOutput('niche'),
                                   textOutput('esdm.binary.info'),
                                   title = 'Binary map'),
-                         tabPanel(plotOutput('esdm.uncertainty'), title = 'Uncertainty'),
+                         tabPanel(leaflet::leafletOutput('esdm.uncertainty'), title = 'Uncertainty'),
                          tabPanel(tableOutput('esdm.summary'), title = 'Summary')
                   ),
                   tabBox(title = 'Variable importance',
@@ -132,44 +139,33 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
 
     # Main page beginning #
     # Maps
-    # Single zoomable plot
-    ranges <- reactiveValues(x = NULL, y = NULL)
-    observeEvent(input$plot1_dblclick, {
-      brush <- input$plot1_brush
-      if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(x@diversity.map, c(ranges$x, ranges$y))} else {ref = x@diversity.map}
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
+    output$diversity.title <- renderText({paste0('<b>Mean species richness error: ', round(x@evaluation['mean','species.richness.error'], 3), "<br>")})
+    output$Diversity <- leaflet::renderLeaflet({
+      diversity <- x@diversity.map
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(diversity), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(diversity, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(diversity), title = "Diversity")
     })
-    observeEvent(input$unzoom, {
-      ranges$x <- NULL
-      ranges$y <- NULL
+    output$endemism <- leaflet::renderLeaflet({
+      endemism = x@endemism.map
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(endemism), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(endemism, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(endemism), title = "Endemism")
     })
-    output$Diversity <- renderPlot({
-      if (!is.null(ranges$x)) {diversity = crop(x@diversity.map, c(ranges$x, ranges$y))} else {diversity = x@diversity.map}
-      spplot(diversity,
-           main = paste('Mean species richness error:', round(x@evaluation['mean','species.richness.error'], 3)),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)))
-    })
-    output$endemism <- renderPlot({
-      if (!is.null(ranges$x)) {endemism = crop(x@endemism.map, c(ranges$x, ranges$y))} else {endemism = x@endemism.map}
-      spplot(endemism,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
-    })
-    output$uncertainty <- renderPlot({
-      if (!is.null(ranges$x)) {uncert = crop(x@uncertainty, c(ranges$x, ranges$y))} else {uncert = x@uncertainty}
-      spplot(uncert,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
+    output$uncertainty <- leaflet::renderLeaflet({
+      uncert = x@uncertainty
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(uncert), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(uncert, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(uncert), title = "Uncertainty")
       })
     # Evaluation
     output$evaluation.barplot <- renderPlot({
@@ -235,7 +231,7 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
     })
     output$diversity.info <- renderText({
       x@parameters$method = switch(x@parameters$method,
-                                   'P' = 'summing habitat suitability map probabilities.',
+                                   'pSSDM' = 'summing habitat suitability map probabilities.',
                                    'T' = paste('summing habitat suitability binary map after thresholding with',x@parameters$metric),
                                    'B' = paste('drawing repeatdly bernoulli repetitions with',x@parameters$rep.B))
       text = paste('Local species richness map realized by', x@parameters$method)
@@ -279,48 +275,41 @@ setMethod('plot', 'Stacked.SDM', function(x, y, ...) {
 
     # ESDM beginning #
     # Maps
-    # Single zoomable plot
-    observeEvent(input$proba_dblclick, {
-      brush <- input$proba_brush
-      if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(x@diversity.map, c(ranges$x, ranges$y))} else {ref = x@diversity.map}
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
-    })
-    observeEvent(input$esdmunzoom, {
-      ranges$x <- NULL
-      ranges$y <- NULL
-    })
-    output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(x@esdms[[which(choices == input$esdmchoice)]]@projection, c(ranges$x, ranges$y))} else {proba = x@esdms[[which(choices == input$esdmchoice)]]@projection}
-      spplot(proba,
-           main = paste('AUC :',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$Kappa,3)),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)),
-           sp.layout=list(SpatialPoints(data.frame(X = x@esdms[[which(choices == input$esdmchoice)]]@data$X[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)],
-                                                   Y = x@esdms[[which(choices == input$esdmchoice)]]@data$Y[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)])),
-                          pch = 16, cex = 0.7, col = 'black'))
-    })
-    output$niche <- renderPlot({
-      niche.map = x@esdms[[which(choices == input$esdmchoice)]]@binary
-      if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
-      spplot(niche.map,
-           main = paste('AUC :',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$AUC,3),'  Kappa',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$Kappa,3)),
-           xlab = 'Longitude (\u02DA)',
-           ylab = 'Latitude (\u02DA)',
-           col.regions = rev(terrain.colors(10000)))
+    output$probability.title <- renderText({
+      paste0('<b>AUC :',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$AUC,3),
+             '  Kappa',round(x@esdms[[which(choices == input$esdmchoice)]]@evaluation$Kappa,3), "<br>")
       })
-    output$esdm.uncertainty <- renderPlot({
-      if (!is.null(ranges$x)) {uncert.map = crop(x@esdms[[which(choices == input$esdmchoice)]]@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = x@esdms[[which(choices == input$esdmchoice)]]@uncertainty}
-      spplot(uncert.map,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
+    output$probability <- leaflet::renderLeaflet({
+      proba <- x@esdms[[which(choices == input$esdmchoice)]]@projection
+      obs <- data.frame(
+        X = x@esdms[[which(choices == input$esdmchoice)]]@data$X[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)],
+        Y = x@esdms[[which(choices == input$esdmchoice)]]@data$Y[which(x@esdms[[which(choices == input$esdmchoice)]]@data$Presence == 1)]
+        )
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(proba), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(proba, colors = pal, opacity = 0.8) %>%
+        leaflet::addCircles(data = obs, lng = ~ X, lat = ~ Y, radius = 1) %>%
+        leaflet::addLegend(pal = pal, values = values(proba), title = "Habitat\nsuitability")
+    })
+    output$niche <- leaflet::renderLeaflet({
+      niche.map = x@esdms[[which(choices == input$esdmchoice)]]@binary
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(niche.map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(niche.map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(niche.map), title = "Habitat\nsuitability")
+      })
+    output$esdm.uncertainty <- leaflet::renderLeaflet({
+      uncert.map = x@esdms[[which(choices == input$esdmchoice)]]@uncertainty
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(uncert.map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(uncert.map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(uncert.map), title = "Uncertainty")
       })
     # Evaluation
     output$esdm.evaluation.barplot <- renderPlot({
@@ -450,13 +439,13 @@ setMethod('plot', 'SDM', function(x, y, ...) {
   }
   ui <- dashboardPage(dashboardHeader(title = x@name, titleWidth = 450),
                       dashboardSidebar(disable = TRUE), dashboardBody(fluidRow(tabBox(title = "Maps",
-                                                                                      tabPanel(actionButton("unzoom", "unzoom", icon = icon("search-minus"),
-                                                                                                            width = NULL, ...), plotOutput("probability", dblclick = "plot1_dblclick",
-                                                                                                                                           brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
+                                                                                      tabPanel(htmlOutput('probability.title'),
+                                                                                               leaflet::leafletOutput("probability"),
                                                                                                title = "Habitat suitability"), if (full) {
-                                                                                                 tabPanel(plotOutput("niche"), title = "Binary map")
+                                                                                                 tabPanel(leaflet::leafletOutput("niche"),
+                                                                                                          title = "Binary map")
                                                                                                }, if (full) {
-                                                                                                 tabPanel(plotOutput("uncertainty"), title = "uncertainty")
+                                                                                                 tabPanel(leaflet::leafletOutput("uncertainty"), title = "uncertainty")
                                                                                                }, tabPanel(tableOutput("summary"), title = "Summary")), tabBox(title = "Variables importance",
                                                                                                                                                                tabPanel(plotOutput("varimp.barplot"), textOutput("varimp.info"),
                                                                                                                                                                         title = "Barplot"), tabPanel(tableOutput("varimp.table"), title = "Table"),
@@ -498,63 +487,43 @@ setMethod('plot', 'SDM', function(x, y, ...) {
       }
     }
     # Maps
-
-    # Single zoomable plot
-    ranges <- reactiveValues(x = NULL, y = NULL)
-    observeEvent(input$plot1_dblclick, {
-      brush <- input$plot1_brush
-      if (!is.null(brush)) {
-        if (!is.null(ranges$x)) {
-          ref <- crop(x@projection, c(ranges$x, ranges$y))
-        } else {
-          ref <- x@projection
-        }
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) +
-          extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) +
-          extent(ref)[3]
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
+    output$probability.title <- renderText({
+      paste0('<b>AUC :', round(x@evaluation$AUC, 3),
+             '  Kappa', round(x@evaluation$Kappa, 3), "<br>")
     })
-    observeEvent(input$unzoom, {
-      ranges$x <- NULL
-      ranges$y <- NULL
-    })
-    output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {
-        proba.map <- crop(x@projection, c(ranges$x, ranges$y))
-      } else {
+    output$probability <- leaflet::renderLeaflet({
         proba.map <- x@projection
-      }
-      spplot(proba.map, main = paste("AUC :", round(x@evaluation$AUC,
-                                                    3), "  Kappa", round(x@evaluation$Kappa, 3)), xlab = "Longitude (\u02DA)",
-             ylab = "Latitude (\u02DA)", col.regions = rev(terrain.colors(10000)),
-             sp.layout = list(SpatialPoints(data.frame(X = x@data$X[which(x@data$Presence ==
-                                                                            1)], Y = x@data$Y[which(x@data$Presence == 1)])), pch = 16,
-                              cex = 0.7, col = "black"))
+        obs <- data.frame(
+          X = x@data$X[which(x@data$Presence == 1)],
+          Y = x@data$Y[which(x@data$Presence == 1)]
+        )
+        pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                     values(proba.map), na.color = "transparent")
+        leaflet::leaflet() %>%
+          leaflet::addTiles() %>%
+          leaflet::addRasterImage(proba.map, colors = pal, opacity = 0.8) %>%
+          leaflet::addCircles(data = obs, lng = ~ X, lat = ~ Y, radius = 1) %>%
+          leaflet::addLegend(pal = pal, values = values(proba.map), title = "Habitat\nsuitability")
     })
-    output$niche <- renderPlot({
-      if (!is.null(ranges$x)) {
-        niche.map <- x@binary
-      } else {
+    output$niche <- leaflet::renderLeaflet({
         niche.map <- reclassify(x@projection, c(-Inf, x@evaluation$threshold,
                                                 0, x@evaluation$threshold, Inf, 1))
-      }
-      spplot(niche.map, main = paste("AUC :", round(x@evaluation$AUC,
-                                                    3), "  Kappa", round(x@evaluation$Kappa, 3)), xlab = "Longitude (\u02DA)",
-             ylab = "Latitude (\u02DA)", col.regions = rev(terrain.colors(10000)))
+        pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                     values(niche.map), na.color = "transparent")
+        leaflet::leaflet() %>%
+          leaflet::addTiles() %>%
+          leaflet::addRasterImage(niche.map, colors = pal, opacity = 0.8) %>%
+          leaflet::addLegend(pal = pal, values = values(niche.map), title = "Habitat\nsuitability")
     })
     if (full) {
-      output$uncertainty <- renderPlot({
-        if (!is.null(ranges$x)) {
-          uncert.map <- crop(x@uncertainty, c(ranges$x, ranges$y))
-        } else {
+      output$uncertainty <- leaflet::renderLeaflet({
           uncert.map <- x@uncertainty
-        }
-        spplot(uncert.map, xlab = "Longitude (\u02DA)", ylab = "Latitude (\u02DA)",
-               col.regions = rev(terrain.colors(10000)))
+          pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                       values(uncert.map), na.color = "transparent")
+          leaflet::leaflet() %>%
+            leaflet::addTiles() %>%
+            leaflet::addRasterImage(uncert.map, colors = pal, opacity = 0.8) %>%
+            leaflet::addLegend(pal = pal, values = values(uncert.map), title = "Uncertainty")
       })
       output$evaluation.barplot <- renderPlot({
         evaluation <- x@algorithm.evaluation

@@ -4,9 +4,11 @@
 \name{Env}
 \alias{Env}
 \title{A stack of three environmental variables}
-\format{A stack of three rasters: \describe{ \item{RAINFALL}{Annual mean
+\format{
+A stack of three rasters: \describe{ \item{RAINFALL}{Annual mean
   rainfall (mm)} \item{TEMPERATURE}{Annual mean temperature (x10 degree
-  Celsius)} \item{SUBSTRATE}{Substrate type (categorical variable)} }}
+  Celsius)} \item{SUBSTRATE}{Substrate type (categorical variable)} }
+}
 \usage{
 Env
 }

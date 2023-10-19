@@ -39,7 +39,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                     ),
                                     box(title = 'Preview', height = 600,
                                         uiOutput('layerchoice'),
-                                        plotOutput('env'))
+                                        leaflet::leafletOutput('env'))
                                   ),
                                   fluidRow(
                                     box(title = 'Occurrence table',
@@ -81,7 +81,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                     ),
                                     box('Preview',
                                         textOutput('prevmodelbug'),
-                                        plotOutput('model.preview')
+                                        leaflet::leafletOutput('model.preview')
                                     )
                                   )
                                 )
@@ -146,7 +146,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                              uiOutput('degreeUI')
                                     )
                                   ),
-                                  box(title = 'Preview', textOutput('modelfailed'), plotOutput('modelprev'))
+                                  box(title = 'Preview', textOutput('modelfailed'), leaflet::leafletOutput('modelprev'))
                                 ),
                                 fluidRow(
                                   box(
@@ -173,12 +173,12 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                 ),
                                 fluidRow(
                                   tabBox(title = 'Maps',
-                                         tabPanel( actionButton('unzoom', 'unzoom', icon = icon('search-minus'), width = NULL),
-                                                   plotOutput('Diversity', dblclick = "plot1_dblclick", brush = brushOpts(id = "plot1_brush", resetOnNew = TRUE)),
+                                         tabPanel(htmlOutput('diversity.title'),
+                                                  leaflet::leafletOutput('Diversity'),
                                                    textOutput('diversity.info'),
                                                    title = 'Local species richness'),
-                                         tabPanel(plotOutput('endemism'), title = 'Endemism map', textOutput('endemism.info')),
-                                         tabPanel(plotOutput('Uncertainity'), title = 'Uncertainty'),
+                                         tabPanel(leaflet::leafletOutput('endemism'), title = 'Endemism map', textOutput('endemism.info')),
+                                         tabPanel(leaflet::leafletOutput('Uncertainity'), title = 'Uncertainty'),
                                          tabPanel(tableOutput('summary'), title = 'Summary')
                                   ),
                                   tabBox(title = 'Variable importance',
@@ -205,13 +205,13 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                         tabItem('stackesdm',
                                 fluidRow(
                                   tabBox(title = 'Maps',
-                                         tabPanel(actionButton('esdmunzoom', 'unzoom', icon = icon('search-minus'), width = NULL),
-                                                  plotOutput('probability', dblclick = "proba_dblclick", brush = brushOpts(id = "proba_brush", resetOnNew = TRUE)),
+                                         tabPanel(htmlOutput('probability.title'),
+                                                  leaflet::leafletOutput('probability'),
                                                   title = 'Habitat suitability'),
-                                         tabPanel(plotOutput('niche'),
-                                                  textOutput('esdm.binary.info'),
+                                         tabPanel(leaflet::leafletOutput('niche'),
+                                                  leaflet::leafletOutput('esdm.binary.info'),
                                                   title = 'Binary map'),
-                                         tabPanel(plotOutput('esdm.uncertainty'), title = 'Uncertainty'),
+                                         tabPanel(leaflet::leafletOutput('esdm.uncertainty'), title = 'Uncertainty'),
                                          tabPanel(tableOutput('esdm.summary'), title = 'Summary')
                                   ),
                                   tabBox(title = 'Variable importance',
@@ -237,7 +237,7 @@ ui <- dashboardPage(dashboardHeader(title = 'SSDM'),
                                   )
                                 )
                         ),
-                        
+
                         ## Save maps ##
                         tabItem('savem',
                                 fluidPage(

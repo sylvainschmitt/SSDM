@@ -152,7 +152,7 @@ serverWD <- function(working.directory){
         output$layerchoice <- renderUI({
           selectInput('layer', 'Variable', as.list(names(data$Env)), multiple = FALSE, selectize = TRUE)
         })
-        output$env <- renderPlot({
+        output$env <- leaflet::renderLeaflet({
           if(!is.null(input$layer)){
             i = as.numeric(which(as.list(names(data$Env)) == input$layer))
             if(data$Env[[i]]@data@isfactor) {
@@ -160,11 +160,12 @@ serverWD <- function(working.directory){
             } else {
               map = data$Env[[i]]
             }
-            spplot(map,
-                   main = names(data$Env)[i],
-                   xlab = 'Longitude (\u02DA)',
-                   ylab = 'Latitude (\u02DA)',
-                   col.regions = rev(terrain.colors(10000)))
+            pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                         values(map), na.color = "transparent")
+            leaflet::leaflet() %>%
+            leaflet::addTiles() %>%
+            leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+            leaflet::addLegend(pal = pal, values = values(map), title = "Diversity")
           }
         })
       }
@@ -334,20 +335,28 @@ serverWD <- function(working.directory){
         if (input$model.type == 'Ensemble SDM') {
           data$ESDM = a
           if(!is.null(data$ESDM)){result$ESDM = data$ESDM}
-          output$model.preview <- renderPlot({spplot(data$ESDM@projection,
-                                                     main = 'Habitat suitability map',
-                                                     xlab = 'Longitude (\u02DA)',
-                                                     ylab = 'Latitude (\u02DA)',
-                                                     col.regions = rev(terrain.colors(10000)))})
+          output$model.preview <- leaflet::renderLeaflet({
+            diversity <- data$ESDM@projection
+            pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                         values(diversity), na.color = "transparent")
+            leaflet::leaflet() %>%
+              leaflet::addTiles() %>%
+              leaflet::addRasterImage(diversity, colors = pal, opacity = 0.8) %>%
+              leaflet::addLegend(pal = pal, values = values(diversity), title = "Diversity")
+          })
         }
         if (input$model.type == 'SSDM') {
           data$Stack = a
           for (i in seq_len(length(names(data$Stack@esdms)))) {data$esdms[[i]] = strsplit(names(data$Stack@esdms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
-          output$model.preview <- renderPlot({spplot(data$Stack@diversity.map,
-                                                     main = data$Stack@name,
-                                                     xlab = 'Longitude (\u02DA)',
-                                                     ylab = 'Latitude (\u02DA)',
-                                                     col.regions = rev(terrain.colors(10000)))})
+          output$model.preview <- leaflet::renderLeaflet({
+            diversity <- data$Stack@diversity.map
+            pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                         values(diversity), na.color = "transparent")
+            leaflet::leaflet() %>%
+              leaflet::addTiles() %>%
+              leaflet::addRasterImage(diversity, colors = pal, opacity = 0.8) %>%
+              leaflet::addLegend(pal = pal, values = values(diversity), title = "Diversity")
+          })
         }
       }
     })
@@ -631,11 +640,15 @@ serverWD <- function(working.directory){
                                                    finalleave = algoparam$finalleave,
                                                    algocv = algoparam$cv))
         if(!is.null(data$ESDM)){
-          output$modelprev = renderPlot(spplot(data$ESDM@projection,
-                                               main = 'Habitat suitability map',
-                                               xlab = 'Longitude (\u02DA)',
-                                               ylab = 'Latitude (\u02DA)',
-                                               col.regions = rev(terrain.colors(10000))))
+          output$modelprev = leaflet::renderLeaflet({
+            diversity <- data$ESDM@projection
+            pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                         values(diversity), na.color = "transparent")
+            leaflet::leaflet() %>%
+              leaflet::addTiles() %>%
+              leaflet::addRasterImage(diversity, colors = pal, opacity = 0.8) %>%
+              leaflet::addLegend(pal = pal, values = values(diversity), title = "Habitat\nsuitability")
+          })
           result$ESDM = data$ESDM
         } else {
           output$modelfailed = renderText('No ensemble SDM were kept, maybe you should try lower ensemble threshold(s) ?')
@@ -685,11 +698,15 @@ serverWD <- function(working.directory){
                                                   finalleave = algoparam$finalleave,
                                                   algocv = algoparam$cv))
         if(!is.null(data$Stack)){
-          output$modelprev = renderPlot(spplot(data$Stack@diversity.map,
-                                               main = 'Local species richness',
-                                               xlab = 'Longitude (\u02DA)',
-                                               ylab = 'Latitude (\u02DA)',
-                                               col.regions = rev(terrain.colors(10000))))
+          output$modelprev = leaflet::renderLeaflet({
+            diversity <- data$Stack@diversity.map
+            pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                         values(diversity), na.color = "transparent")
+            leaflet::leaflet() %>%
+              leaflet::addTiles() %>%
+              leaflet::addRasterImage(diversity, colors = pal, opacity = 0.8) %>%
+              leaflet::addLegend(pal = pal, values = values(diversity), title = "Species\nrichness")
+          })
           for (i in seq_len(length(names(data$Stack@esdms)))) {data$esdms[[i]] = strsplit(names(data$Stack@esdms), '.Ensemble.SDM', fixed = TRUE)[[i]][1]}
         } else {
           output$modelfailed = renderText('You have less than two remaining ensemble SDMs, maybe you should try lower ensemble threshold(s) ?')
@@ -699,43 +716,33 @@ serverWD <- function(working.directory){
 
     ## Stack results ##
     output$Stackname <- renderUI(h2(data$Stack@name, align = 'center'))
-    ranges <- reactiveValues(x = NULL, y = NULL)
-    observeEvent(input$plot1_dblclick, {
-      brush <- input$plot1_brush
-      if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(data$Stack@diversity.map, c(ranges$x, ranges$y))} else {ref = data$Stack@diversity.map}
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
+    output$diversity.title <- renderText({paste0('<b>Mean species richness error: ', round(data$Stack@evaluation['mean','species.richness.error'], 3), "<br>")})
+    output$Diversity <- leaflet::renderLeaflet({
+      map <- data$Stack@diversity.map
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(map), title = "Diversity")
     })
-    observeEvent(input$unzoom, {
-      ranges$x <- NULL
-      ranges$y <- NULL
+    output$endemism <- leaflet::renderLeaflet({
+      map<- data$Stack@endemism.map
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(map), title = "Endemism")
     })
-    output$Diversity <- renderPlot({
-      if (!is.null(ranges$x)) {diversity = crop(data$Stack@diversity.map, c(ranges$x, ranges$y))} else {diversity = data$Stack@diversity.map}
-      spplot(diversity,
-             main = paste('Mean species richness error:', round(data$Stack@evaluation['mean','species.richness.error'], 3)),
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
-    })
-    output$endemism <- renderPlot({
-      if (!is.null(ranges$x)) {endemism = crop(data$Stack@endemsim.map, c(ranges$x, ranges$y))} else {endemism = data$Stack@endemism.map}
-      spplot(endemism,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
-    })
-    output$Uncertainity <- renderPlot({
-      if (!is.null(ranges$x)) {uncert = crop(data$Stack@uncertainty, c(ranges$x, ranges$y))} else {uncert = data$Stack@uncertainty}
-      spplot(uncert,
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)))
+    output$Uncertainity <- leaflet::renderLeaflet({
+      map <- data$Stack@uncertainty
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(map), title = "Uncertainty")
     })
     # Evaluation
     output$evaluation.barplot <- renderPlot({
@@ -843,43 +850,40 @@ serverWD <- function(working.directory){
         if(length(data$esdms) > 0){result$ESDM = data$Stack@esdms[[which(data$esdms == input$esdmchoice)]]}
       }
     })
-    observeEvent(input$proba_dblclick, {
-      brush <- input$proba_brush
-      if (!is.null(brush)) {
-        if(!is.null(ranges$x)){ref = crop(result$ESDM@projection, c(ranges$x, ranges$y))} else {ref = result$ESDM@projection}
-        ranges$x <- c(brush$xmin, brush$xmax) * (extent(ref)[2] - extent(ref)[1]) + extent(ref)[1]
-        ranges$y <- c(brush$ymin, brush$ymax) * (extent(ref)[4] - extent(ref)[3]) + extent(ref)[3]
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
+    output$probability.title <- renderText({
+      paste0('<b>AUC :', round(result$ESDM@evaluation$AUC,3),
+             '  Kappa', round(result$ESDM@evaluation$Kappa,3), "<br>")
     })
-    observeEvent(input$esdmunzoom, {
-      ranges$x <- NULL
-      ranges$y <- NULL
+    output$probability <- leaflet::renderLeaflet({
+      map <- result$ESDM@projection
+      obs <- data.frame(X = result$ESDM@data$X[which(result$ESDM@data$Presence == 1)],
+                        Y = result$ESDM@data$Y[which(result$ESDM@data$Presence == 1)])
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                   values(map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+        leaflet::addCircles(data = obs, lng = ~ X, lat = ~ Y, radius = 1) %>%
+        leaflet::addLegend(pal = pal, values = values(map), title = "Habitat\nsuitability")
     })
-    output$probability <- renderPlot({
-      if (!is.null(ranges$x)) {proba = crop(result$ESDM@projection, c(ranges$x, ranges$y))} else {proba = result$ESDM@projection}
-      spplot(proba,
-             main = paste('AUC :',round(result$ESDM@evaluation$AUC,3),'  Kappa',round(result$ESDM@evaluation$Kappa,3)),
-             xlab = 'Longitude (\u02DA)',
-             ylab = 'Latitude (\u02DA)',
-             col.regions = rev(terrain.colors(10000)),
-             sp.layout=list(SpatialPoints(data.frame(X = result$ESDM@data$X[which(result$ESDM@data$Presence == 1)],
-                                                     Y = result$ESDM@data$Y[which(result$ESDM@data$Presence == 1)])),
-                            pch = 16, cex = 0.7, col = 'black'))
+    output$niche <- leaflet::renderLeaflet({
+      map<- reclassify(result$ESDM@projection, c(-Inf,result$ESDM@evaluation$threshold,0, result$ESDM@evaluation$threshold,Inf,1))
+      pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                  values(map), na.color = "transparent")
+      leaflet::leaflet() %>%
+        leaflet::addTiles() %>%
+        leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+        leaflet::addLegend(pal = pal, values = values(map), title = "Niche")
     })
-    output$niche <- renderPlot({
-      niche.map = reclassify(result$ESDM@projection, c(-Inf,result$ESDM@evaluation$threshold,0, result$ESDM@evaluation$threshold,Inf,1))
-      if (!is.null(ranges$x)) {niche.map = crop(niche.map, c(ranges$x, ranges$y))}
-      spplot(niche.map,
-             main = paste('AUC :',round(result$ESDM@evaluation$AUC,3),'  Kappa',round(result$ESDM@evaluation$Kappa,3)),
-             col.regions = rev(terrain.colors(10000)))
-    })
-    output$esdm.uncertainty <- renderPlot({
+    output$esdm.uncertainty <- leaflet::renderLeaflet({
       if(!inherits(result$ESDM,'Algorithm.SDM')) {
-        if (!is.null(ranges$x)) {uncert.map = crop(result$ESDM@uncertainty, c(ranges$x, ranges$y))} else {uncert.map = result$ESDM@uncertainty}
-        spplot(uncert.map, col.regions = rev(terrain.colors(10000)))
+        map <- result$ESDM@uncertainty
+        pal <- leaflet::colorNumeric(rev(terrain.colors(1000)),
+                                     values(map), na.color = "transparent")
+        leaflet::leaflet() %>%
+          leaflet::addTiles() %>%
+          leaflet::addRasterImage(map, colors = pal, opacity = 0.8) %>%
+          leaflet::addLegend(pal = pal, values = values(map), title = "Uncertainty")
       }
     })
     # Evaluation

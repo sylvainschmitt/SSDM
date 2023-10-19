@@ -4,9 +4,11 @@
 \name{Occurrences}
 \alias{Occurrences}
 \title{Plant occurrences data frame}
-\format{A data frame with 57 rows and 3 variables: \describe{
+\format{
+A data frame with 57 rows and 3 variables: \describe{
   \item{SPECIES}{Species of the occurrence} \item{LONGITUDE}{Longitude of the
-  occurrence} \item{LATITUDE}{Latitude of the occurrence} }}
+  occurrence} \item{LATITUDE}{Latitude of the occurrence} }
+}
 \usage{
 Occurrences
 }

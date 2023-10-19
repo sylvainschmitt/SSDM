@@ -4,9 +4,19 @@
 \alias{load_occ}
 \title{Load occurrence data}
 \usage{
-load_occ(path = getwd(), Env, file = NULL, ..., Xcol = "Longitude",
-  Ycol = "Latitude", Spcol = NULL, GeoRes = TRUE,
-  reso = max(res(Env@layers[[1]])), verbose = TRUE, GUI = FALSE)
+load_occ(
+  path = getwd(),
+  Env,
+  file = NULL,
+  ...,
+  Xcol = "Longitude",
+  Ycol = "Latitude",
+  Spcol = NULL,
+  GeoRes = TRUE,
+  reso = max(res(Env@layers[[1]])),
+  verbose = TRUE,
+  GUI = FALSE
+)
 }
 \arguments{
 \item{path}{character. Path to the directory that contains the occurrence table.}
