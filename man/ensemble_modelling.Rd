@@ -184,7 +184,7 @@ evaluation, algorithm correlation matrix and variable importance).
  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
  \item{control}{list (created with \code{\link[stats]{glm.control}}).
  Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}.
- 'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
+ 'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_old|/(|dev| + 0.1) < eps}.
  'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 }
 

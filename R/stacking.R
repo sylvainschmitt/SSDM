@@ -100,7 +100,7 @@ NULL
 #'  J.M. Calabrese, G. Certain, C.  Kraan, & C.F. Dormann (2014) "Stacking
 #'  species distribution  models  and  adjusting  bias  by linking them to
 #'  macroecological models." \emph{Global Ecology and Biogeography} 23:99-112
-#'  \url{http://portal.uni-freiburg.de/biometrie/mitarbeiter/dormann/calabrese2013globalecolbiogeogr.pdf}
+#'  \url{https://onlinelibrary.wiley.com/doi/full/10.1111/geb.12102}
 #'
 #'  M. D. Crisp, S. Laffan, H. P. Linder & A. Monro (2001) "Endemism in the
 #'  Australian flora"  \emph{Journal of Biogeography} 28:183-198

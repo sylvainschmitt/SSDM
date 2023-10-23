@@ -19,5 +19,8 @@ changes shows that we are able to assume all the needed dependencies.
 
 ## Resubmission
 
-This is a resubmission. In this version I have removed rgdal and sp 
-from the package dependencies following r-spatial package archiving.
+This is a resubmission. In this version I have:
+
+- removed rgdal and sp from the package dependencies following r-spatial package archiving
+- updated invalid URLs
+- removed lost braces from documentation

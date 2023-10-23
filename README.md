@@ -2,8 +2,8 @@ SSDM: Stacked species distribution modelling
 ================
 
 [![R-CMD-check](https://github.com/sylvainschmitt/SSDM/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sylvainschmitt/SSDM/actions/workflows/R-CMD-check.yaml)
-[![Downloads](http://cranlogs.r-pkg.org/badges/SSDM?color=brightgreen)](http://www.r-pkg.org/pkg/SSDM) 
-[![Codecov test coverage](https://codecov.io/gh/sylvainschmitt/SSDM/branch/master/graph/badge.svg)](https://app.codecov.io/gh/sylvainschmitt/SSDM?branch=master) [![Research software impact](http://depsy.org/api/package/cran/SSDM/badge.svg)](http://depsy.org/package/r/SSDM) [![Gitter](https://badges.gitter.im/S-SDM/community.svg)](https://gitter.im/S-SDM/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Downloads](http://cranlogs.r-pkg.org/badges/SSDM?color=brightgreen)](https://www.r-pkg.org/pkg/SSDM) 
+[![Codecov test coverage](https://codecov.io/gh/sylvainschmitt/SSDM/branch/master/graph/badge.svg)](https://app.codecov.io/gh/sylvainschmitt/SSDM?branch=master) [![Research software impact](http://depsy.org/api/package/cran/SSDM/badge.svg)](http://depsy.org/package/r/SSDM)
 
 SSDM is a package to map species richness and endemism based on stacked species distribution models (SSDM). Individual SDMs can be created using a single or multiple algorithms (ensemble SDMs). For each species, an SDM can yield a habitat suitability map, a binary map, a between-algorithm variance map, and can assess variable importance, algorithm accuracy, and between-algorithm correlation. Methods to stack individual SDMs include summing individual probabilities and thresholding then summing. Thresholding can be based on a specific evaluation metric or by drawing repeatedly from a Bernouilli distribution. The SSDM package also provides a user-friendly interface `gui`.
 
@@ -16,7 +16,7 @@ Please be aware that SSDM package use a lot of dependencies (see [`DESCRIPTION`]
 
 ### Install from Github
 
-You can install the latest version of **SSDM** from Github using the [`devtools`](https://github.com/hadley/devtools) package:
+You can install the latest version of **SSDM** from Github using the [`devtools`](https://github.com/r-lib/devtools) package:
 
 ``` r
 if (!requireNamespace("devtools", quietly = TRUE))

@@ -12,3 +12,4 @@ ToDo.md
 ^\.github$
 ^codecov\.yml$
 ^\.covrignore$
+^CRAN-SUBMISSION$
