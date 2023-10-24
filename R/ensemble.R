@@ -1,5 +1,5 @@
 #' @include Algorithm.SDM.R checkargs.R
-#' @importFrom raster raster stack reclassify beginCluster clusterR endCluster
+#' @importFrom raster raster stack reclassify
 NULL
 
 #'Methods to assemble multiple algorithms in an ensemble SDM
@@ -247,14 +247,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         if (verbose) {
           cat("uncertainty mapping...")
         }
-        if(cores>0){
-          beginCluster(cores)
-          esdm@uncertainty <- clusterR(projections, fun=function(x) calc(x, var))
-          endCluster()
-        }
-        else{
-          esdm@uncertainty <- calc(projections, var)
-        }
+        esdm@uncertainty <- calc(projections, var)
         names(esdm@uncertainty) <- "uncertainty map"
         if (verbose) {
           cat("   done \n")
