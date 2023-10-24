@@ -4,8 +4,7 @@
 #' @importFrom raster stack writeRaster
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
-#' @importFrom parallel detectCores
-#' @importFrom snow makeCluster stopCluster
+#' @importFrom parallel detectCores makeCluster stopCluster
 NULL
 
 #'Build an SSDM that assembles multiple algorithms and species.
@@ -162,7 +161,7 @@ NULL
 #'  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
 #'  \item{control}{list (created with \code{\link[stats]{glm.control}}).
 #'  Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}.
-#'  'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
+#'  'epsilon' is a numeric and defines the positive convergence tolerance (eps).
 #'  'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 #'
 #'@section Generalized additive model (\strong{GAM}) : Uses the \code{gam}
@@ -218,7 +217,7 @@ NULL
 #'@section Maximum Entropy (\strong{MAXENT}) : Uses the \code{maxent} function
 #'  from the package 'dismo'. Make sure that you have correctly installed the
 #'  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
-#'  at \url{https://www.cs.princeton.edu/~schapire/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
+#'  at \url{https://biodiversityinformatics.amnh.org/open_source/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
 #'  No specific defaults are set with this method.
 #'
 #'@section Artificial Neural Network (\strong{ANN}) : Uses the \code{nnet}

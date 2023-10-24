@@ -5,7 +5,7 @@ test_that('Stack parallelization', {
     SSDM <- stack_modelling(c('CTA', 'MARS'), Occurrences, Env, rep = 1,
                             Xcol = 'LONGITUDE', Ycol = 'LATITUDE', Spcol = 'SPECIES',
                             ensemble.thresh = c(0), method="pSSDM", uncertainty = TRUE,
-                            verbose = FALSE, cores = 2, parmode = i , minimal.memory = TRUE, tmp = FALSE)
+                            verbose = FALSE, cores = 2, parmode = i , tmp = FALSE)
     expect_is(SSDM, 'Stacked.SDM')
   }
 })

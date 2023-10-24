@@ -4,8 +4,7 @@
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom iterators icount
-#' @importFrom parallel detectCores
-#' @importFrom snow makeCluster stopCluster
+#' @importFrom parallel detectCores makeCluster stopCluster
 NULL
 
 #'Build an ensemble SDM that assembles multiple algorithms
@@ -181,7 +180,7 @@ NULL
 #'@section Maximum Entropy (\strong{MAXENT}) : Uses the \code{maxent} function
 #'  from the package 'dismo'. Make sure that you have correctly installed the
 #'  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
-#'  at \url{https://www.cs.princeton.edu/~schapire/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
+#'  at \url{https://biodiversityinformatics.amnh.org/open_source/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
 #'  No specific defaults are set with this method.
 #'
 #'@section Artificial Neural Network (\strong{ANN}) : Uses the \code{nnet}

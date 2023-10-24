@@ -43,8 +43,7 @@ Imports:
     parallel (>= 3.5.2),
     leaflet (>= 2.2.0),
     magrittr (>= 2.0.3),
-    sdm (>= 1.1.8),
-    snow (>= 0.4-4)
+    sdm (>= 1.1.8)
 Depends:
     R (>= 3.2.2)
 Collate:

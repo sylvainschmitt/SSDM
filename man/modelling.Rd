@@ -151,12 +151,12 @@ evaluation table.
 }
 \section{Generalized linear model (\strong{GLM}) }{
  Uses the \code{glm}
- function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).  
+ function from the package 'stats'. You can set parameters by supplying \code{glm.args=list(arg1=val1,arg2=val2)} (see \code{\link[stats]{glm}} for all settable arguments).
  The following parameters have defaults: \describe{
  \item{test}{character. Test used to evaluate the SDM, default 'AIC'.}
  \item{control}{list (created with \code{\link[stats]{glm.control}}).
- Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}. 
- 'epsilon' is a numeric and defines the positive convergence tolerance (eps). The iterations converge when \emph{|dev - dev_{old}|/(|dev| + 0.1) < eps}.
+ Contains parameters for controlling the fitting process. Default is \code{glm.control(epsilon = 1e-08, maxit = 500)}.
+ 'epsilon' is a numeric and defines the positive convergence tolerance (eps).
  'maxit' is an integer giving the maximal number of IWLS (Iterative Weighted Last Squares) iterations.} }
 }
 
@@ -165,7 +165,7 @@ evaluation table.
  function from the package 'mgcv'. You can set parameters by supplying \code{gam.args=list(arg1=val1,arg2=val2)} (see \code{\link[mgcv]{gam}} for all settable arguments).
  The following parameters have defaults: \describe{\item{test}{character.
  Test used to evaluate the model, default 'AIC'.} \item{control}{list (created with \code{\link[mgcv]{gam.control}}).
- Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}. 
+ Contains parameters for controlling the fitting process. Default is \code{gam.control(epsilon = 1e-08, maxit = 500)}.
  'epsilon' is a numeric used for judging the conversion of the GLM IRLS (Iteratively Reweighted Least Squares) loop. 'maxit' is an integer giving the maximum number of IRLS iterations to perform.} }
 }
 
@@ -204,7 +204,7 @@ evaluation table.
  function from the package 'rpart'. You can set parameters by supplying \code{cta.args=list(arg1=val1,arg2=val2)} (see \code{\link[rpart]{rpart}} for all settable arguments).
  The following parameters have defaults: \describe{
  \item{control}{list (created with \code{\link[rpart]{rpart.control}}).
- Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}. 
+ Contains parameters for controlling the rpart fit. The default is \code{rpart.control(minbucket=1, xval=3)}.
  'mibucket' is an integer giving the minimum number of observations in any
  terminal node. 'xval' is an integer defining the number of
  cross-validations.} }
@@ -224,7 +224,7 @@ evaluation table.
  Uses the \code{maxent} function
  from the package 'dismo'. Make sure that you have correctly installed the
  maxent.jar file in the folder ~\\R\\library\\version\\dismo\\java available
- at \url{https://www.cs.princeton.edu/~schapire/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
+ at \url{https://biodiversityinformatics.amnh.org/open_source/maxent/}. As with the other algorithms, you can set parameters by supplying \code{maxent.args=list(arg1=val1,arg2=val2)}. Mind that arguments are passed from dismo to the MAXENT software again as an argument list  (see \code{\link[dismo]{maxent}} for more details).
  No specific defaults are set with this method.
 }
 
