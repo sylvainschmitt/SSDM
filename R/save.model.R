@@ -66,7 +66,7 @@ setMethod('save.esdm', 'Ensemble.SDM', function (esdm,
   if (verbose) {
     cat("   tables ...")
   }
-  write.csv(esdm@evaluation, paste0(path, "/", name, "/Tables/esdmeval.csv"))
+  write.csv(esdm@evaluation, paste0(path, "/", name, "/Tables/ESDMeval.csv"))
   write.csv(esdm@algorithm.evaluation, paste0(path, "/", name, "/Tables/AlgoEval.csv"))
   write.csv(esdm@algorithm.correlation, paste0(path, "/", name, "/Tables/AlgoCorr.csv"))
   write.csv(esdm@variable.importance, paste0(path, "/", name, "/Tables/VarImp.csv"))
