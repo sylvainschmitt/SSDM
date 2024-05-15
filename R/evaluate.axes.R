@@ -28,7 +28,7 @@ setMethod('evaluate.axes', "Algorithm.SDM", function(obj, cv, cv.param, final.fi
       } else {
         model.axes <- get_model(obj.axes, ...)
         predicted.values <- predict(model.axes, obj.axes@data[,-which(names(obj.axes@data)=="train")])
-        c <- cor(predicted.values, o.predicted.values)[1,1]
+        c <- cor(predicted.values, o.predicted.values)
         if (is.na(c) || !is.numeric(c)) {
           c <- 0
         }
