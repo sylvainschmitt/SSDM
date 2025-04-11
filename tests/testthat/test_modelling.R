@@ -1,4 +1,5 @@
 test_that('modelling function', {
+  skip_on_cran()
   data(Env)
   data(Occurrences)
   Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')

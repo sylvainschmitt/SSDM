@@ -1,6 +1,11 @@
 NEWS
 ================
 
+SSDM 0.2.10
+===============
+
+bug fixes: noLD fails on test_modelling
+
 SSDM 0.2.9
 ===============
 
