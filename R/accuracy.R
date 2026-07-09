@@ -39,7 +39,7 @@
     }
     #create the confusion matrix ...just like using confusion.matrix command
     mat = table(bin.pred=factor(bin.pred,levels=c(0,1)),obs=factor(obs,levels=c(0,1)))
-    attr(mat,'class') = 'confusion.matrix'
+    class(mat) <- "confusion.matrix"
     #sppend data to output dataframe
     out$AUC[ii] = .auc(obs,bin.pred)
     out$omission.rate[ii] = .omission(mat)
@@ -85,35 +85,35 @@
 
 .omission <- function(mat){
   #input checks
-  if (attr(mat,'class')!='confusion.matrix') stop('mat must be of class confusion.matrix')
+  if (class(mat)!='confusion.matrix') stop('mat must be of class confusion.matrix')
   #return the value
   return(mat[1,2]/sum(mat[,2]))
 }
 
 .sensitivity = function(mat) {
   #input checks
-  if (attr(mat,'class')!='confusion.matrix') stop('mat must be of class confusion.matrix')
+  if (class(mat)!='confusion.matrix') stop('mat must be of class confusion.matrix')
   #return the value
   return(mat[2,2]/sum(mat[,2]))
 }
 
 .specificity = function(mat) {
   #input checks
-  if (attr(mat,'class')!='confusion.matrix') stop('mat must be of class confusion.matrix')
+  if (class(mat)!='confusion.matrix') stop('mat must be of class confusion.matrix')
   #return the value
   return(mat[1,1]/sum(mat[,1]))
 }
 
 .prop.correct = function(mat) {
   #input checks
-  if (attr(mat,'class')!='confusion.matrix') stop('mat must be of class confusion.matrix')
+  if (class(mat)!='confusion.matrix') stop('mat must be of class confusion.matrix')
   #return the value
   return(sum(diag(mat))/sum(mat))
 }
 
 .Kappa <- function(mat){
   #input checks
-  if (attr(mat,'class')!='confusion.matrix') stop('mat must be of class confusion.matrix')
+  if (class(mat)!='confusion.matrix') stop('mat must be of class confusion.matrix')
   #calculate Kappa
   n<-sum(mat)
   colsums<-as.double(apply(mat,2,sum))
