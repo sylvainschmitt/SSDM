@@ -14,30 +14,36 @@
 #' @importFrom utils lsf.str read.csv read.csv2 tail write.csv
 NULL
 
-setClass('SDM',
-         representation(name = 'character',
-                        projection = 'Raster',
-                        binary = 'Raster',
-                        evaluation = 'data.frame',
-                        variable.importance = 'data.frame',
-                        data = 'data.frame',
-                        parameters = 'data.frame'),
-         prototype(name = character(),
-                   projection = raster(),
-                   binary = raster(),
-                   evaluation = data.frame(),
-                   variable.importance = data.frame(),
-                   data = data.frame(),
-                   parameters = data.frame()))
+setClass(
+  "SDM",
+  representation(
+    name = "character",
+    projection = "Raster",
+    binary = "Raster",
+    evaluation = "data.frame",
+    variable.importance = "data.frame",
+    data = "data.frame",
+    parameters = "data.frame"
+  ),
+  prototype(
+    name = character(),
+    projection = raster(),
+    binary = raster(),
+    evaluation = data.frame(),
+    variable.importance = data.frame(),
+    data = data.frame(),
+    parameters = data.frame()
+  )
+)
 
-setMethod('print', 'SDM', function(x, ...) {
-  cat('Object of class :', class(x)[1],'\n')
-  cat('Name :', x@name, '\n')
-  cat('Projections : ',names(x@projection),'\n')
+setMethod("print", "SDM", function(x, ...) {
+  cat("Object of class :", class(x)[1], "\n")
+  cat("Name :", x@name, "\n")
+  cat("Projections : ", names(x@projection), "\n")
   print(x@evaluation)
   print(x@variable.importance)
-  if(inherits(x, 'Ensemble.SDM')) {
-    cat('Uncertainty map :', names(x@uncertainty),'\n')
+  if (inherits(x, "Ensemble.SDM")) {
+    cat("Uncertainty map :", names(x@uncertainty), "\n")
     print(x@algorithm.evaluation)
     print(x@algorithm.correlation)
   }

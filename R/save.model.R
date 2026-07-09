@@ -28,15 +28,17 @@ NULL
 
 #' @rdname save.model
 #' @export
-setGeneric('save.esdm', function (esdm, name = strsplit(esdm@name, '.', fixed = TRUE)[[1]][1],
-                                 path = getwd(), verbose = TRUE, GUI = FALSE) {return(standardGeneric('save.esdm'))})
+setGeneric("save.esdm", function(esdm, name = strsplit(esdm@name, ".", fixed = TRUE)[[1]][1],
+                                 path = getwd(), verbose = TRUE, GUI = FALSE) {
+  return(standardGeneric("save.esdm"))
+})
 
 #' @rdname save.model
 #' @export
-setMethod('save.esdm', 'Ensemble.SDM', function (esdm,
-                                                        name = strsplit(esdm@name, '.Ensemble.SDM', fixed = TRUE)[[1]][1],
-                                                        path = getwd(),
-                                                        verbose = TRUE, GUI = FALSE) {
+setMethod("save.esdm", "Ensemble.SDM", function(esdm,
+                                                name = strsplit(esdm@name, ".Ensemble.SDM", fixed = TRUE)[[1]][1],
+                                                path = getwd(),
+                                                verbose = TRUE, GUI = FALSE) {
   # Check arguments
   .checkargs(esdm = esdm, name = name, path = path, verbose = verbose, GUI = GUI)
 
@@ -53,11 +55,17 @@ setMethod('save.esdm', 'Ensemble.SDM', function (esdm,
     cat("   rasters ...")
   }
   writeRaster(esdm@projection[[1]], paste0(path, "/", name, "/Rasters/Probability"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   writeRaster(esdm@binary[[1]], paste0(path, "/", name, "/Rasters/Binary"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   writeRaster(esdm@uncertainty, paste0(path, "/", name, "/Rasters/uncertainty"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   if (verbose) {
     cat("saved \n")
   }
@@ -80,23 +88,27 @@ setMethod('save.esdm', 'Ensemble.SDM', function (esdm,
 
 #' @rdname save.model
 #' @export
-setGeneric('save.stack', function (stack, name = 'Stack', path = getwd(), verbose = TRUE, GUI = FALSE) {return(standardGeneric('save.stack'))})
+setGeneric("save.stack", function(stack, name = "Stack", path = getwd(), verbose = TRUE, GUI = FALSE) {
+  return(standardGeneric("save.stack"))
+})
 
 #' @rdname save.model
 #' @export
-setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
-                                                                        path = getwd(),
-                                                                        verbose = TRUE, GUI = FALSE) {
+setMethod("save.stack", "Stacked.SDM", function(stack, name = "Stack",
+                                                path = getwd(),
+                                                verbose = TRUE, GUI = FALSE) {
   # Check arguments
-  .checkargs(stack = stack, name = name, path = path, verbose = verbose,
-             GUI = GUI)
+  .checkargs(
+    stack = stack, name = name, path = path, verbose = verbose,
+    GUI = GUI
+  )
 
   if (verbose) {
     cat("Saving stack species model results \n")
   }
   # Directories creation
   dir.create(path = paste0(path, "/", name))
-  path = paste0(path, "/", name)
+  path <- paste0(path, "/", name)
   dir.create(path = paste0(path, "/", "Stack"))
   dir.create(path = paste0(path, "/", "Species"))
   dir.create(path = paste0(path, "/", "Stack", "/Rasters"))
@@ -107,11 +119,17 @@ setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
     cat("   rasters ...")
   }
   writeRaster(stack@diversity.map, paste0(path, "/", "Stack", "/Rasters/Diversity"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   writeRaster(stack@endemism.map, paste0(path, "/", "Stack", "/Rasters/Endemism"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   writeRaster(stack@uncertainty, paste0(path, "/", "Stack", "/Rasters/uncertainty"),
-              "GTiff", overwrite = TRUE)
+    "GTiff",
+    overwrite = TRUE
+  )
   cat("saved \n")
 
   # Tables saving
@@ -131,8 +149,10 @@ setMethod('save.stack', 'Stacked.SDM', function (stack, name = 'Stack',
     cat("   esdms ... \n\n")
   }
   for (i in seq_len(length(stack@esdms))) {
-    save.esdm(stack@esdms[[i]], path = paste0(path, "/", "Species"), verbose = verbose,
-             GUI = GUI)
+    save.esdm(stack@esdms[[i]],
+      path = paste0(path, "/", "Species"), verbose = verbose,
+      GUI = GUI
+    )
   }
   if (verbose) {
     cat("saved \n \n")

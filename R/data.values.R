@@ -16,8 +16,10 @@ setMethod("data.values", "Algorithm.SDM", function(obj, Env, na.rm = TRUE) {
       values[, col] <- as.factor(values[, col])
       levels(values[, col]) <- Env[[i]]@data@attributes[[1]]$ID
       if (length(Env[[i]]@data@attributes[[1]]$ID) > 100) {
-        warning(paste(names(Env[[i]]), "as more than 100 levels (",
-                      length(Env[[i]]@data@attributes[[1]]$ID), ") are you sure to consider it as a factor ?"))
+        warning(paste(
+          names(Env[[i]]), "as more than 100 levels (",
+          length(Env[[i]]@data@attributes[[1]]$ID), ") are you sure to consider it as a factor ?"
+        ))
       }
     }
   }
@@ -29,8 +31,7 @@ setMethod("data.values", "Algorithm.SDM", function(obj, Env, na.rm = TRUE) {
   if (na.rm) {
     for (i in seq_len(length(Env@layers))) {
       if (length(which(is.na(obj@data[i + 3]))) > 0) {
-        obj@data <- obj@data[-c(which(is.na(obj@data[i + 3]))),
-                             ]
+        obj@data <- obj@data[-c(which(is.na(obj@data[i + 3]))), ]
       }
     }
   }

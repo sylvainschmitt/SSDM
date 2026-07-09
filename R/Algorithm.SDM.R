@@ -26,11 +26,12 @@ NULL
 #'  and \linkS4class{Stacked.SDM} an S4 class for SSDMs.
 #'
 #' @export
-setClass('Algorithm.SDM',
-         contains = 'SDM')
+setClass("Algorithm.SDM",
+  contains = "SDM"
+)
 
 # Class generator
-Algorithm.SDM <- function(algorithm = 'Algorithm',
+Algorithm.SDM <- function(algorithm = "Algorithm",
                           name = character(),
                           projection = raster(),
                           binary = raster(),
@@ -38,40 +39,50 @@ Algorithm.SDM <- function(algorithm = 'Algorithm',
                           variable.importance = data.frame(),
                           data = data.frame(),
                           parameters = data.frame(matrix(nrow = 1, ncol = 0))) {
-  object.class <- paste0(algorithm,'.SDM')
+  object.class <- paste0(algorithm, ".SDM")
   return(new(object.class,
-             name = name,
-             binary = binary,
-             projection = projection,
-             evaluation = evaluation,
-             variable.importance = variable.importance,
-             data = data,
-             parameters = parameters))
+    name = name,
+    binary = binary,
+    projection = projection,
+    evaluation = evaluation,
+    variable.importance = variable.importance,
+    data = data,
+    parameters = parameters
+  ))
 }
 
-setClass('GLM.SDM',
-         contains = 'Algorithm.SDM')
+setClass("GLM.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('GAM.SDM',
-         contains = 'Algorithm.SDM')
+setClass("GAM.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('MARS.SDM',
-         contains = 'Algorithm.SDM')
+setClass("MARS.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('CTA.SDM',
-         contains = 'Algorithm.SDM')
+setClass("CTA.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('GBM.SDM',
-         contains = 'Algorithm.SDM')
+setClass("GBM.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('RF.SDM',
-         contains = 'Algorithm.SDM')
+setClass("RF.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('MAXENT.SDM',
-         contains = 'Algorithm.SDM')
+setClass("MAXENT.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('ANN.SDM',
-         contains = 'Algorithm.SDM')
+setClass("ANN.SDM",
+  contains = "Algorithm.SDM"
+)
 
-setClass('SVM.SDM',
-         contains = 'Algorithm.SDM')
+setClass("SVM.SDM",
+  contains = "Algorithm.SDM"
+)

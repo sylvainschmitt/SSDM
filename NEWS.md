@@ -1,6 +1,11 @@
 NEWS
 ================
 
+SSDM 0.2.12
+===============
+
+bug fixes: #142 fixing deprecated xfun::attr with a more robust approach following @billy34
+
 SSDM 0.2.11
 ===============
 

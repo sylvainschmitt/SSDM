@@ -36,7 +36,7 @@ Rasters of environmental data need to have the same coordinate reference system 
 ```{r Environmental variables}
 library(SSDM)
 library(raster)
-Env <- load_var(system.file('extdata',  package = 'SSDM'), categorical = 'SUBSTRATE', verbose = FALSE)
+Env <- load_var(system.file("extdata", package = "SSDM"), categorical = "SUBSTRATE", verbose = FALSE)
 Env
 ```
 
@@ -52,9 +52,11 @@ Species distribution models are built on natural history records indicating wher
 ‘SSDM’ include `load_occ` function to read raw .csv or .txt files including your natural history records. We will work with natural history records from five Cryptocarya species native to New Caledonia (see `?Occurrences`).  
 
 ```{r Natural history records}
-Occ <- load_occ(path = system.file('extdata',  package = 'SSDM'), Env,
-         Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-         file = 'Occurrences.csv', sep = ',', verbose = FALSE)
+Occ <- load_occ(
+  path = system.file("extdata", package = "SSDM"), Env,
+  Xcol = "LONGITUDE", Ycol = "LATITUDE",
+  file = "Occurrences.csv", sep = ",", verbose = FALSE
+)
 head(Occ)
 ```
 
@@ -72,9 +74,11 @@ head(Occ)
 In the example below we build a distribution model of Cryptocarya *elliptica* with a subset of the occurrences of the species and for one single algorithm, here generalized linear models. The package ‘SSDM’ currently includes eight commonly used algorithms for modelling species distributions: generalized additive models (GAM), generalized linear models (GLM), multivariate adaptive regression splines (MARS), classification tree analysis (CTA), generalized boosted models (GBM), maximum entropy (MAXENT), artificial neural networks (ANN), random forests (RF), and support vector machines (SVM). Default parameters of the dependent R package of each algorithm were conserved but most of them remain settable (see section 'Advanced settings').
 
 ```{r SDM}
-SDM <- modelling('GLM', subset(Occurrences, Occurrences$SPECIES == 'elliptica'), 
-                 Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE', verbose = FALSE)
-plot(SDM@projection, main = 'SDM\nfor Cryptocarya elliptica\nwith GLM algorithm')
+SDM <- modelling("GLM", subset(Occurrences, Occurrences$SPECIES == "elliptica"),
+  Env,
+  Xcol = "LONGITUDE", Ycol = "LATITUDE", verbose = FALSE
+)
+plot(SDM@projection, main = "SDM\nfor Cryptocarya elliptica\nwith GLM algorithm")
 ```
 
 **Note that:** The package ‘SSDM’ encompasses a large methodology offered by literature. Have a look at all parameters for the `modelling` function with `?modelling`. 
@@ -94,10 +98,12 @@ The package also provides an uncertainty map representing the between-algorithms
 
 
 ```{r ESDM}
-ESDM <- ensemble_modelling(c('CTA', 'MARS'), subset(Occurrences, Occurrences$SPECIES == 'elliptica'),
-                           Env, rep = 1, Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-                          ensemble.thresh = 0, verbose = FALSE)
-plot(ESDM@projection, main = 'ESDM\nfor Cryptocarya elliptica\nwith CTA and MARS algorithms')
+ESDM <- ensemble_modelling(c("CTA", "MARS"), subset(Occurrences, Occurrences$SPECIES == "elliptica"),
+  Env,
+  rep = 1, Xcol = "LONGITUDE", Ycol = "LATITUDE",
+  ensemble.thresh = 0, verbose = FALSE
+)
+plot(ESDM@projection, main = "ESDM\nfor Cryptocarya elliptica\nwith CTA and MARS algorithms")
 ```
 
 **Note that:** the package ‘SSDM’ includes a large methodology offered by literature. Have a look at all parameters for the `ensemble_modelling` function with `?ensemble_modelling`.
@@ -108,10 +114,12 @@ Finally, we build a stacked species distribution model using CTA and SVM algorit
 
 
 ```{r SSDM}
-SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1, ensemble.thresh = 0,
-                       Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-                       Spcol = 'SPECIES', method = "pSSDM", verbose = FALSE)
-plot(SSDM@diversity.map, main = 'SSDM\nfor Cryptocarya genus\nwith CTA and SVM algorithms')
+SSDM <- stack_modelling(c("CTA", "SVM"), Occurrences, Env,
+  rep = 1, ensemble.thresh = 0,
+  Xcol = "LONGITUDE", Ycol = "LATITUDE",
+  Spcol = "SPECIES", method = "pSSDM", verbose = FALSE
+)
+plot(SSDM@diversity.map, main = "SSDM\nfor Cryptocarya genus\nwith CTA and SVM algorithms")
 ```
 
 Five other stacking methods are available (see references in `?stack_modelling` for details): 
@@ -155,7 +163,7 @@ In addition to species richness, endemism is an important feature for conservati
 2. the corrected weighted endemism index
 
 ```{r SSDM endemism}
-plot(SSDM@endemism.map, main = 'Endemism map\nfor Cryptocarya genus\nwith CTA and SVM algorithms')
+plot(SSDM@endemism.map, main = "Endemism map\nfor Cryptocarya genus\nwith CTA and SVM algorithms")
 ```
 
 ### Summary plot
@@ -174,8 +182,8 @@ To investigate impacts of changing environmental conditions on species distribut
 The following example shows the projection of our previously built SDM object to an environment with reduced rainfall and increased temperature.
 
 ```{r project}
-Env_new <- stack(Env[[1]]-0.3,Env[[2]],Env[[3]]+0.2)
-SDM_projection <- project(SDM,Env_new)
+Env_new <- stack(Env[[1]] - 0.3, Env[[2]], Env[[3]] + 0.2)
+SDM_projection <- project(SDM, Env_new)
 ```
 
 The function by default takes the supplied SDM object and returns it with updated `@projection` slots and, in the case of ESDMs and SSDMs, also updates the `@uncertainty`, `@diversity.map` and `@endemism.map`. If the original model should be kept, the resulting maps can also be returned as a list by setting `update.projections=FALSE`. Further, for ESDMs or SSDMs the projections of the individual models they are composed of can be saved by setting `SDM.projections=TRUE`.

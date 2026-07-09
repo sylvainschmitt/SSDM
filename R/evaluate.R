@@ -32,19 +32,19 @@ NULL
 #' @return SDM/ESDM/SSDM evaluation in a data.frame
 #'
 #' @examples
-#'
 #' \dontrun{
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
 #' # SSDM building
-#' SSDM <- stack_modelling(c('CTA', 'SVM'), Occurrences, Env, rep = 1,
-#'                        Xcol = 'LONGITUDE', Ycol = 'LATITUDE',
-#'                        Spcol = 'SPECIES')
+#' SSDM <- stack_modelling(c("CTA", "SVM"), Occurrences, Env,
+#'   rep = 1,
+#'   Xcol = "LONGITUDE", Ycol = "LATITUDE",
+#'   Spcol = "SPECIES"
+#' )
 #'
 #' # Evaluation
 #' evaluate(SSDM)
-#'
 #' }
 #'
 #' @references Pottier, J., Dubuis, A., Pellissier, L., Maiorano, L., Rossier,
@@ -58,11 +58,13 @@ NULL
 
 #' @rdname evaluate
 #' @export
-setGeneric('evaluate', function(obj, ...) {return(standardGeneric('evaluate'))})
+setGeneric("evaluate", function(obj, ...) {
+  return(standardGeneric("evaluate"))
+})
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh = 'SES', metric = NULL, thresh=1001, Env, ...) {
+setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.data = "all", bin.thresh = "SES", metric = NULL, thresh = 1001, Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -70,7 +72,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
   }
   obj@parameters$cv <- cv
   obj@parameters$cv.param <- text.cv.param
-  if(!is.null(metric)){
+  if (!is.null(metric)) {
     warning("Argument 'metric' is deprecated and will be removed in future versions. Please consider using 'bin.thresh' instead.")
     obj@parameters$metric <- metric
   } else {
@@ -82,14 +84,23 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
     # Binary data of SDM model
 
     # translate thresholding terms (metric only for backwards compatibility)
-    if(!is.null(metric)){
-      metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
-                       TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
-                       LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    if (!is.null(metric)) {
+      metric <- switch(metric,
+        Kappa = "maxKappa",
+        CCR = "max.prop.correct",
+        TSS = "max.sensitivity+specificity",
+        SES = "sensitivity=specificity",
+        LW = "min.occurence.prediction",
+        ROC = "min.ROC.plot.distance"
+      )
     } else {
-      bin.thresh <- switch(bin.thresh, Kappa = "kappa", NOM = "no_omission",
-                           TSS = "spec_sens", SES = "equal_sens_spec",
-                           EP = "prevalence")
+      bin.thresh <- switch(bin.thresh,
+        Kappa = "kappa",
+        NOM = "no_omission",
+        TSS = "spec_sens",
+        SES = "equal_sens_spec",
+        EP = "prevalence"
+      )
     }
 
 
@@ -102,7 +113,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         for (p in 0:1) {
           datap <- data[which(data$Presence == p), ]
           datap$train[sample.int(length(datap$train), round(length(datap$train) *
-                                                              cv.param[1]))] <- TRUE
+            cv.param[1]))] <- TRUE
           data[which(data$Presence == p), ] <- datap
         }
         eval.testdata <- data[-which(data$train), ]
@@ -113,18 +124,18 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
         predicted.values <- c(predict(model, eval.testdata))
-        if(!is.null(metric)){
+        if (!is.null(metric)) {
           threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
           threshval <- mean(threshval[[which(names(threshval) == metric)]])
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)],tr= threshval)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], tr = threshval)
         } else {
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
-          threshval <- dismo::threshold(roweval,stat=bin.thresh)
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)])
+          threshval <- dismo::threshold(roweval, stat = bin.thresh)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], tr = threshval)
         }
-        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+        caleval <- sdm::calibration(eval.testdata$Presence, predicted.values, nbin = 20, weight = TRUE)
 
-        evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+        evaldf <- data.frame(threshold = threshval, AUC = roweval@auc, omission.rate = roweval@MCR, sensitivity = roweval@TPR, specificity = roweval@TNR, prop.correct = roweval@CCR, Kappa = roweval@kappa, calibration = caleval@statistic)
         if (i == 1) {
           evaluation <- evaldf
         } else {
@@ -132,7 +143,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         }
       }
     } else if (cv == "k-fold") {
-      if(cv.param[1]<2){
+      if (cv.param[1] < 2) {
         warning("less than 2 folds selected, automatic adjustment to k=5")
         cv.param[1] <- 5
       }
@@ -146,7 +157,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
           indices <- seq_len(length(datap$fold))
           fold <- 1
           while (length(indices) > 0) {
-            j <- ifelse(length(indices)==1,indices,sample(indices, 1))
+            j <- ifelse(length(indices) == 1, indices, sample(indices, 1))
             datap$fold[j] <- fold
             indices <- indices[-which(indices == j)]
             if (fold != k) {
@@ -167,18 +178,18 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
           evalobj@data <- eval.traindata
           model <- get_model(evalobj, ...)
           predicted.values <- c(predict(model, eval.testdata))
-          if(!is.null(metric)){
+          if (!is.null(metric)) {
             threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
             threshval <- mean(threshval[[which(names(threshval) == metric)]])
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], threshval)
           } else {
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
-            threshval <- dismo::threshold(roweval,stat=bin.thresh)
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)])
+            threshval <- dismo::threshold(roweval, stat = bin.thresh)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], threshval)
           }
-          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+          caleval <- sdm::calibration(eval.testdata$Presence, predicted.values, nbin = 20, weight = TRUE)
 
-          evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+          evaldf <- data.frame(threshold = threshval, AUC = roweval@auc, omission.rate = roweval@MCR, sensitivity = roweval@TPR, specificity = roweval@TNR, prop.correct = roweval@CCR, Kappa = roweval@kappa, calibration = caleval@statistic)
           if (i == 1 && j == 1) {
             evaluation <- evaldf
           } else {
@@ -198,24 +209,23 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
         model <- get_model(evalobj, ...)
         predicted.values[j] <- c(predict(model, eval.testdata))
       }
-      if(!is.null(metric)){
+      if (!is.null(metric)) {
         threshval <- .optim.thresh(data$Presence, predicted.values, thresh)
         threshval <- mean(threshval[[which(names(threshval) == metric)]])
-        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
+        roweval <- dismo::evaluate(p = predicted.values[which(data$Presence == 1)], a = predicted.values[which(data$Presence == 0)], threshval)
       } else {
-        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)])
-        threshval <- dismo::threshold(roweval,stat=bin.thresh)
-        roweval <- dismo::evaluate(p=predicted.values[which(data$Presence==1)], a=predicted.values[which(data$Presence==0)], threshval)
+        roweval <- dismo::evaluate(p = predicted.values[which(data$Presence == 1)], a = predicted.values[which(data$Presence == 0)])
+        threshval <- dismo::threshold(roweval, stat = bin.thresh)
+        roweval <- dismo::evaluate(p = predicted.values[which(data$Presence == 1)], a = predicted.values[which(data$Presence == 0)], threshval)
       }
-      caleval <- sdm::calibration(data$Presence,predicted.values, nbin=20, weight=TRUE)
+      caleval <- sdm::calibration(data$Presence, predicted.values, nbin = 20, weight = TRUE)
 
-      evaluation <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+      evaluation <- data.frame(threshold = threshval, AUC = roweval@auc, omission.rate = roweval@MCR, sensitivity = roweval@TPR, specificity = roweval@TNR, prop.correct = roweval@CCR, Kappa = roweval@kappa, calibration = caleval@statistic)
     }
     obj@evaluation <- evaluation[1, ]
     for (i in seq_len(length(evaluation))) {
       obj@evaluation[i] <- mean(evaluation[, i], na.rm = TRUE)
     }
-
   } else {
     # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
@@ -223,24 +233,25 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
 
   # assign train/test fractions for final model training
 
-  if(final.fit.data=='holdout'){
+  if (final.fit.data == "holdout") {
     obj@data <- data
   }
-  if(is.numeric(final.fit.data)){
-    if(final.fit.data>0 & final.fit.data<=1){
+  if (is.numeric(final.fit.data)) {
+    if (final.fit.data > 0 & final.fit.data <= 1) {
       data <- obj@data
       data$train <- FALSE
       for (p in 0:1) {
         datap <- data[which(data$Presence == p), ]
-        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[3]))] <- TRUE
+        datap$train[sample.int(length(datap$train), round(length(datap$train) * cv.param[3]))] <- TRUE
         data[which(data$Presence == p), ] <- datap
       }
       obj@data <- data
-    } else{
+    } else {
       warning("Training fraction needs to be between 0 and 1 for sampling, assuming 1")
-      final.fit.data <- 'all'}
+      final.fit.data <- "all"
+    }
   }
-  if(final.fit.data=='all'){
+  if (final.fit.data == "all") {
     data$train <- TRUE
     obj@data <- data
   }
@@ -251,7 +262,7 @@ setMethod("evaluate", "Algorithm.SDM", function(obj, cv, cv.param, final.fit.dat
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='all', bin.thresh = 'SES', metric = NULL, thresh = 1001, Env, ...) {
+setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data = "all", bin.thresh = "SES", metric = NULL, thresh = 1001, Env, ...) {
   # Parameters
   text.cv.param <- character()
   for (i in seq_len(length(cv.param))) {
@@ -260,7 +271,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
   obj@parameters$cv <- cv
   obj@parameters$cv.param <- text.cv.param
 
-  if(!is.null(metric)){
+  if (!is.null(metric)) {
     warning("Argument 'metric' is deprecated and will be removed in future versions. Please consider using 'bin.thresh' instead.")
     obj@parameters$metric <- metric
   } else {
@@ -271,14 +282,23 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
     # Binary data of SDM model
 
     # translate thresholding terms (metric only for backwards compatibility)
-    if(!is.null(metric)){
-      metric <- switch(metric, Kappa = "maxKappa", CCR = "max.prop.correct",
-                       TSS = "max.sensitivity+specificity", SES = "sensitivity=specificity",
-                       LW = "min.occurence.prediction", ROC = "min.ROC.plot.distance")
+    if (!is.null(metric)) {
+      metric <- switch(metric,
+        Kappa = "maxKappa",
+        CCR = "max.prop.correct",
+        TSS = "max.sensitivity+specificity",
+        SES = "sensitivity=specificity",
+        LW = "min.occurence.prediction",
+        ROC = "min.ROC.plot.distance"
+      )
     } else {
-      bin.thresh <- switch(bin.thresh, Kappa = "kappa", CCR = "no_omission",
-                           TSS = "spec_sens", SES = "equal_sens_spec",
-                           EP = "prevalence")
+      bin.thresh <- switch(bin.thresh,
+        Kappa = "kappa",
+        CCR = "no_omission",
+        TSS = "spec_sens",
+        SES = "equal_sens_spec",
+        EP = "prevalence"
+      )
     }
 
     if (cv == "holdout") {
@@ -288,7 +308,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         # only sample test presences, not test background points
         for (p in 0:1) {
           datap <- data[which(data$Presence == p), ]
-          if(p==0){
+          if (p == 0) {
             datap$train <- TRUE
             bgdata <- datap
           } else {
@@ -298,7 +318,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         }
         eval.testdata <- data[-which(data$train), ]
         # add background points as test absences (can be the same as training, if not spatially biased)
-        eval.testdata <- rbind(eval.testdata,bgdata)
+        eval.testdata <- rbind(eval.testdata, bgdata)
         eval.testdata <- eval.testdata[-which(names(data) == "train")]
         eval.traindata <- data[which(data$train), ]
 
@@ -306,18 +326,18 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         evalobj@data <- eval.traindata
         model <- get_model(evalobj, ...)
         predicted.values <- c(predict(model, eval.testdata))
-        if(!is.null(metric)){
+        if (!is.null(metric)) {
           threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
           threshval <- mean(threshval[[which(names(threshval) == metric)]])
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], threshval)
         } else {
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
-          threshval <- dismo::threshold(roweval,stat=bin.thresh)
-          roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], threshval)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)])
+          threshval <- dismo::threshold(roweval, stat = bin.thresh)
+          roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], threshval)
         }
-        caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+        caleval <- sdm::calibration(eval.testdata$Presence, predicted.values, nbin = 20, weight = TRUE)
 
-        evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+        evaldf <- data.frame(threshold = threshval, AUC = roweval@auc, omission.rate = roweval@MCR, sensitivity = roweval@TPR, specificity = roweval@TNR, prop.correct = roweval@CCR, Kappa = roweval@kappa, calibration = caleval@statistic)
         if (i == 1) {
           evaluation <- evaldf
         } else {
@@ -337,14 +357,14 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         data <- obj@data
         data$fold <- 0
         for (p in 0:1) {
-          if(p==0){
+          if (p == 0) {
             bgdata <- data[which(data$Presence == p), ]
           } else {
             datap <- data[which(data$Presence == p), ]
             indices <- seq_len(length(datap$fold))
             fold <- 1
             while (length(indices) > 0) {
-              j <- ifelse(length(indices)==1,indices,sample(indices, 1))
+              j <- ifelse(length(indices) == 1, indices, sample(indices, 1))
               datap$fold[j] <- fold
               indices <- indices[-which(indices == j)]
               if (fold != k) {
@@ -358,7 +378,7 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
         }
         for (j in 1:k) {
           eval.testdata <- data[which(data$fold == j), ]
-          eval.testdata <- rbind(eval.testdata,bgdata)
+          eval.testdata <- rbind(eval.testdata, bgdata)
           eval.testdata <- eval.testdata[-which(names(data) == "fold")]
           eval.traindata <- data[which(data$fold != j), ]
           eval.traindata <- eval.traindata[-which(names(data) == "fold")]
@@ -367,18 +387,18 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
           evalobj@data <- eval.traindata
           model <- get_model(evalobj, Env)
           predicted.values <- c(predict(model, eval.testdata))
-          if(!is.null(metric)){
+          if (!is.null(metric)) {
             threshval <- .optim.thresh(eval.testdata$Presence, predicted.values, thresh)
             threshval <- mean(threshval[[which(names(threshval) == metric)]])
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], tr = threshval)
           } else {
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)])
-            threshval <- dismo::threshold(roweval,stat=bin.thresh)
-            roweval <- dismo::evaluate(p=predicted.values[which(eval.testdata$Presence==1)], a=predicted.values[which(eval.testdata$Presence==0)], tr=threshval)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)])
+            threshval <- dismo::threshold(roweval, stat = bin.thresh)
+            roweval <- dismo::evaluate(p = predicted.values[which(eval.testdata$Presence == 1)], a = predicted.values[which(eval.testdata$Presence == 0)], tr = threshval)
           }
-          caleval <- sdm::calibration(eval.testdata$Presence,predicted.values, nbin=20, weight=TRUE)
+          caleval <- sdm::calibration(eval.testdata$Presence, predicted.values, nbin = 20, weight = TRUE)
 
-          evaldf <- data.frame(threshold=threshval, AUC=roweval@auc, omission.rate=roweval@MCR, sensitivity=roweval@TPR, specificity=roweval@TNR, prop.correct=roweval@CCR, Kappa=roweval@kappa, calibration=caleval@statistic)
+          evaldf <- data.frame(threshold = threshval, AUC = roweval@auc, omission.rate = roweval@MCR, sensitivity = roweval@TPR, specificity = roweval@TNR, prop.correct = roweval@CCR, Kappa = roweval@kappa, calibration = caleval@statistic)
           if (i == 1 && j == 1) {
             evaluation <- evaldf
           } else {
@@ -391,7 +411,6 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
     for (i in seq_len(length(evaluation))) {
       obj@evaluation[i] <- mean(evaluation[, i], na.rm = TRUE)
     }
-
   } else {
     # Continuous values of MEMs
     warning("Evaluation is not yet implemented for continuous data of MEMs !")
@@ -399,68 +418,85 @@ setMethod("evaluate", "MAXENT.SDM", function(obj, cv, cv.param, final.fit.data='
 
   # assign train/test fractions for final model training
 
-  if(final.fit.data=='holdout'){
+  if (final.fit.data == "holdout") {
     obj@data <- data
   }
-  if(is.numeric(final.fit.data)){
-    if(final.fit.data>0 & final.fit.data<=1){
+  if (is.numeric(final.fit.data)) {
+    if (final.fit.data > 0 & final.fit.data <= 1) {
       data <- obj@data
       data$train <- FALSE
       for (p in 0:1) {
         datap <- data[which(data$Presence == p), ]
-        datap$train[sample.int(length(datap$train), round(length(datap$train)*cv.param[3]))] <- TRUE
+        datap$train[sample.int(length(datap$train), round(length(datap$train) * cv.param[3]))] <- TRUE
         data[which(data$Presence == p), ] <- datap
       }
       obj@data <- data
-    } else{
+    } else {
       warning("Training fraction needs to be between 0 and 1 for sampling, assuming 1")
-      final.fit.data <- 'all'}
+      final.fit.data <- "all"
+    }
   }
-  if(final.fit.data=='all'){
+  if (final.fit.data == "all") {
     data$train <- TRUE
     obj@data <- data
   }
 
 
-  return(obj)})
+  return(obj)
+})
 
 #' @rdname evaluate
 #' @export
-setMethod("evaluate", "Stacked.SDM", function(obj, ...){
-
+setMethod("evaluate", "Stacked.SDM", function(obj, ...) {
   # Observed composition
-  obs <- lapply(obj@esdms, function(x){
-    x <- x@data[x@data$Presence == 1,1:2]
+  obs <- lapply(obj@esdms, function(x) {
+    x <- x@data[x@data$Presence == 1, 1:2]
   })
-  obs <- mapply(function(x, n){
-    x['species'] <- n ; return(x)
-  }, n = lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}),
-  x= obs, SIMPLIFY = FALSE)
-  obs <- do.call('rbind', obs)
+  obs <- mapply(
+    function(x, n) {
+      x["species"] <- n
+      return(x)
+    },
+    n = lapply(strsplit(names(obj@esdms), ".", fixed = TRUE), function(x) {
+      x[[1]]
+    }),
+    x = obs, SIMPLIFY = FALSE
+  )
+  obs <- do.call("rbind", obs)
   obs <- with(obs, table(paste(X, Y), species))
   obs <- as.data.frame.matrix(obs)
   obs[obs > 1] <- 1
-  XY <- do.call('rbind', strsplit(row.names(obs), ' '))
+  XY <- do.call("rbind", strsplit(row.names(obs), " "))
   row.names(obs) <- 1:dim(obs)[1]
   XY <- apply(XY, 1, as.character)
   XY <- apply(XY, 1, as.numeric)
   XY <- data.frame(XY)
-  names(XY) <- c('X','Y')
+  names(XY) <- c("X", "Y")
 
   # Predicted composition
-  pred <- stack(lapply(obj@esdms, function(x){
+  pred <- stack(lapply(obj@esdms, function(x) {
     x@binary
   }))
-  names(pred) <- unlist(lapply(strsplit(names(obj@esdms), '.', fixed = TRUE), function(x){x[[1]]}))
+  names(pred) <- unlist(lapply(strsplit(names(obj@esdms), ".", fixed = TRUE), function(x) {
+    x[[1]]
+  }))
   pred <- extract(pred, XY)
 
   # Confusion matrix
-  conftab <- obs*10 + pred
+  conftab <- obs * 10 + pred
   conf <- data.frame(
-    TP = apply(conftab, 1, function(x){sum(length(which(x == 11)))}), # True positive
-    FN = apply(conftab, 1, function(x){sum(length(which(x == 10)))}), # False negative
-    FP = apply(conftab, 1, function(x){sum(length(which(x == 1)))}), # False positive
-    TN = apply(conftab, 1, function(x){sum(length(which(x == 0)))}) # True negative
+    TP = apply(conftab, 1, function(x) {
+      sum(length(which(x == 11)))
+    }), # True positive
+    FN = apply(conftab, 1, function(x) {
+      sum(length(which(x == 10)))
+    }), # False negative
+    FP = apply(conftab, 1, function(x) {
+      sum(length(which(x == 1)))
+    }), # False positive
+    TN = apply(conftab, 1, function(x) {
+      sum(length(which(x == 0)))
+    }) # True negative
   )
 
   # Evaluation indices
@@ -469,14 +505,14 @@ setMethod("evaluate", "Stacked.SDM", function(obj, ...){
   b <- conf$FP
   c <- conf$FN
   d <- conf$TN
-  kappa.inter <- ((a + b)*(a + c) + (c + d)*(d + b)) / n*n
+  kappa.inter <- ((a + b) * (a + c) + (c + d) * (d + b)) / n * n
   eval <- data.frame(
-    'species richness error' = rowSums(pred) - rowSums(obs),
-    'prediction success' = (a + d) / n,
-    'kappa' = (((a + d) / n) - kappa.inter) / (1 - kappa.inter),
-    'specificity' = d / (b + d),
-    'sensitivity' = a / (a + c),
-    'Jaccard' = a / (a + b + c)
+    "species richness error" = rowSums(pred) - rowSums(obs),
+    "prediction success" = (a + d) / n,
+    "kappa" = (((a + d) / n) - kappa.inter) / (1 - kappa.inter),
+    "specificity" = d / (b + d),
+    "sensitivity" = a / (a + c),
+    "Jaccard" = a / (a + b + c)
   )
 
   # Result

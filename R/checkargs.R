@@ -1,47 +1,47 @@
-.checkargs <- function(Xcol = 'Longitude',
-                      Ycol = 'Latitude',
-                      Pcol = NULL,
-                      Spcol = 'SpeciesID',
-                      name = NULL,
-                      Spname = NULL,
-                      save = FALSE,
-                      path = getwd(),
-                      PA = NULL,
-                      rep = 1,
-                      cv = 'holdout',
-                      cv.param = c(0.7,2),
-                      final.fit.data = 'all',
-                      bin.thresh = 'SES',
-                      metric = NULL,
-                      thresh = 1001,
-                      axes.metric = 'Pearson',
-                      select = FALSE,
-                      select.metric = c('AUC'),
-                      select.thresh = c(0.75),
-                      verbose = TRUE,
-                      GUI = FALSE,
-                      uncertainty = TRUE,
-                      tmp = FALSE,
-                      ensemble.metric = c('AUC'),
-                      ensemble.thresh = c(0.75),
-                      weight = TRUE,
-                      method = 'pSSDM',
-                      rep.B = 1000,
-                      richness = NULL,
-                      GeoRes = TRUE,
-                      reso = 1,
-                      file = NULL,
-                      files = NULL,
-                      format = c('.grd','.tif','.asc','.sdat','.rst','.nc','.tif','.envi','.bil','.img'),
-                      categorical = NULL,
-                      Norm = TRUE,
-                      esdm = Ensemble.SDM(),
-                      stack = Stacked.SDM(),
-                      range = NULL,
-                      endemism = 'WEI',
-                      cores = 1,
-                      MEM = FALSE,
-                      eval = TRUE){
+.checkargs <- function(Xcol = "Longitude",
+                       Ycol = "Latitude",
+                       Pcol = NULL,
+                       Spcol = "SpeciesID",
+                       name = NULL,
+                       Spname = NULL,
+                       save = FALSE,
+                       path = getwd(),
+                       PA = NULL,
+                       rep = 1,
+                       cv = "holdout",
+                       cv.param = c(0.7, 2),
+                       final.fit.data = "all",
+                       bin.thresh = "SES",
+                       metric = NULL,
+                       thresh = 1001,
+                       axes.metric = "Pearson",
+                       select = FALSE,
+                       select.metric = c("AUC"),
+                       select.thresh = c(0.75),
+                       verbose = TRUE,
+                       GUI = FALSE,
+                       uncertainty = TRUE,
+                       tmp = FALSE,
+                       ensemble.metric = c("AUC"),
+                       ensemble.thresh = c(0.75),
+                       weight = TRUE,
+                       method = "pSSDM",
+                       rep.B = 1000,
+                       richness = NULL,
+                       GeoRes = TRUE,
+                       reso = 1,
+                       file = NULL,
+                       files = NULL,
+                       format = c(".grd", ".tif", ".asc", ".sdat", ".rst", ".nc", ".tif", ".envi", ".bil", ".img"),
+                       categorical = NULL,
+                       Norm = TRUE,
+                       esdm = Ensemble.SDM(),
+                       stack = Stacked.SDM(),
+                       range = NULL,
+                       endemism = "WEI",
+                       cores = 1,
+                       MEM = FALSE,
+                       eval = TRUE) {
   ## Argument checking function
   ## Occurrences, Environment, and part of
   ## X, Y, Pcol are directly defined in functions
@@ -76,16 +76,16 @@
     stop("PA should be a list containing as PA = list('nb'=..., 'strat'=...).")
   }
   if (!is.null(PA) && !is.null(PA$nb) && (abs(PA$nb - round(PA$nb)) != 0 ||
-                                          PA$nb < 1)) {
+    PA$nb < 1)) {
     stop("PA$nb should be an integer > 0.")
   }
-  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk","geobuffer"))) {
+  if (!is.null(PA) && !is.null(PA$strat) && !(PA$strat %in% c("random", "disk", "geobuffer"))) {
     stop("PA$strat should be random, disk or geobuffer (see help).")
   }
 
   # rep
   if (!inherits(rep, "numeric") || abs(thresh - round(thresh)) != 0 || thresh <
-      1) {
+    1) {
     stop("rep parameter should be an integer > 1.")
   }
 
@@ -103,44 +103,46 @@
     stop("cv.param parameter should be of length 2")
   }
   if (cv == "k-fold" && ((abs(cv.param[1] - round(cv.param[1])) != 0 || abs(cv.param[2] -
-                                                                            round(cv.param[2])) != 0) || (cv.param[1] == 0 || cv.param[2] == 0))) {
+    round(cv.param[2])) != 0) || (cv.param[1] == 0 || cv.param[2] == 0))) {
     stop("cv.param parameters (k and repetitions) should be both integers > 0 (see help).")
   }
   if (cv == "holdout" && (abs(cv.param[2] - round(cv.param[2])) != 0 || cv.param[2] ==
-                          0)) {
+    0)) {
     stop("cv.param[2] (repetitions) parameters should be an integer > 0 (see help).")
   }
   if (cv == "holdout" && (cv.param[1] < 0 || cv.param[1] > 1)) {
     stop("cv.param[1] (train fraction) parameters should be a float between 0 and 1 (see help).")
   }
-  
+
   # final.fit.data
-  if (!inherits(final.fit.data,c("character","numeric"))) {
+  if (!inherits(final.fit.data, c("character", "numeric"))) {
     stop("final.fit.data should be a character string or numeric.")
   }
-  
-  if (inherits(final.fit.data,"character") && !(final.fit.data %in% c("all", "holdout"))) {
+
+  if (inherits(final.fit.data, "character") && !(final.fit.data %in% c("all", "holdout"))) {
     stop("final.fit.data should be one of 'all', 'holdout' or numeric (between 0-1).")
   }
 
   # bin.thresh
-  if (!inherits(bin.thresh, "character") || !(bin.thresh %in% c("Kappa", "NOM", "TSS","SES", "EP"))) {
+  if (!inherits(bin.thresh, "character") || !(bin.thresh %in% c("Kappa", "NOM", "TSS", "SES", "EP"))) {
     stop("bin.thresh parameter should be Kappa, NOM, TSS, SES, or EP (see help).")
   }
-  
+
   # thresh
   if (!inherits(thresh, "numeric") || abs(thresh - round(thresh)) != 0) {
     stop("thresh parameter should be an integer.")
   }
 
   # metric
-  if (!inherits(metric, c("character","NULL")) || (inherits(metric, "character") && !(metric %in% c("Kappa", "CCR", "TSS","SES", "LW", "ROC")))) {
+  if (!inherits(metric, c("character", "NULL")) || (inherits(metric, "character") && !(metric %in% c("Kappa", "CCR", "TSS", "SES", "LW", "ROC")))) {
     stop("metric parameter should be Kappa, CCR, TSS, SES, LW, or ROC (see help).")
   }
 
   # axes.metric
-  if (!inherits(axes.metric, "character") || !(axes.metric %in% c("Pearson",
-                                                                  "AUC", "Kappa", "omission.rate", "sensitivity", "specificity", "prop.correct"))) {
+  if (!inherits(axes.metric, "character") || !(axes.metric %in% c(
+    "Pearson",
+    "AUC", "Kappa", "omission.rate", "sensitivity", "specificity", "prop.correct"
+  ))) {
     stop("axes.metric parameter should be Pearson, AUC, Kappa, omission.rate, sensitivity, specificity or prop.correct (see help).")
   }
 
@@ -152,8 +154,10 @@
     stop("select.metric parameter should be a character.")
   } else {
     for (i in seq_len(length(select.metric))) {
-      if (!(select.metric[i] %in% c("AUC", "Kappa", "sensitivity", "specificity",
-                                    "prop.correct","calibration"))) {
+      if (!(select.metric[i] %in% c(
+        "AUC", "Kappa", "sensitivity", "specificity",
+        "prop.correct", "calibration"
+      ))) {
         stop(paste("select.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
@@ -181,7 +185,7 @@
   if (!inherits(uncertainty, "logical")) {
     stop("uncertainty parameter should be a logical (True or False).")
   }
-  if (!inherits(tmp, c("logical","character"))) {
+  if (!inherits(tmp, c("logical", "character"))) {
     stop("tmp parameter should be a logical (True or False) or character (file path).")
   }
   if (!inherits(save, "logical")) {
@@ -202,8 +206,10 @@
     stop("ensemble.metric parameter should be a character.")
   } else {
     for (i in seq_len(length(ensemble.metric))) {
-      if (!(ensemble.metric[i] %in% c("AUC", "Kappa", "sensitivity",
-                                      "specificity", "prop.correct","calibration"))) {
+      if (!(ensemble.metric[i] %in% c(
+        "AUC", "Kappa", "sensitivity",
+        "specificity", "prop.correct", "calibration"
+      ))) {
         stop(paste("ensemble.metric", i, "parameter should be AUC, Kappa, sensitivity, specificity, prop.correct or calibration (see help)."))
       }
     }
@@ -222,13 +228,15 @@
   }
 
   # Stacking
-  if (!inherits(method, "character") || !(method %in% c("pSSDM", "Bernoulli", "bSSDM",
-                                                        "MaximumLikelihood",
-                                                        "PRR.MEM", "PRR.pSSDM"))) {
+  if (!inherits(method, "character") || !(method %in% c(
+    "pSSDM", "Bernoulli", "bSSDM",
+    "MaximumLikelihood",
+    "PRR.MEM", "PRR.pSSDM"
+  ))) {
     stop("method parameter should be pSSDM, Bernoulli, bSSDM, MaximumLikelihood, PRR.MEM, or PRR.pSSDM (see help).")
   }
   if (method == "Bernoulli" && !inherits(rep.B, "numeric") && abs(rep.B - round(rep.B)) !=
-      0 && rep.B < 1) {
+    0 && rep.B < 1) {
     stop("rep.B parameter should be an integer > 1 (see help).")
   }
   if (!is.null(richness)) {
@@ -251,9 +259,13 @@
   if (!inherits(files, "character") && !is.null(files)) {
     stop("files parameter should be characters or NULL")
   }
-  if (!is.null(format) && !inherits(format, "character") || (inherits(format,
-                                                                      "character") && any(!(format %in% c(".grd", ".tif", ".asc", ".sdat", ".rst",
-                                                                                                          ".nc", ".tif", ".envi", ".bil", ".img"))))) {
+  if (!is.null(format) && !inherits(format, "character") || (inherits(
+    format,
+    "character"
+  ) && any(!(format %in% c(
+    ".grd", ".tif", ".asc", ".sdat", ".rst",
+    ".nc", ".tif", ".envi", ".bil", ".img"
+  ))))) {
     stop("format parameter should be .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil or .img")
   }
   if (!inherits(categorical, "character") && !is.null(categorical)) {
@@ -273,12 +285,16 @@
 
   # Range and Endemism parameters
   if (!is.null(endemism) && length(endemism) > 1) {
-    if (!inherits(endemism[1], "character") || !(endemism[1] %in% c("WEI",
-                                                                    "CWEI"))) {
+    if (!inherits(endemism[1], "character") || !(endemism[1] %in% c(
+      "WEI",
+      "CWEI"
+    ))) {
       stop("endemism parameter first value should be WEI, or CWEI (see help).")
     }
-    if (!inherits(endemism[2], "character") || !(endemism[2] %in% c("NbOcc",
-                                                                    "Binary"))) {
+    if (!inherits(endemism[2], "character") || !(endemism[2] %in% c(
+      "NbOcc",
+      "Binary"
+    ))) {
       stop("endemism parameter second value should be NbOcc, or Binary (see help).")
     }
   }
@@ -290,7 +306,7 @@
 
   # Cores
   if (!inherits(cores, "numeric") || abs(cores - round(cores)) != 0 || cores <
-      0) {
+    0) {
     stop("cores parameter should be an integer > 0 (see help).")
   }
 }

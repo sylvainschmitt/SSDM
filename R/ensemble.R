@@ -2,38 +2,38 @@
 #' @importFrom raster raster stack reclassify
 NULL
 
-#'Methods to assemble multiple algorithms in an ensemble SDM
+#' Methods to assemble multiple algorithms in an ensemble SDM
 #'
-#'This is a method to assemble several algorithms in an ensemble SDM. The
-#'function takes as inputs several S4 \linkS4class{Algorithm.SDM} class objects
-#'returned by the \code{\link{modelling}} function. The function returns an S4
-#'\linkS4class{Ensemble.SDM} class object containing the habitat suitability
-#'map, the binary map, and the uncertainty map (based on the between-algorithm
-#'variance) and the associated evaluation tables (model evaluation, algorithm
-#'evaluation, algorithm correlation matrix and variable importance).
+#' This is a method to assemble several algorithms in an ensemble SDM. The
+#' function takes as inputs several S4 \linkS4class{Algorithm.SDM} class objects
+#' returned by the \code{\link{modelling}} function. The function returns an S4
+#' \linkS4class{Ensemble.SDM} class object containing the habitat suitability
+#' map, the binary map, and the uncertainty map (based on the between-algorithm
+#' variance) and the associated evaluation tables (model evaluation, algorithm
+#' evaluation, algorithm correlation matrix and variable importance).
 #'
-#'@param x,... SDMs. SDMs to be assembled.
-#'@param name character. Optional name given to the final Ensemble.SDM produced
+#' @param x,... SDMs. SDMs to be assembled.
+#' @param name character. Optional name given to the final Ensemble.SDM produced
 #'  (by default 'Ensemble.SDM').
-#'@param ensemble.metric character. Metric(s) used to select the best SDMs that
+#' @param ensemble.metric character. Metric(s) used to select the best SDMs that
 #'  will be included in the ensemble SDM (see details below).
-#'@param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
+#' @param ensemble.thresh numeric. Threshold(s) associated with the metric(s)
 #'  used to compute the selection.
-#'@param weight logical. If TRUE, SDMs are weighted using the ensemble metric
+#' @param weight logical. If TRUE, SDMs are weighted using the ensemble metric
 #'  or, alternatively, the mean of the selection   metrics.
-#'@param thresh numeric. A integer value specifying the number of equal
+#' @param thresh numeric. A integer value specifying the number of equal
 #'  interval threshold values between 0 and 1.
-#'@param uncertainty logical. If TRUE, generates an uncertainty map and
+#' @param uncertainty logical. If TRUE, generates an uncertainty map and
 #'  an algorithm correlation matrix.
-#'@param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
-#'@param cores integer. Specify the number of CPU cores used to do the
+#' @param SDM.projections logical. If FALSE (default), the Algorithm.SDMs inside the 'sdms' slot will not contain projections (for memory saving purposes).
+#' @param cores integer. Specify the number of CPU cores used to do the
 #'  computing. You can use \code{\link[parallel]{detectCores}}) to automatically
-#'@param verbose logical. If set to true, allows the function to print text in
+#' @param verbose logical. If set to true, allows the function to print text in
 #'  the console.
-#'@param GUI,format,na.rm  logical. Do not take those arguments into account
+#' @param GUI,format,na.rm  logical. Do not take those arguments into account
 #'  (parameters for the user interface and sum function).
 #'
-#'@details ensemble.metric (metric(s) used to select the best SDMs that will be
+#' @details ensemble.metric (metric(s) used to select the best SDMs that will be
 #'  included in the ensemble SDM) can be chosen from among: \describe{
 #'  \item{AUC}{Area under the receiver operating characteristic (ROC) curve}
 #'  \item{Kappa}{Kappa from the confusion matrix} \item{sensitivity}{Sensitivity
@@ -41,7 +41,7 @@ NULL
 #'  matrix} \item{prop.correct}{Proportion of correctly predicted occurrences
 #'  from the confusion matrix} \item{calibration}{Calibration metric (Naimi & Araujo 2016)} }
 #'
-#'@return an S4 \linkS4class{Ensemble.SDM} class object viewable with the
+#' @return an S4 \linkS4class{Ensemble.SDM} class object viewable with the
 #'  \code{\link{plot.model}} function.
 #'
 #' @examples
@@ -49,25 +49,25 @@ NULL
 #' # Loading data
 #' data(Env)
 #' data(Occurrences)
-#' Occurrences <- subset(Occurrences, Occurrences$SPECIES == 'elliptica')
+#' Occurrences <- subset(Occurrences, Occurrences$SPECIES == "elliptica")
 #'
 #' # ensemble SDM building
-#' CTA <- modelling('CTA', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
-#' SVM <- modelling('SVM', Occurrences, Env, Xcol = 'LONGITUDE', Ycol = 'LATITUDE')
+#' CTA <- modelling("CTA", Occurrences, Env, Xcol = "LONGITUDE", Ycol = "LATITUDE")
+#' SVM <- modelling("SVM", Occurrences, Env, Xcol = "LONGITUDE", Ycol = "LATITUDE")
 #' ESDM <- ensemble(CTA, SVM, ensemble.thresh = c(0.6))
 #'
 #' # Results plotting
 #' plot(ESDM)
 #' }
 #'
-#'@seealso \code{\link{ensemble_modelling}} to build an ensemble SDM from
+#' @seealso \code{\link{ensemble_modelling}} to build an ensemble SDM from
 #'  multiple algorithms.
 #'
-#'@name ensemble
+#' @name ensemble
 #'
-#'@export
+#' @export
 setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections=FALSE, cores=0,
+                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections = FALSE, cores = 0,
                                 verbose = TRUE, GUI = FALSE) {
   return(standardGeneric("ensemble"))
 })
@@ -75,12 +75,14 @@ setGeneric("ensemble", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
 #' @rdname ensemble
 #' @export
 setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric = c("AUC"),
-                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections=FALSE, cores=0,
+                                                ensemble.thresh = c(0.75), weight = TRUE, thresh = 1001, uncertainty = TRUE, SDM.projections = FALSE, cores = 0,
                                                 verbose = TRUE, GUI = FALSE) {
   # Check arguments
-  .checkargs(name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
-             weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose,
-             GUI = GUI)
+  .checkargs(
+    name = name, ensemble.metric = ensemble.metric, ensemble.thresh = ensemble.thresh,
+    weight = weight, thresh = thresh, uncertainty = uncertainty, verbose = verbose,
+    GUI = GUI
+  )
 
   models <- list(x, ...)
   esdm <- Ensemble.SDM()
@@ -94,8 +96,7 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
   while (length(models) > 0) {
     type.model <- list()
     type <- class(models[[1]])[[1]]
-    rm <- {
-    }
+    rm <- {}
     for (i in seq_len(length(models))) {
       if (inherits(models[[i]], type)) {
         suppressWarnings({
@@ -135,21 +136,20 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
     ind <- 0
     selection.indices <- c()
     for (i in seq_len(length(sdms))) {
-      if (all(sdms[[i]]@evaluation[,which(names(sdms[[i]]@evaluation) %in% ensemble.metric)] > ensemble.thresh)) {
-        ind <- ind+1
+      if (all(sdms[[i]]@evaluation[, which(names(sdms[[i]]@evaluation) %in% ensemble.metric)] > ensemble.thresh)) {
+        ind <- ind + 1
         selection.indices[ind] <- i
-        }
+      }
     }
     # Store individual models
-    if(!SDM.projections){
-      sdmsmin <- lapply(sdms[c(selection.indices)],function(x) {
+    if (!SDM.projections) {
+      sdmsmin <- lapply(sdms[c(selection.indices)], function(x) {
         x@projection <- raster()
         x@binary <- raster()
         return(x)
-        })
+      })
       esdm@sdms <- sdmsmin
-    }
-    else {
+    } else {
       esdm@sdms <- sdms[c(selection.indices)]
     }
 
@@ -171,7 +171,6 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
     if (length(sum.algo.ensemble) < 1) {
       return(NULL)
     } else {
-
       # Name
       if (!is.null(name)) {
         name <- paste0(name, ".")
@@ -231,7 +230,9 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
           cat("Algorithms correlation...")
         }
         esdm@algorithm.correlation <- as.data.frame(layerStats(projections,
-                                                              "pearson", na.rm = TRUE)$`pearson correlation coefficient`)
+          "pearson",
+          na.rm = TRUE
+        )$`pearson correlation coefficient`)
         if (verbose) {
           cat("   done \n")
         }
@@ -263,8 +264,10 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
         row.names(esdm@algorithm.evaluation)[1] <- algo.ensemble[[1]]@name
         if (length(algo.ensemble) > 1) {
           for (i in 2:length(algo.ensemble)) {
-            esdm@algorithm.evaluation <- rbind(esdm@algorithm.evaluation,
-                                              algo.ensemble[[i]]@evaluation)
+            esdm@algorithm.evaluation <- rbind(
+              esdm@algorithm.evaluation,
+              algo.ensemble[[i]]@evaluation
+            )
             row.names(esdm@algorithm.evaluation)[i] <- algo.ensemble[[i]]@name
           }
         }
@@ -284,10 +287,14 @@ setMethod("ensemble", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.me
       text.ensemble.metric <- character()
       text.ensemble.thresh <- character()
       for (i in seq_len(length(ensemble.metric))) {
-        text.ensemble.metric <- paste0(text.ensemble.metric, ".",
-                                       ensemble.metric[i])
-        text.ensemble.thresh <- paste0(text.ensemble.thresh, "|",
-                                       ensemble.thresh[i])
+        text.ensemble.metric <- paste0(
+          text.ensemble.metric, ".",
+          ensemble.metric[i]
+        )
+        text.ensemble.thresh <- paste0(
+          text.ensemble.thresh, "|",
+          ensemble.thresh[i]
+        )
       }
       esdm@parameters$ensemble.metric <- text.ensemble.metric
       esdm@parameters$ensemble.thresh <- text.ensemble.thresh
@@ -319,9 +326,13 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
     }
   }
 
-  smodel <- new(class(x)[[1]], projection = reclassify(x@projection[[1]],
-                                                       c(-Inf, Inf, 0)), data = x@data[1, ], variable.importance = x@variable.importance,
-                evaluation = x@evaluation)
+  smodel <- new(class(x)[[1]],
+    projection = reclassify(
+      x@projection[[1]],
+      c(-Inf, Inf, 0)
+    ), data = x@data[1, ], variable.importance = x@variable.importance,
+    evaluation = x@evaluation
+  )
   smodel@data <- smodel@data[-1, ]
   smodel@variable.importance[1, ] <- 0
   smodel@evaluation[1, ] <- 0
@@ -342,10 +353,12 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
       weight.value <- c()
       for (j in seq_len(length(ensemble.metric))) {
         if (models[[i]]@evaluation[, which(names(models[[i]]@evaluation) ==
-                                           ensemble.metric[j])] < ensemble.thresh[j]) {
+          ensemble.metric[j])] < ensemble.thresh[j]) {
           test <- FALSE
-          weight.value <- c(weight.value, models[[i]]@evaluation[,
-                                                                 which(names(models[[i]]@evaluation) == ensemble.metric[j])])
+          weight.value <- c(weight.value, models[[i]]@evaluation[
+            ,
+            which(names(models[[i]]@evaluation) == ensemble.metric[j])
+          ])
         } else {
           weight.value <- 1
           test <- TRUE
@@ -391,14 +404,15 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
     }
     return(NULL)
   } else {
-
-    smodel@projection <- smodel@projection/sweight
+    smodel@projection <- smodel@projection / sweight
     names(smodel@projection) <- "Probability"
     if (all(x@data$Presence %in% c(0, 1))) {
       # SDMs
-      smodel@evaluation <- smodel@evaluation/sweight
-      smodel@binary <- reclassify(smodel@projection, c(-Inf, smodel@evaluation$threshold,
-                                                       0, smodel@evaluation$threshold, Inf, 1))
+      smodel@evaluation <- smodel@evaluation / sweight
+      smodel@binary <- reclassify(smodel@projection, c(
+        -Inf, smodel@evaluation$threshold,
+        0, smodel@evaluation$threshold, Inf, 1
+      ))
     } else {
       # MEMs
       warning("Ensemble model evaluation is not yet implemented with MEMs")
@@ -413,7 +427,7 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
     } else {
       if (is.nan(sum(smodel@variable.importance))) {
         cat("Error variable importance is NaN")
-        smodel@variable.importance[1, ] <- (100/length(smodel@variable.importance))
+        smodel@variable.importance[1, ] <- (100 / length(smodel@variable.importance))
       } else {
         if (sum(smodel@variable.importance) == 0) {
           all.null <- TRUE
@@ -423,13 +437,13 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
             }
           }
           if (all.null) {
-            smodel@variable.importance[1, ] <- (100/length(smodel@variable.importance))
+            smodel@variable.importance[1, ] <- (100 / length(smodel@variable.importance))
           } else {
             smodel@variable.importance <- smodel@variable.importance *
               100
           }
         } else {
-          smodel@variable.importance <- smodel@variable.importance/sum(smodel@variable.importance) *
+          smodel@variable.importance <- smodel@variable.importance / sum(smodel@variable.importance) *
             100
         }
       }
@@ -442,4 +456,3 @@ setMethod("sum", "Algorithm.SDM", function(x, ..., name = NULL, ensemble.metric 
     return(smodel)
   }
 })
-

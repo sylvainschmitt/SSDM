@@ -3,46 +3,50 @@
 #' @importFrom raster raster stack res extent crop reclassify as.factor resample readAll
 NULL
 
-#'Load environmental variables
+#' Load environmental variables
 #'
-#'Function to load environmental variables in the form of rasters to perform
-#'\code{\link{modelling}}, \code{\link{ensemble_modelling}} or
-#'\code{\link{stack_modelling}}.
+#' Function to load environmental variables in the form of rasters to perform
+#' \code{\link{modelling}}, \code{\link{ensemble_modelling}} or
+#' \code{\link{stack_modelling}}.
 #'
-#'@param path character. Path to the directory that contains the environmental variables
+#' @param path character. Path to the directory that contains the environmental variables
 #'  files.
-#'@param files character. Files containing the environmental variables If NULL
+#' @param files character. Files containing the environmental variables If NULL
 #'  (default) all files present in the path in the selected format will
 #'  be loaded.
-#'@param format character. Format of environmental variables files
+#' @param format character. Format of environmental variables files
 #'  (including .grd, .tif, .asc, .sdat, .rst, .nc, .tif, .envi, .bil, .img).
-#'@param categorical character. Specify environmental variables that are categorical.
-#'@param Norm logical. Default FALSE. If set to TRUE, normalizes environmental variables into a range between 0 and 1.
-#'@param tmp logical. If set to TRUE, rasters are
+#' @param categorical character. Specify environmental variables that are categorical.
+#' @param Norm logical. Default FALSE. If set to TRUE, normalizes environmental variables into a range between 0 and 1.
+#' @param tmp logical. If set to TRUE, rasters are
 #'  read in temporary file avoiding to overload the random access memory. But
 #'  beware: if you close R, temporary files will be deleted.
-#'@param verbose logical. If set to TRUE, allows the function to print text in the
+#' @param verbose logical. If set to TRUE, allows the function to print text in the
 #'  console.
-#'@param GUI logical. Do not take that argument into account (parameter for the
+#' @param GUI logical. Do not take that argument into account (parameter for the
 #'  user interface).
 #'
-#'@return A stack containing the environmental rasters (normalized or
+#' @return A stack containing the environmental rasters (normalized or
 #'  not).
 #'
 #' @examples
 #' \dontrun{
-#' load_var(system.file('extdata',  package = 'SSDM'))
+#' load_var(system.file("extdata", package = "SSDM"))
 #' }
 #'
-#'@seealso \code{\link{load_occ}} to load occurrences.
+#' @seealso \code{\link{load_occ}} to load occurrences.
 #'
-#'@export
-load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
-                                                              ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"), categorical = NULL,
+#' @export
+load_var <- function(path = getwd(), files = NULL, format = c(
+                       ".grd", ".tif",
+                       ".asc", ".sdat", ".rst", ".nc", ".envi", ".bil", ".img"
+                     ), categorical = NULL,
                      Norm = FALSE, tmp = TRUE, verbose = TRUE, GUI = FALSE) {
   # Check arguments
-  .checkargs(path = path, files = files, format = format, categorical = categorical,
-             Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI)
+  .checkargs(
+    path = path, files = files, format = format, categorical = categorical,
+    Norm = Norm, tmp = tmp, verbose = verbose, GUI = GUI
+  )
 
   # pdir = getwd()
   if (verbose) {
@@ -67,8 +71,10 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
   }
   for (j in 1:n) {
     if (files.null) {
-      files <- list.files(path = path, pattern = paste0(".", format[j],
-                                                        "$"))
+      files <- list.files(path = path, pattern = paste0(
+        ".", format[j],
+        "$"
+      ))
     }
     if (length(files) > 0) {
       for (i in seq_len(length(files))) {
@@ -88,8 +94,10 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
         extentstack@ymin <- max(extentstack@ymin, extent@ymin)
         extentstack@ymax <- min(extentstack@ymax, extent@ymax)
         if (GUI) {
-          incProgress(1/(length(files) * 3), detail = paste(i,
-                                                            "loaded"))
+          incProgress(1 / (length(files) * 3), detail = paste(
+            i,
+            "loaded"
+          ))
         }
       }
     }
@@ -104,8 +112,10 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
   }
   for (j in 1:n) {
     if (files.null) {
-      files <- list.files(path = path, pattern = paste0(".", format[j],
-                                                        "$"))
+      files <- list.files(path = path, pattern = paste0(
+        ".", format[j],
+        "$"
+      ))
     }
     if (length(files) > 0) {
       for (i in seq_len(length(files))) {
@@ -126,21 +136,27 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
           fun <- mean
         }
         if (round(res(Raster)[1], digits = 6) != round(resostack[1],
-                                                       digits = 6) || round(res(Raster)[2], digits = 6) != round(resostack[2],
-                                                                                                                 digits = 6)) {
+          digits = 6
+        ) || round(res(Raster)[2], digits = 6) != round(resostack[2],
+          digits = 6
+        )) {
           cat("\n", names(Raster), "is aggregated to the coarsest resolution \n")
-          Raster <- aggregate(Raster, fact = c((resostack[1]/res(Raster)[1]),
-                                               (resostack[2]/res(Raster)[2])), fun = fun)
+          Raster <- aggregate(Raster, fact = c(
+            (resostack[1] / res(Raster)[1]),
+            (resostack[2] / res(Raster)[2])
+          ), fun = fun)
         }
         Raster <- crop(Raster, extentstack)
         if (i > 1 && (any(res(Raster) != res(Env)) || extent(Raster) !=
-                      extentstack)) {
+          extentstack)) {
           Raster <- resample(Raster, Env[[1]])
         }
         Env <- stack(Env, Raster, quick = TRUE)
         if (GUI) {
-          incProgress((1/(length(files) * 3)), detail = paste(i,
-                                                              "treated"))
+          incProgress((1 / (length(files) * 3)), detail = paste(
+            i,
+            "treated"
+          ))
         }
       }
     }
@@ -158,11 +174,13 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
     for (i in seq_len(length(Env@layers))) {
       # For not categorical variable
       if (!Env[[i]]@data@isfactor) {
-        Env[[i]] <- Env[[i]]/Env[[i]]@data@max
+        Env[[i]] <- Env[[i]] / Env[[i]]@data@max
       }
       if (GUI) {
-        incProgress((1/length(Env@layers)/3), detail = paste(i,
-                                                             "normalized"))
+        incProgress((1 / length(Env@layers) / 3), detail = paste(
+          i,
+          "normalized"
+        ))
       }
     }
   }
@@ -172,11 +190,14 @@ load_var <- function(path = getwd(), files = NULL, format = c(".grd", ".tif",
   # Temporary files
   if (tmp) {
     path <- get("tmpdir", envir = .PkgEnv)
-    if (!(file.path(path, ".rasters") %in% list.dirs(path)))
+    if (!(file.path(path, ".rasters") %in% list.dirs(path))) {
       (dir.create(paste0(path, "/.rasters")))
+    }
     for (i in seq_len(length(Env@layers))) {
-      Env[[i]] <- writeRaster(Env[[i]], paste0(path, "/.rasters/",
-                                               names(Env[[i]])), overwrite = TRUE)
+      Env[[i]] <- writeRaster(Env[[i]], paste0(
+        path, "/.rasters/",
+        names(Env[[i]])
+      ), overwrite = TRUE)
     }
   }
 
